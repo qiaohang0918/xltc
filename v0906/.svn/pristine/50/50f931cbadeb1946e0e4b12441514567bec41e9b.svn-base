@@ -1,0 +1,81 @@
+package com.qigan.qiganshop.mapper;
+
+import com.qigan.qiganshop.pojo.AppUser;
+import com.qigan.qiganshop.pojo.ClueUserInfo;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public interface AppUserMapper {
+    public AppUser getAppUserByToken(String token);
+
+    public AppUser findAppUserByPhone(String phone);
+
+    public int addAppUser(@Param("user") AppUser user);
+
+    public int updateAppUser(@Param("user") AppUser appUser);
+
+    public int updateAppUserToken(@Param("user") AppUser appUser);
+
+    public AppUser selectByPrimaryKey(String userId);
+
+    public AppUser getAppUserById(String id);
+
+    AppUser getAppUserByOpenid(String openid);
+
+    AppUser getAppUserByQOpenid(String openid);
+
+
+    List<AppUser> findPage(@Param("user") AppUser appUser, @Param("page") Integer page, @Param("size") Integer size);
+
+    int addDeal(@Param("userId") String userId, @Param("payMoney") Double payMoney);
+
+    /**
+     * 删选appuser
+     * @param map
+     * @return
+     */
+    List<AppUser> findPageByCondition(@Param("map") HashMap<String, String> map);
+
+    /**
+     * 是啊简单为内新增的人数
+     * @param startTime
+     * @param endTime
+     * @return
+     */
+    List<Map<String, Object>> daysUserRecords(@Param("startTime") String startTime, @Param("endTime")String endTime);
+
+    @Update("update tb_user set balance = balance + ${wishesAmount} where userId = #{orginUserId} ")
+    int givenWishesAmount(@Param("orginUserId") String orginUserId, @Param("wishesAmount")double wishesAmount);
+
+    @Select("select DISTINCT userId from tb_user where phone = #{phone}")
+    String getUserId(@Param("phone") String phone);
+
+    @Update(" update tb_user set balance = IFNULL(balance,0.00) + #{total} where userId = #{userId} ")
+    int reGivenUserAmount(@Param("userId") String userId, @Param("total") String total);
+
+    @Select("select *  from tb_user where phone = #{phone}")
+    AppUser getUserByPhone(@Param("phone")String phone);
+
+    @Update("update tb_user set orginUserId = #{orginUserId} where userId = #{newUserId} ")
+    int addOrginUserToClueUser(@Param("orginUserId") String orginUserId, @Param("newUserId") String newUserId);
+
+    @Update("update tb_user set explandRegisters = explandRegisters + 1 where userId = #{orginUserId} ")
+    int incrementExplandRegistersForOrginUser(@Param("orginUserId") String orginUserId);
+
+    @Select("select * from tb_user where userId in ( ${clueUserIds} ) ${timeConditional} ")
+    List<AppUser> findUserByIds(@Param("clueUserIds") String clueUserIds, @Param("timeConditional") String timeConditional);
+
+    @Select({" select a.explandRegisters,a.phone,a.nickName,a.balance from tb_user a" ,
+            " right join (select DISTINCT orginUserId from tb_user where orginUserId is not null) b on a.userId= b.orginUserId " ,
+            " order by explandRegisters desc " })
+    List<ClueUserInfo> selectCLueUserInfo();
+
+    @Update(" update tb_user set balance =  balance + #{money} where userId = #{userId} ")
+    int refundUserBalance(@Param("userId") String userId, @Param("money") String money);
+}
+

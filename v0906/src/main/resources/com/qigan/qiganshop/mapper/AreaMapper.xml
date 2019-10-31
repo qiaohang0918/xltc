@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qigan.qiganshop.mapper.AreaMapper">
+    <resultMap id="BaseResultMap" type="com.qigan.qiganshop.pojo.Area">
+        <id column="areaId" property="areaId" jdbcType="VARCHAR"/>
+        <result column="areaName" property="areaName" jdbcType="VARCHAR"/>
+        <result column="parentId" property="parentId" jdbcType="VARCHAR"/>
+        <result column="level" property="level" jdbcType="VARCHAR"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+    areaId, areaName, parentId, level
+  </sql>
+    <insert id="insert" parameterType="com.qigan.qiganshop.pojo.Area">
+    insert into tb_area (areaId, areaName, parentId,
+      level)
+    values (#{areaId,jdbcType=VARCHAR}, #{areaName,jdbcType=VARCHAR}, #{parentId,jdbcType=VARCHAR},
+      #{level,jdbcType=VARCHAR})
+  </insert>
+
+    <delete id="delete" parameterType="java.lang.String">
+    delete from tb_area
+    where areaId = #{areaId,jdbcType=VARCHAR}
+    </delete>
+
+    <update id="update" parameterType="map">
+        update tb_area
+        <set>
+            <if test="record.areaName != null">
+                areaName = #{record.areaName,jdbcType=VARCHAR},
+            </if>
+            <if test="record.parentId != null">
+                parentId = #{record.parentId,jdbcType=VARCHAR},
+            </if>
+            <if test="record.level != null">
+                level = #{record.level,jdbcType=VARCHAR},
+            </if>
+        </set>
+        where areaId = #{record.areaId}
+
+    </update>
+    <select id="findByArea" resultMap="BaseResultMap" parameterType="map">
+        select
+        <include refid="Base_Column_List"/>
+        from tb_area
+        <if test="record != null">
+            where
+            <if test="record.areaName != null">
+                areaName = #{record.areaName,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.parentId != null">
+                parentId = #{record.parentId,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.level != null">
+                level = #{record.level,jdbcType=VARCHAR} and
+            </if>
+            1=1
+        </if>
+        order by areaId
+    </select>
+
+    <select id="findOne" resultMap="BaseResultMap" parameterType="java.lang.String">
+        select
+        <include refid="Base_Column_List"/>
+        from tb_area
+        where areaId = #{areaId,jdbcType=VARCHAR}
+    </select>
+
+
+</mapper>

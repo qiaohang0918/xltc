@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qigan.qiganshop.mapper.TbSpecialMapper" >
+  <resultMap id="BaseResultMap" type="com.qigan.qiganshop.pojo.TbSpecial" >
+    <id column="special_id" property="specialId" jdbcType="VARCHAR" />
+    <result column="special_name" property="specialName" jdbcType="VARCHAR" />
+    <result column="special_sort" property="specialSort" jdbcType="VARCHAR" />
+    <result column="create_time" property="createTime" jdbcType="VARCHAR" />
+    <result column="update_time" property="updateTime" jdbcType="VARCHAR" />
+    <result column="no" property="no" jdbcType="VARCHAR" />
+    <result column="enable" property="enable" jdbcType="VARCHAR" />
+    <result column="is_hot" property="isHot" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    special_id, special_name, special_sort, create_time, update_time, no, enable, is_hot
+  </sql>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.qigan.qiganshop.pojo.TbSpecialExample" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from tb_special
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from tb_special
+    where special_id = #{specialId,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from tb_special
+    where special_id = #{specialId,jdbcType=VARCHAR}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.qigan.qiganshop.pojo.TbSpecialExample" >
+    delete from tb_special
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.qigan.qiganshop.pojo.TbSpecial" >
+    insert into tb_special (special_id, special_name, special_sort, 
+      create_time, update_time, no, 
+      enable, is_hot)
+    values (#{specialId,jdbcType=VARCHAR}, #{specialName,jdbcType=VARCHAR}, #{specialSort,jdbcType=VARCHAR}, 
+      #{createTime,jdbcType=VARCHAR}, #{updateTime,jdbcType=VARCHAR}, #{no,jdbcType=VARCHAR}, 
+      #{enable,jdbcType=VARCHAR}, #{isHot,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.qigan.qiganshop.pojo.TbSpecial" >
+    insert into tb_special
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="specialId != null" >
+        special_id,
+      </if>
+      <if test="specialName != null" >
+        special_name,
+      </if>
+      <if test="specialSort != null" >
+        special_sort,
+      </if>
+      <if test="createTime != null" >
+        create_time,
+      </if>
+      <if test="updateTime != null" >
+        update_time,
+      </if>
+      <if test="no != null" >
+        no,
+      </if>
+      <if test="enable != null" >
+        enable,
+      </if>
+      <if test="isHot != null" >
+        is_hot,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="specialId != null" >
+        #{specialId,jdbcType=VARCHAR},
+      </if>
+      <if test="specialName != null" >
+        #{specialName,jdbcType=VARCHAR},
+      </if>
+      <if test="specialSort != null" >
+        #{specialSort,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null" >
+        #{createTime,jdbcType=VARCHAR},
+      </if>
+      <if test="updateTime != null" >
+        #{updateTime,jdbcType=VARCHAR},
+      </if>
+      <if test="no != null" >
+        #{no,jdbcType=VARCHAR},
+      </if>
+      <if test="enable != null" >
+        #{enable,jdbcType=VARCHAR},
+      </if>
+      <if test="isHot != null" >
+        #{isHot,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.qigan.qiganshop.pojo.TbSpecialExample" resultType="java.lang.Integer" >
+    select count(*) from tb_special
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update tb_special
+    <set >
+      <if test="record.specialId != null" >
+        special_id = #{record.specialId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.specialName != null" >
+        special_name = #{record.specialName,jdbcType=VARCHAR},
+      </if>
+      <if test="record.specialSort != null" >
+        special_sort = #{record.specialSort,jdbcType=VARCHAR},
+      </if>
+      <if test="record.createTime != null" >
+        create_time = #{record.createTime,jdbcType=VARCHAR},
+      </if>
+      <if test="record.updateTime != null" >
+        update_time = #{record.updateTime,jdbcType=VARCHAR},
+      </if>
+      <if test="record.no != null" >
+        no = #{record.no,jdbcType=VARCHAR},
+      </if>
+      <if test="record.enable != null" >
+        enable = #{record.enable,jdbcType=VARCHAR},
+      </if>
+      <if test="record.isHot != null" >
+        is_hot = #{record.isHot,jdbcType=VARCHAR},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update tb_special
+    set special_id = #{record.specialId,jdbcType=VARCHAR},
+      special_name = #{record.specialName,jdbcType=VARCHAR},
+      special_sort = #{record.specialSort,jdbcType=VARCHAR},
+      create_time = #{record.createTime,jdbcType=VARCHAR},
+      update_time = #{record.updateTime,jdbcType=VARCHAR},
+      no = #{record.no,jdbcType=VARCHAR},
+      enable = #{record.enable,jdbcType=VARCHAR},
+      is_hot = #{record.isHot,jdbcType=VARCHAR}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.qigan.qiganshop.pojo.TbSpecial" >
+    update tb_special
+    <set >
+      <if test="specialName != null" >
+        special_name = #{specialName,jdbcType=VARCHAR},
+      </if>
+      <if test="specialSort != null" >
+        special_sort = #{specialSort,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null" >
+        create_time = #{createTime,jdbcType=VARCHAR},
+      </if>
+      <if test="updateTime != null" >
+        update_time = #{updateTime,jdbcType=VARCHAR},
+      </if>
+      <if test="no != null" >
+        no = #{no,jdbcType=VARCHAR},
+      </if>
+      <if test="enable != null" >
+        enable = #{enable,jdbcType=VARCHAR},
+      </if>
+      <if test="isHot != null" >
+        is_hot = #{isHot,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where special_id = #{specialId,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.qigan.qiganshop.pojo.TbSpecial" >
+    update tb_special
+    set special_name = #{specialName,jdbcType=VARCHAR},
+      special_sort = #{specialSort,jdbcType=VARCHAR},
+      create_time = #{createTime,jdbcType=VARCHAR},
+      update_time = #{updateTime,jdbcType=VARCHAR},
+      no = #{no,jdbcType=VARCHAR},
+      enable = #{enable,jdbcType=VARCHAR},
+      is_hot = #{isHot,jdbcType=VARCHAR}
+    where special_id = #{specialId,jdbcType=VARCHAR}
+  </update>
+</mapper>

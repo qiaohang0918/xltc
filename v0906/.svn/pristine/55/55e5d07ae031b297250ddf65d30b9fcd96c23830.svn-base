@@ -1,0 +1,87 @@
+package com.qigan.qiganshop.mapper;
+
+import com.qigan.qiganshop.pojo.Label;
+import com.qigan.qiganshop.pojo.XltcGoodsLabelModel;
+
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
+
+import java.util.List;
+
+public interface LabelMapper {
+
+    /**
+     * 增加
+     *
+     * @param label
+     * @return
+     */
+    int insert(Label label);
+
+
+    /**
+     * 删除
+     *
+     * @param labelId
+     * @return
+     */
+    Integer delete(String labelId);
+
+
+    /**
+     * 修改
+     *
+     * @param goods
+     * @return
+     *//*
+    int update(Goods goods);
+
+    */
+
+    /**
+     * 查询所有或者查询单个
+     * 当查询所有时,传递 null
+     * 当查询单个时,传递 label
+     *
+     * @return
+     */
+    List<Label> findByLabel(@Param("record") Label label);
+
+    /**
+     * 查询单个规格
+     *
+     * @param labelId
+     * @return
+     */
+    Label findOne(@Param("labelId") String labelId);
+
+
+    Integer deleteByCateId(@Param("cateId") String cateId);
+
+    /**
+     * 修改
+     *
+     * @param label
+     * @return
+     */
+    Integer update(@Param("record") Label label);
+    
+    @Select({
+    	"select x.labelId, x.labelName,x.sort, x.labelImage from tb_category t ",
+    	"left join tb_label x on t.cateId = x.cateId ",
+    	"where t.cateId = #{cateId} and t.enable = '1' ",
+    	"order by x.sort asc "
+    })
+    List<XltcGoodsLabelModel> findLabelByCate(String cateId);
+    
+    
+    @Update({
+    	"update tb_label_goods",
+    	"set sort = #{sort}",
+    	"where labelId = #{labelId}",
+        "and goodsId = #{goodsId} "
+    })
+    int updateGoodsSort(@Param("labelId") String labelId, @Param("goodsId") String goodsId, @Param("sort") Integer sort);
+    
+}

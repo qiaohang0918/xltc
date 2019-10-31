@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qigan.qiganshop.mapper.FeedbackMapper">
+
+    <insert id="insert" parameterType="com.qigan.qiganshop.pojo.Feedback">
+        <selectKey keyProperty="feedbackId" keyColumn="feedbackId" resultType="Integer" order="BEFORE"
+                   statementType="PREPARED">
+            select if(max(feedback_id) is null, 1, max(feedback_id) + 1) as feedbackId from tb_feedback
+        </selectKey>
+        insert into tb_feedback(feedback_id,content,create_time,user_id)
+        values(#{feedbackId},#{content},now(),#{userId})
+    </insert>
+
+    <select id="getFeedbackPage" resultType="com.qigan.qiganshop.pojo.Feedback" parameterType="map">
+        select feedback_id as feedbackId,content,user_id as userId,create_time as createTime from tb_feedback where 1=1 order by ${order} ${sort} limit ${(page - 1) * size} , ${size}
+    </select>
+
+    <select id="count" resultType="java.lang.Long">
+        select count(feedback_id) from tb_feedback where 1=1
+    </select>
+
+</mapper>

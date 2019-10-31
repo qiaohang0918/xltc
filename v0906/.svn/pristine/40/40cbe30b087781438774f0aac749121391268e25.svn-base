@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qigan.qiganshop.mapper.TbPresellOrderMapper" >
+  <resultMap id="BaseResultMap" type="com.qigan.qiganshop.pojo.TbPresellOrder" >
+    <id column="preSellOrderId" property="presellorderid" jdbcType="VARCHAR" />
+    <result column="preSellTime" property="preselltime" jdbcType="VARCHAR" />
+    <result column="createTime" property="createtime" jdbcType="VARCHAR" />
+    <result column="isPushed" property="ispushed" jdbcType="VARCHAR" />
+    <result column="level" property="level" jdbcType="VARCHAR" />
+    <result column="code" property="code" jdbcType="VARCHAR" />
+    <result column="but_count" property="butCount" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    preSellOrderId, preSellTime, createTime, isPushed, level, code, but_count
+  </sql>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.qigan.qiganshop.pojo.TbPresellOrderExample" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from tb_presell_order
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from tb_presell_order
+    where preSellOrderId = #{presellorderid,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from tb_presell_order
+    where preSellOrderId = #{presellorderid,jdbcType=VARCHAR}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.qigan.qiganshop.pojo.TbPresellOrderExample" >
+    delete from tb_presell_order
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.qigan.qiganshop.pojo.TbPresellOrder" >
+    insert into tb_presell_order (preSellOrderId, preSellTime, createTime, 
+      isPushed, level, code, 
+      but_count)
+    values (#{presellorderid,jdbcType=VARCHAR}, #{preselltime,jdbcType=VARCHAR}, #{createtime,jdbcType=VARCHAR}, 
+      #{ispushed,jdbcType=VARCHAR}, #{level,jdbcType=VARCHAR}, #{code,jdbcType=VARCHAR}, 
+      #{butCount,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.qigan.qiganshop.pojo.TbPresellOrder" >
+    insert into tb_presell_order
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="presellorderid != null" >
+        preSellOrderId,
+      </if>
+      <if test="preselltime != null" >
+        preSellTime,
+      </if>
+      <if test="createtime != null" >
+        createTime,
+      </if>
+      <if test="ispushed != null" >
+        isPushed,
+      </if>
+      <if test="level != null" >
+        level,
+      </if>
+      <if test="code != null" >
+        code,
+      </if>
+      <if test="butCount != null" >
+        but_count,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="presellorderid != null" >
+        #{presellorderid,jdbcType=VARCHAR},
+      </if>
+      <if test="preselltime != null" >
+        #{preselltime,jdbcType=VARCHAR},
+      </if>
+      <if test="createtime != null" >
+        #{createtime,jdbcType=VARCHAR},
+      </if>
+      <if test="ispushed != null" >
+        #{ispushed,jdbcType=VARCHAR},
+      </if>
+      <if test="level != null" >
+        #{level,jdbcType=VARCHAR},
+      </if>
+      <if test="code != null" >
+        #{code,jdbcType=VARCHAR},
+      </if>
+      <if test="butCount != null" >
+        #{butCount,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.qigan.qiganshop.pojo.TbPresellOrderExample" resultType="java.lang.Integer" >
+    select count(*) from tb_presell_order
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update tb_presell_order
+    <set >
+      <if test="record.presellorderid != null" >
+        preSellOrderId = #{record.presellorderid,jdbcType=VARCHAR},
+      </if>
+      <if test="record.preselltime != null" >
+        preSellTime = #{record.preselltime,jdbcType=VARCHAR},
+      </if>
+      <if test="record.createtime != null" >
+        createTime = #{record.createtime,jdbcType=VARCHAR},
+      </if>
+      <if test="record.ispushed != null" >
+        isPushed = #{record.ispushed,jdbcType=VARCHAR},
+      </if>
+      <if test="record.level != null" >
+        level = #{record.level,jdbcType=VARCHAR},
+      </if>
+      <if test="record.code != null" >
+        code = #{record.code,jdbcType=VARCHAR},
+      </if>
+      <if test="record.butCount != null" >
+        but_count = #{record.butCount,jdbcType=VARCHAR},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update tb_presell_order
+    set preSellOrderId = #{record.presellorderid,jdbcType=VARCHAR},
+      preSellTime = #{record.preselltime,jdbcType=VARCHAR},
+      createTime = #{record.createtime,jdbcType=VARCHAR},
+      isPushed = #{record.ispushed,jdbcType=VARCHAR},
+      level = #{record.level,jdbcType=VARCHAR},
+      code = #{record.code,jdbcType=VARCHAR},
+      but_count = #{record.butCount,jdbcType=VARCHAR}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.qigan.qiganshop.pojo.TbPresellOrder" >
+    update tb_presell_order
+    <set >
+      <if test="preselltime != null" >
+        preSellTime = #{preselltime,jdbcType=VARCHAR},
+      </if>
+      <if test="createtime != null" >
+        createTime = #{createtime,jdbcType=VARCHAR},
+      </if>
+      <if test="ispushed != null" >
+        isPushed = #{ispushed,jdbcType=VARCHAR},
+      </if>
+      <if test="level != null" >
+        level = #{level,jdbcType=VARCHAR},
+      </if>
+      <if test="code != null" >
+        code = #{code,jdbcType=VARCHAR},
+      </if>
+      <if test="butCount != null" >
+        but_count = #{butCount,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where preSellOrderId = #{presellorderid,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.qigan.qiganshop.pojo.TbPresellOrder" >
+    update tb_presell_order
+    set preSellTime = #{preselltime,jdbcType=VARCHAR},
+      createTime = #{createtime,jdbcType=VARCHAR},
+      isPushed = #{ispushed,jdbcType=VARCHAR},
+      level = #{level,jdbcType=VARCHAR},
+      code = #{code,jdbcType=VARCHAR},
+      but_count = #{butCount,jdbcType=VARCHAR}
+    where preSellOrderId = #{presellorderid,jdbcType=VARCHAR}
+  </update>
+</mapper>

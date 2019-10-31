@@ -1,0 +1,55 @@
+package com.qigan.qiganshop.service.impl;
+
+import com.qigan.qiganshop.mapper.TbDepositMapper;
+import com.qigan.qiganshop.pojo.TbDeposit;
+import com.qigan.qiganshop.pojo.TbDepositExample;
+import com.qigan.qiganshop.service.XltcDepositService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+/**
+ * @Aurher: QiaoHang
+ * @Description:
+ * @Data: 2019/10/8 11:23
+ * @Modified By:
+ */
+@Service
+@Transactional(rollbackFor = Exception.class)
+public class XltcDepositServiceImpl implements XltcDepositService {
+
+    @Autowired
+    TbDepositMapper depositMapper;
+
+
+    @Override
+    public int insert(TbDeposit tbDeposit) {
+        return depositMapper.insert(tbDeposit);
+    }
+
+    /**
+     * 根据贸易号 查询充值日志记录
+     * @param out_trade_no
+     * @return
+     */
+    @Override
+    public List<TbDeposit> findByOutTradeNum(String out_trade_no) {
+        TbDepositExample example = new TbDepositExample();
+        TbDepositExample.Criteria criteria = example.createCriteria();
+        criteria.andOutTradeNumEqualTo(out_trade_no);
+        return depositMapper.selectByExample(example);
+    }
+
+
+    /**
+     * 根据orderId (primaryKey) 修改充值日志记录
+     * @param deposit
+     * @return
+     */
+    @Override
+    public int updateByPrimaryKeySelective(TbDeposit deposit) {
+        return depositMapper.updateByPrimaryKeySelective(deposit);
+    }
+}

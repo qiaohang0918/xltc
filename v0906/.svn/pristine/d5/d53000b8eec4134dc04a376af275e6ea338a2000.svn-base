@@ -1,0 +1,22 @@
+package com.qigan.qiganshop.service;
+
+import com.qigan.qiganshop.pojo.OrderItem;
+import com.qigan.qiganshop.pojo.Pay;
+
+import java.util.List;
+
+/**
+ * @author wanghao
+ */
+public interface OrderItemService {
+
+    int add(OrderItem orderItem);
+
+    /**
+     * 根据订单ID查询商品
+     *
+     * @param orderId
+     * @return
+     */
+    List<OrderItem> findByOrderId(String orderId);
+}

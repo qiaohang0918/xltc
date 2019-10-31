@@ -1,0 +1,195 @@
+package com.qigan.qiganshop.service.impl;
+
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
+import com.qigan.qiganshop.mapper.AppUserMapper;
+import com.qigan.qiganshop.pojo.AppUser;
+import com.qigan.qiganshop.service.AppUserService;
+import com.qigan.qiganshop.util.notnull.NotNull;
+import com.qigan.qiganshop.util.result.ImageResponse;
+import com.qigan.qiganshop.util.result.format.JsonResult;
+import com.qigan.qiganshop.util.result.format.ResultCode;
+import com.qigan.qiganshop.util.upload.PictureOSSUtils;
+import com.qigan.qiganshop.util.upload.UploadFiles;
+import com.qigan.qiganshop.utils.json.JsonUtils;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.awt.print.Pageable;
+import java.text.SimpleDateFormat;
+import java.util.*;
+
+@Service
+@Transactional(rollbackFor = Exception.class)
+public class AppUserServiceImpl implements AppUserService {
+	@Autowired
+	private UploadFiles uploadFiles;
+	@Autowired
+	private AppUserMapper userMapper;
+	@Value("${FILE_SERVER_URL}")
+	private String FILE_SERVER_URL;
+
+	@Override
+	public AppUser getAppUserByToken(String token) {
+		AppUser user = null;
+		if (token != null) {
+			user = userMapper.getAppUserByToken(token);
+		}
+//		if (user != null) {
+//			String image = user.getImageUrl();
+//			if (image != null && !"".equals(image)) {
+//				user.setImageUrl(FILE_SERVER_URL + image);
+//			}
+//		}
+		return user;
+	}
+
+	@Override
+	public AppUser getAppUserById(String id) {
+		return userMapper.getAppUserById(id);
+	}
+
+	@Override
+	public AppUser findAppUserByPhone(String phone) {
+		return userMapper.findAppUserByPhone(phone);
+	}
+
+	@Override
+	public int addAppUser(AppUser user) {
+		user.setMember("0");
+		return userMapper.addAppUser(user);
+	}
+
+	@Override
+	public int updateAppUser(AppUser appUser) {
+		return userMapper.updateAppUser(appUser);
+	}
+
+	@Override
+	public int updateAppUserToken(AppUser appUser) {
+		return userMapper.updateAppUserToken(appUser);
+	}
+
+	/**
+	 * 用户上传头像
+	 *
+	 * @param token
+	 * @param file
+	 * @return
+	 */
+	@Override
+	public String updateAppuserImage(String token, MultipartFile file) {
+		// 检测用户信息是否有效
+		AppUser appUser = this.getAppUserByToken(token);
+		if (appUser != null) {
+			// 文件上传
+			Map<String, String> upResult = PictureOSSUtils.uploadPictureToOSS(file, "app");
+			// ImageResponse upload = (ImageResponse)
+			// uploadFiles.uploadFile(file, "app");
+			if (upResult != null && upResult.get(PictureOSSUtils.RESULT).equals(PictureOSSUtils.SUCCESS)) {
+				appUser.setImageUrl(upResult.get(PictureOSSUtils.IMGURL));
+				userMapper.updateAppUser(appUser);
+				return upResult.get(PictureOSSUtils.IMGURL);
+			} else {
+				return JsonUtils.writeValueAsString(upResult);
+			}
+
+			// ImageResponse upload = (ImageResponse)
+			// uploadFiles.uploadFile(file, "app");
+			// if (upload != null && NotNull.checkString(upload.getImageurl()))
+			// {
+			// appUser.setImageUrl(upload.getImageurl());
+			// userMapper.updateAppUser(appUser);
+			// return upload.getImageurl();
+			// } else {
+			// return upload.getStatus();
+			// }
+		}
+		return "登陆信息已失效！";
+	}
+
+	@Override
+	public AppUser getAppUserByOpenid(String openid) {
+		AppUser user = userMapper.getAppUserByOpenid(openid);
+//		if (user != null) {
+//			String image = user.getImageUrl();
+//			if (image != null && !"".equals(image)) {
+//				user.setImageUrl(FILE_SERVER_URL + image);
+//			}
+//		}
+		return user;
+	}
+
+	@Override
+	public AppUser getAppUserByQOpenid(String openid) {
+		AppUser user = userMapper.getAppUserByQOpenid(openid);
+//		if (user != null) {
+//			String image = user.getImageUrl();
+//			if (image != null && !"".equals(image)) {
+//				user.setImageUrl(FILE_SERVER_URL + image);
+//			}
+//		}
+		return user;
+	}
+
+	@Override
+	public List<AppUser> findPage(AppUser appUser, Integer page, Integer size) {
+		return userMapper.findPage(appUser, page, size);
+	}
+
+	@Override
+	public int addDeal(String userId, Double payMoney) {
+		return userMapper.addDeal(userId, payMoney);
+	}
+
+	@Override
+	public PageInfo<AppUser> findPageByCondition(HashMap<String, String> map) {
+		PageHelper.startPage(Integer.parseInt(map.get("page")),Integer.parseInt(map.get("size")));
+		List<AppUser> list = userMapper.findPageByCondition(map);
+		PageInfo<AppUser> info = new PageInfo<>(list);
+		return info;
+	}
+
+	/**
+	 * 时间单位新增人数
+	 * @param startTime
+	 * @param endTime
+	 * @return
+	 */
+	@Override
+	public JsonResult  daysUserRecords(String startTime, String endTime) {
+		List<Map<String,Object>> list = userMapper.daysUserRecords(startTime,endTime);
+		int sum = 0;
+		SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+		if(list!=null && list.size()>0){
+			for (Map<String,Object> map : list) {
+				Object count = map.get("count");
+				Date date = new Date();
+				map.put("createTime",simpleDateFormat.format((Date) map.remove("createTime")));
+				Object time = map.get("createTime");
+				if(count!=null && count instanceof Long){
+					sum += (Long)count;
+				}
+			}
+		}
+
+		HashMap<String, Object> data = new HashMap<>();
+		data.put("data",list);
+		data.put("total",sum);
+
+//		HashMap<String, Object> map = new HashMap<>();
+//		map.put("data",data);
+		return new JsonResult(ResultCode.SUCCESS.res_code(),"操作成功",data);
+	}
+
+	@Override
+	public String getUserId(String phone) {
+		String userId = userMapper.getUserId(phone);
+		return userId;
+	}
+
+}

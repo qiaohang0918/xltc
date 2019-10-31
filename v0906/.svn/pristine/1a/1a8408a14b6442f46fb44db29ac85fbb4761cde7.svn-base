@@ -1,0 +1,72 @@
+package com.qigan.qiganshop.util.quartz;
+
+import com.qigan.qiganshop.constant.RedisConstant;
+import com.qigan.qiganshop.constant.TimeFormat;
+import com.qigan.qiganshop.myutils.SqlConstructUtils;
+import com.qigan.qiganshop.pojo.Order;
+import com.qigan.qiganshop.pojo.TbPresellOrder;
+import com.qigan.qiganshop.service.XltcOrderService;
+import com.qigan.qiganshop.service.XltcPreSellGoodsService;
+import com.qigan.qiganshop.service.XltcPreSellOrderService;
+import com.qigan.qiganshop.util.access.JedisUtil;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
+import java.util.Date;
+import java.util.List;
+
+/**
+ * @Aurher: QiaoHang
+ * @Description:
+ * @Data: 2019/10/8 17:27
+ * @Modified By:
+ */
+@Component
+@EnableScheduling
+public class PreSellOrderTask {
+
+    @Autowired
+    private XltcPreSellOrderService preSellOrderService;
+    @Autowired
+    private XltcOrderService orderService;
+    @Autowired
+    private JedisUtil jedisUtil;
+
+    @Scheduled(cron = "0 0 1 * * ?")
+    public void findSuitPreSellOrderAndPush(){
+        //查询当前适合推送的订单 （time  isPushed）
+        List<TbPresellOrder>  preSellOrders = preSellOrderService.findCurrentSuitPushOrders();
+        //校验订单进行推送
+        int success = 0;
+        if(!SqlConstructUtils.nullList(preSellOrders)){
+            for (TbPresellOrder preSellOrder : preSellOrders) {
+                //查询订单详情
+                Order order = orderService.findOne(preSellOrder.getPresellorderid());
+                if(order != null){
+                    if("1".equals(order.getStatus())){
+                        //推送订单
+                        String result = orderService.pullToGuanYi(order.getOrderId());
+                        if("ok".equals(result)){
+                            //修改当前订单isPushed = 1
+                            int i = preSellOrderService.updateCurrentOrderStatusIsPushed(order.getOrderId(),order.getLevel());
+                            ++success;
+                        }
+                    }
+                }
+            }
+        }
+        jedisUtil.set("TryPushPreSellOrder", "have_"+preSellOrders.size()+"push_"+success);
+    }
+
+    /**
+     * 每天0点重置左右的弹窗
+     */
+    @Scheduled(cron = "0 0 0 * * *")
+    public void resetAlert(){
+    	jedisUtil.del(RedisConstant.USER_ALERT_FLAG);
+    }
+    
+    
+}

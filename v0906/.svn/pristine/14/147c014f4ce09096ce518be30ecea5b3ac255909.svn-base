@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qigan.qiganshop.mapper.LabelGoodsMapper">
+    <resultMap id="BaseResultMap" type="com.qigan.qiganshop.pojo.LabelGoods">
+        <id column="labelGoodsId" property="labelGoodsId" jdbcType="VARCHAR"/>
+        <result column="labelId" property="labelId" jdbcType="VARCHAR"/>
+        <result column="goodsId" property="goodsId" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <resultMap id="GoodsResultMap" type="com.qigan.qiganshop.pojo.Goods">
+        <id column="goodsId" property="goodsId" jdbcType="VARCHAR"/>
+        <result column="createDate" property="createDate" jdbcType="VARCHAR"/>
+        <result column="modifyDate" property="modifyDate" jdbcType="VARCHAR"/>
+        <result column="code" property="code" jdbcType="VARCHAR"/>
+        <result column="name" property="name" jdbcType="VARCHAR"/>
+        <result column="note" property="note" jdbcType="VARCHAR"/>
+        <result column="weight" property="weight" jdbcType="DOUBLE"/>
+        <result column="combine" property="combine" jdbcType="VARCHAR"/>
+        <result column="del" property="del" jdbcType="VARCHAR"/>
+        <result column="length" property="length" jdbcType="DOUBLE"/>
+        <result column="width" property="width" jdbcType="DOUBLE"/>
+        <result column="height" property="height" jdbcType="DOUBLE"/>
+        <result column="volume" property="volume" jdbcType="VARCHAR"/>
+        <result column="simpleName" property="simpleName" jdbcType="VARCHAR"/>
+        <result column="categoryCode" property="categoryCode" jdbcType="VARCHAR"/>
+        <result column="categoryName" property="categoryName" jdbcType="VARCHAR"/>
+        <result column="labelId" property="labelId" jdbcType="VARCHAR"/>
+        <result column="itemUnitCode" property="itemUnitCode" jdbcType="VARCHAR"/>
+        <result column="itemUnitName" property="itemUnitName" jdbcType="VARCHAR"/>
+        <result column="salesPrice" property="salesPrice" jdbcType="DECIMAL"/>
+        <result column="costPrice" property="costPrice" jdbcType="DECIMAL"/>
+        <result column="stockStatusCode" property="stockStatusCode" jdbcType="VARCHAR"/>
+        <result column="stockNum" property="stockNum" jdbcType="INTEGER"/>
+        <result column="picUrls" property="picUrls" jdbcType="VARCHAR"/>
+        <result column="originArea" property="originArea" jdbcType="VARCHAR"/>
+        <result column="shelfLife" property="shelfLife" jdbcType="VARCHAR"/>
+        <result column="itemAddAttribute" property="itemAddAttribute" jdbcType="VARCHAR"/>
+        <result column="itemBrandCode" property="itemBrandCode" jdbcType="VARCHAR"/>
+        <result column="itemBrandName" property="itemBrandName" jdbcType="VARCHAR"/>
+        <result column="status" property="status" jdbcType="VARCHAR"/>
+        <result column="push" property="push" jdbcType="VARCHAR"/>
+        <result column="isSpec" property="isSpec" jdbcType="VARCHAR"/>
+        <result column="isVIPGoods" property="isVIPGoods" jdbcType="VARCHAR"/>
+        <result column="VIPrice" property="vIPrice" jdbcType="DECIMAL"/>
+    </resultMap>
+
+
+    <sql id="Base_Column_List">
+    labelGoodsId, labelId, goodsId
+  </sql>
+    <delete id="delete" parameterType="com.qigan.qiganshop.pojo.LabelGoods">
+    delete from tb_label_goods
+    where labelId = #{labelId,jdbcType=VARCHAR} and goodsId = #{goodsId,jdbcType=VARCHAR}
+  </delete>
+    <insert id="insert" parameterType="com.qigan.qiganshop.pojo.LabelGoods">
+    insert into tb_label_goods (labelGoodsId, labelId, goodsId
+      )
+    values (#{labelGoodsId,jdbcType=VARCHAR}, #{labelId,jdbcType=VARCHAR}, #{goodsId,jdbcType=VARCHAR}
+      )
+  </insert>
+    <select id="findOne" parameterType="com.qigan.qiganshop.pojo.LabelGoods" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from tb_label_goods
+        where labelId = #{labelId,jdbcType=VARCHAR}
+        and goodsId = #{goodsId,jdbcType=VARCHAR}
+    </select>
+
+    <select id="findUnionGoods" parameterType="map" resultMap="GoodsResultMap">
+        SELECT
+	    t1.*
+        FROM
+	    tb_goods t1,
+	    tb_label_goods t2
+        WHERE t1.goodsId = t2.goodsId
+            AND t2.labelId = #{labelId}
+            AND t1.categoryCode = #{cateId}
+            and t1.status = '2'
+            and t1.del = '0';
+    </select>
+</mapper>

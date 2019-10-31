@@ -1,0 +1,274 @@
+package com.qigan.qiganshop.service.impl;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.github.pagehelper.PageInfo;
+import com.qigan.qiganshop.exception.XltcRuntimeException;
+import com.qigan.qiganshop.mapper.LabelGoodsMapper;
+import com.qigan.qiganshop.mapper.LabelMapper;
+import com.qigan.qiganshop.pojo.Category;
+import com.qigan.qiganshop.pojo.CommonPage;
+import com.qigan.qiganshop.pojo.Goods;
+import com.qigan.qiganshop.pojo.Label;
+import com.qigan.qiganshop.pojo.LabelGoods;
+import com.qigan.qiganshop.pojo.XltcGoodsModel;
+import com.qigan.qiganshop.service.CategoryService;
+import com.qigan.qiganshop.service.GoodsService;
+import com.qigan.qiganshop.service.LabelService;
+import com.qigan.qiganshop.util.access.JedisUtil;
+import com.qigan.qiganshop.util.notnull.NotNull;
+import com.qigan.qiganshop.util.result.PageResult;
+import com.qigan.qiganshop.util.result.XltcResult;
+import com.qigan.qiganshop.util.result.format.JsonResult;
+
+@Service
+@Transactional(rollbackFor = Exception.class)
+public class LabelServiceImpl implements LabelService {
+	@Autowired
+	private LabelMapper mapper;
+	@Autowired
+	private LabelGoodsMapper unionMapper;
+	@Autowired
+	private GoodsService goodsService;
+
+	@Autowired
+	private CategoryService cateService;
+
+	/**
+	 * 增加sku
+	 *
+	 * @param labelList
+	 * @return
+	 */
+	@Override
+	public Integer add(List<Label> labelList) {
+		Integer count = 0;
+		for (Label label : labelList) {
+			if (label.getCateId() == null || "".equals(label.getCateId())) {
+				return 0;
+			}
+			if (label.getLabelId() == null || "".equals(label.getLabelId())) {
+				label.setLabelId(UUID.randomUUID().toString().replace("-", ""));
+			}
+			count += mapper.insert(label);
+		}
+		return count;
+	}
+
+	/**
+	 * 批量删除label
+	 *
+	 * @param ids
+	 * @return
+	 */
+	@Override
+	public Integer delete(String[] ids) {
+		Integer count = 0;
+		for (String id : ids) {
+			count += mapper.delete(id);
+		}
+		return count;
+	}
+
+	/**
+	 * 修改
+	 *
+	 * @param labelList
+	 * @return
+	 */
+	@Override
+	public Integer update(List<Label> labelList) {
+		Integer count = 0;
+		for (Label label : labelList) {
+			count += this.update(label);
+		}
+
+		return count;
+	}
+
+	public Integer update(Label label) {
+		Integer count = 0;
+		if (label.getCateId() == null || "".equals(label.getCateId())) {
+			return 0;
+		}
+		if (label.getLabelId() == null || "".equals(label.getLabelId())) {
+			return 0;
+		}
+		count += mapper.update(label);
+
+		return count;
+	}
+
+	/**
+	 * 查询单个标签
+	 *
+	 * @param labelId
+	 * @return
+	 */
+	@Override
+	public Label findOne(String labelId) {
+		return mapper.findOne(labelId);
+	}
+
+	/**
+	 * 条件查询,分页查询,查询所有,三合一
+	 *
+	 * @param label
+	 * @return
+	 */
+	@Override
+	public PageResult findByLabel(Label label) {
+		List<Label> list = mapper.findByLabel(label);
+		if (list.size() > 0) {
+			return new PageResult(list.size(), (List<Label>) NotNull.checkListNull(list));
+		}
+		return new PageResult(0, new ArrayList());
+
+	}
+
+	/**
+	 * 根据条件进行删除标签
+	 *
+	 * @param cateId
+	 */
+	@Override
+	public Integer deleteByCateId(String cateId) {
+		return mapper.deleteByCateId(cateId);
+	}
+
+	/**
+	 * 商品与标签 关联或取消关联
+	 *
+	 * @param labelId
+	 * @param goodsIds
+	 * @param flag
+	 * @return
+	 */
+	@Override
+	public Integer unionGoods(String labelId, String goodsIds, String flag) {
+		String[] split = goodsIds.split(",");
+		int count = 0;
+		int none = 0;
+		for (String s : split) {
+			Goods goods = goodsService.findOne(s);
+			if ("0".equals(goods.getDel()) && "2".equals(goods.getStatus())) {
+				if ("add".equals(flag)) {
+					/**
+					 * 增加
+					 */
+					LabelGoods labelGoods = new LabelGoods();
+					labelGoods.setGoodsId(s);
+					labelGoods.setLabelId(labelId);
+					List<LabelGoods> one = unionMapper.findOne(labelGoods);
+					if (one != null && one.size() > 0) {
+						LabelGoods search = one.get(0);
+						if (search != null) {
+							continue;
+						}
+
+					} else {
+						labelGoods.setLabelGoodsId(UUID.randomUUID().toString().replace("-", ""));
+						count += unionMapper.insert(labelGoods);
+					}
+
+				} else if ("del".equals(flag)) {
+					LabelGoods labelGoods = new LabelGoods();
+					labelGoods.setGoodsId(s);
+					labelGoods.setLabelId(labelId);
+					count += unionMapper.delete(labelGoods);
+				}
+			}
+		}
+		return count;
+	}
+
+	/**
+	 * 修改排序
+	 *
+	 * @param labelId1
+	 * @param labelId2
+	 * @return
+	 */
+	@Override
+	public Integer updateSort(String labelId1, String labelId2) {
+		ArrayList<Label> list = new ArrayList<>();
+		Label one = this.findOne(labelId1);
+		Label two = this.findOne(labelId2);
+
+		if (one == null || two == null) {
+			String cateId1 = one.getCateId();
+			String cateId2 = two.getCateId();
+			if (cateId1.equals(cateId2)) {
+				Integer sort1 = one.getSort();
+				Integer sort2 = two.getSort();
+				two.setSort(sort1);
+				one.setSort(sort2);
+				list.add(one);
+				list.add(two);
+			}
+			return -1;
+		}
+
+		return this.update(list);
+	}
+
+	@Override
+	public List<?> findCatesByCate(String cateId) {
+		// TODO Auto-generated method stub
+		Category one = cateService.findOne(cateId);
+		if (one == null)
+			return new ArrayList<>();
+		return mapper.findLabelByCate(cateId);
+	}
+
+	@Value("${local_pic_url}")
+	private String localPicHead;
+
+	@Autowired
+	JedisUtil jedis;
+
+	@Override
+	public List<?> findPageByLabel(String lId, String coni, CommonPage page) {
+		// TODO Auto-generated method stub
+		if (StringUtils.isBlank(coni))
+			throw XltcRuntimeException.throwable("请传入经纬度");
+
+		String warehouseId = null;
+		String wareStr = null;
+		if (StringUtils.isNotBlank(wareStr)) {
+			wareStr = warehouseId;
+		} else {
+			JsonResult ware = goodsService.getWarehouseId(coni);
+			warehouseId = ware == null ? null : ware.getMessage();
+		}
+		page.startPageHelper();
+		List<?> result = unionMapper.findGoodsByLabel(lId, warehouseId, localPicHead);
+		return result;
+	}
+
+	@Override
+	public Integer updateGoodsSort(String labelId, String goodsId, Integer sort) {
+		// TODO Auto-generated method stub
+		if(StringUtils.isBlank(labelId) || StringUtils.isBlank(goodsId) || sort == null)
+			throw XltcRuntimeException.throwable("更新排序参数不能为空");
+		return mapper.updateGoodsSort(labelId, goodsId, sort);
+	}
+
+	@Override
+	public XltcResult findUnitGoodsByCateId(String cateId, CommonPage page) {
+		// TODO Auto-generated method stub
+		page.startPageHelper();
+		List<XltcGoodsModel> list = unionMapper.findUnitGoodsByCateId(cateId);
+		PageInfo<XltcGoodsModel> result = new PageInfo<>(list);
+		return XltcResult.ok(new PageResult(result.getTotal(), list));
+	}
+	
+}

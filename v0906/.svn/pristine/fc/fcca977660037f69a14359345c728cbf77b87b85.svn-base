@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qigan.qiganshop.mapper.GameSettingMapper">
+
+    <update id="update" parameterType="com.qigan.qiganshop.pojo.game.Setting" >
+      update tb_setting set `name` = #{name}, `describe` = #{describe}, points = #{points} , modified_time = now()
+        where 1=1 and redeem_type = #{redeemType}
+    </update>
+    <select id="getGameSettings" resultType="com.qigan.qiganshop.pojo.game.Setting" parameterType="map">
+        select redeem_type as redeemType,`name`,`describe`,points,create_time as createTime ,modified_time as modifiedTime
+          from tb_setting
+        where 1=1
+    </select>
+    <select id="getGameSetting" resultType="com.qigan.qiganshop.pojo.game.Setting" parameterType="map">
+        select redeem_type as redeemType,`name`,`describe`,points,create_time as createTime ,modified_time as modifiedTime
+          from tb_setting
+        where 1=1 and redeem_type = #{redeemType}
+    </select>
+
+</mapper>

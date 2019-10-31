@@ -1,0 +1,142 @@
+package com.qigan.qiganshop.pojo;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+
+import java.io.Serializable;
+
+/**
+ * 本地订单实体
+ *
+ * @author wanghao
+ */
+@SuppressWarnings("all")
+@ApiModel(value = "order", description = "订单")
+@ToString
+public class Order implements Serializable {
+    @ApiModelProperty(value = "订单 ID")
+    @Getter
+    @Setter
+    private String orderId;
+    @JsonIgnore
+    @ApiModelProperty(value = "管易订单 ID")
+    @Getter
+    @Setter
+    private String guanyiId;
+    @ApiModelProperty("用户 ID")
+    @Getter
+    @Setter
+    private String userId;
+    @ApiModelProperty(value = "用户收货地址 ID")
+    @Getter
+    @Setter
+    private String userAddrId;
+    @ApiModelProperty(value = "用户选择配送时间")
+    @Getter
+    @Setter
+    private String userChooseTime;
+    @ApiModelProperty(value = "下单时间")
+    @Getter
+    @Setter
+    private String dealDatetime;
+    @ApiModelProperty(value = "支付时间")
+    @Getter
+    @Setter
+    private String payTime;
+    @ApiModelProperty(value = "配送时间")
+    @Getter
+    @Setter
+    private String peisongTime;
+    @ApiModelProperty(value = "送达时间")
+    @Getter
+    @Setter
+    private String endTime;
+    @ApiModelProperty(value = "店铺代码")
+    @Getter
+    @Setter
+    private String shopCode;
+    @ApiModelProperty(value = "仓库代码")
+    @Getter
+    @Setter
+    private String warehouseCode;
+    @ApiModelProperty(value = "物流公司代码")
+    @Getter
+    @Setter
+    private String expressCode;
+    @ApiModelProperty(value = "订单类型")
+    @Getter
+    @Setter
+    private String orderTypeCode;
+    @ApiModelProperty(value = "收货人名字")
+    @Getter
+    @Setter
+    private String receiverName;
+    @ApiModelProperty(value = "收货人联系电话")
+    @Getter
+    @Setter
+    private String receiverMobile;
+    @ApiModelProperty(value = "省")
+    @Getter
+    @Setter
+    private String receiverProvince;
+    @ApiModelProperty(value = "市")
+    @Getter
+    @Setter
+    private String receiverCity;
+    @ApiModelProperty(value = "区")
+    @Getter
+    @Setter
+    private String receiverDistrict;
+    @ApiModelProperty(value = "收货地址")
+    @Getter
+    @Setter
+    private String receiverAddress;
+    @ApiModelProperty(value = "订单支付流水号")
+    @Getter
+    @Setter
+    private String payCode;
+    @ApiModelProperty(value = "订单金额")
+    @Getter
+    @Setter
+    private Double money;
+    @ApiModelProperty(value = "优惠金额")
+    @Getter
+    @Setter
+    private Double couponMoney;
+    @ApiModelProperty(value = "配送金额")
+    @Getter
+    @Setter
+    private Double peisongfei;
+    @ApiModelProperty(value = "支付金额")
+    @Getter
+    @Setter
+    private Double payMoney;
+    @ApiModelProperty(value = "发票 ID")
+    @Getter
+    @Setter
+    private Long invoiceId;
+    @ApiModelProperty(value = "买家留言")
+    @Getter
+    @Setter
+    private String buyerMemo;
+    @ApiModelProperty(value = "订单状态")
+    @Getter
+    @Setter
+    private String status;
+    @ApiModelProperty(value = "评论")
+    @Getter
+    @Setter
+    private String comment;
+
+    @ApiModelProperty(value = "待支付锁")
+    @Getter
+    @Setter
+    private String waitingPay;
+
+
+
+}

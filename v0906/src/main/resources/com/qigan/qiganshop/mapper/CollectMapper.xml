@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qigan.qiganshop.mapper.CollectMapper">
+
+    <insert id="insertCollect" parameterType="java.util.Map">
+        insert into tb_user_collect
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="userId != null">
+                userId ,
+            </if>
+            <if test="itemId != null">
+                itemId ,
+            </if>
+            createTime,
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="userId != null">
+                #{userId,jdbcType=VARCHAR} ,
+            </if>
+            <if test="itemId != null">
+                #{itemId,jdbcType=VARCHAR} ,
+            </if>
+            now(),
+        </trim>
+    </insert>
+
+
+
+    <delete id="delectCollect" parameterType="java.util.Map">
+        delete from tb_user_collect where itemId=#{itemId} and userId=#{userId}
+    </delete>
+
+    <select id="selectCollectList" parameterType="java.lang.String" resultType="com.qigan.qiganshop.pojo.Collect">
+        select * from tb_user_collect where userId = #{userId}
+    </select>
+
+    <select id="selectCollectByUseridAndItemid" parameterType="java.util.Map" resultType="com.qigan.qiganshop.pojo.Collect">
+        select * from tb_user_collect where userId = #{userId} and itemId=#{itemId}
+    </select>
+
+    <select id="selectItemByItemid" parameterType="java.lang.String" resultType="com.qigan.qiganshop.pojo.Item">
+        select t1.* from tb_item t1  WHERE t1.itemId = #{itemId}
+    </select>
+
+    <select id="selectGoodsByGoodsid" parameterType="java.lang.String" resultType="com.qigan.qiganshop.pojo.Goods">
+        select t1.* from tb_goods t1  WHERE t1.goodsId = #{spuId}
+    </select>
+
+</mapper>

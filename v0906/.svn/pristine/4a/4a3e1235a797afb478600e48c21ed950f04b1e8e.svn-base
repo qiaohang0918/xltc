@@ -1,0 +1,134 @@
+package com.qigan.qiganshop.service.impl;
+
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
+import com.qigan.qiganshop.constant.TimeFormat;
+import com.qigan.qiganshop.mapper.TbPresellOrderMapper;
+import com.qigan.qiganshop.myutils.SqlConstructUtils;
+import com.qigan.qiganshop.pojo.TbPresellOrder;
+import com.qigan.qiganshop.pojo.TbPresellOrderExample;
+import com.qigan.qiganshop.service.XltcPreSellOrderService;
+import com.qigan.qiganshop.util.notnull.StringNotNull;
+import com.qigan.qiganshop.util.result.XltcResult;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * @Aurher: QiaoHang
+ * @Description:
+ * @Data: 2019/10/5 16:21
+ * @Modified By:
+ */
+@Service
+@Transactional(rollbackFor = Exception.class)
+public class XltcPreSellOrderServiceImpl implements XltcPreSellOrderService {
+
+    @Autowired
+    private TbPresellOrderMapper mapper;
+
+
+    /**
+     * 添加预售订单 记录
+     * @param
+     * @return
+     */
+    @Override
+    public int insert(TbPresellOrder presellOrder) {
+        return mapper.insert(presellOrder);
+    }
+
+    @Override
+    public TbPresellOrder findByOrderId(String orderId) {
+        return mapper.selectByPrimaryKey(orderId);
+    }
+
+    /**
+     * 按条件查询 预售订单
+     * @param parms
+     * @return
+     */
+    @Override
+    public XltcResult findPreSellOrder(Map<String, String> parms) {
+        String status = parms.get("status");
+        String preSellTime = parms.get("preSellTime");
+        String isPushed = parms.get("isPushed");
+        String phone = parms.get("phone");
+        String page = parms.get("page");
+        String size = parms.get("size");
+        String level = parms.get("level");
+        String code = parms.get("code");
+        String dealDateTimeStart = parms.get("dealDateTimeStart");
+        String dealDateTimeEnd = parms.get("dealDateTimeEnd");
+        StringBuffer buffer = new StringBuffer("  ");
+        if(StringNotNull.check(preSellTime)){
+            buffer.append(" and a.preSellTime = '"+preSellTime+"' ");
+        }
+        if(StringNotNull.check(level)){
+            buffer.append(" and a.level = '"+level+"' ");
+        }
+        if(StringNotNull.check(status)){
+            String patternStatus = SqlConstructUtils.constructStringToStringsOnIn(status, ",");
+            buffer.append(" and b.status in ( "+patternStatus+" ) ");
+        }
+        if(StringNotNull.check(isPushed)){
+            buffer.append(" and a.isPushed = '"+isPushed+"' ");
+        }
+        if(StringNotNull.check(phone)){
+            buffer.append(" and c.phone ='"+phone+"' ");
+        }
+        if(StringNotNull.check(code)){
+            buffer.append(" and a.code ='"+code+"' ");
+        }
+        if(StringNotNull.check(dealDateTimeStart)){
+            buffer.append(" and b.dealDateTime >= '"+dealDateTimeStart+"' ");
+        }
+        if(StringNotNull.check(dealDateTimeEnd)){
+            buffer.append(" and b.dealDateTime <= '"+dealDateTimeEnd+"' ");
+        }
+        PageHelper.startPage(page==null?1:Integer.parseInt(page),size==null?10:Integer.parseInt(size));
+        List<Map<String,Object>> mapList = mapper.findPreSellOrder(buffer.toString());
+        PageInfo<Map<String, Object>> info = new PageInfo<>(mapList);
+        return XltcResult.ok(info);
+    }
+
+    @Override
+    public void update(TbPresellOrder preSellOrder) {
+        mapper.updateByPrimaryKeySelective(preSellOrder);
+    }
+
+
+    /**
+     * 查询适合推送的订单
+     * @return
+     */
+    @Override
+    public List<TbPresellOrder> findCurrentSuitPushOrders() {
+        String preSellTime = TimeFormat.nomalFormat.format(new Date());
+        String isPushed = "0";
+        String status = "1";
+        List<TbPresellOrder> orders = mapper.findCurrentSuitPushOrders(preSellTime,isPushed,status);
+        return orders;
+    }
+
+    @Override
+    public int updateCurrentOrderStatusIsPushed(String orderId, String level) {
+        TbPresellOrder presellOrder = new TbPresellOrder();
+        presellOrder.setPresellorderid(orderId);
+        presellOrder.setIspushed("1");
+        int i = mapper.updateByPrimaryKeySelective(presellOrder);
+        return i;
+    }
+
+    @Override
+    public XltcResult findPreSellOrderDetails(String orderId) {
+        List<Map<String, Object>> mapList = mapper.findPreSellOrderDetails(orderId);
+        return XltcResult.ok(mapList);
+    }
+
+
+}

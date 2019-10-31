@@ -1,0 +1,325 @@
+package com.qigan.qiganshop.service.synchronization.impl;
+
+import com.alibaba.fastjson.JSON;
+import com.qigan.qiganshop.pojo.Goods;
+import com.qigan.qiganshop.pojo.Item;
+import com.qigan.qiganshop.pojo.Stock;
+import com.qigan.qiganshop.pojo.Warehouse;
+import com.qigan.qiganshop.pojo.synchronization.ResultStock;
+import com.qigan.qiganshop.pojo.synchronization.ResultWarehouse;
+import com.qigan.qiganshop.service.*;
+import com.qigan.qiganshop.service.synchronization.SynchStockService;
+import com.qigan.qiganshop.service.synchronization.SynchWareHouseService;
+import com.qigan.qiganshop.util.es.EsUtils;
+import com.qigan.qiganshop.util.guanyierp.GetSign;
+import com.qigan.qiganshop.util.guanyierp.SendPost;
+import com.qigan.qiganshop.util.notnull.StringNotNull;
+import com.qigan.qiganshop.util.result.PageResult;
+import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.index.reindex.DeleteByQueryAction;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.List;
+
+/**
+ * @author wanghao
+ */
+@Service
+@Transactional(rollbackFor = Exception.class)
+public class SynchStockServiceImpl implements SynchStockService {
+    @Autowired
+    private SendPost post;
+    @Autowired
+    private GetSign getSign;
+    @Autowired
+    private StockService service;
+    @Autowired
+    private WareHouseService wareHouseService;
+    @Autowired
+    private GoodsService goodsService;
+    @Autowired
+    private ItemService itemService;
+    @Value("${guanyierpUrl}")
+    private String url;
+    @Value("${appkey}")
+    private String appkey;
+    @Value("${sessionkey}")
+    private String sessionkey;
+    @Value("${secret}")
+    private String secret;
+    @Value("${stockMethod}")
+    private String stockMethod;
+    @Autowired
+    private EsUtils client;
+
+    Integer updateCount = 0;
+    Integer addCount = 0;
+
+    @Override
+    public String updateAllStock(String start_date,String end_date,String warehouseId) {
+        // 清除ES历史搜索数据
+//        DeleteByQueryAction.INSTANCE.newRequestBuilder(client.getClient()).source("goods").get();
+        List<ResultStock.StocksBean> source = this.getSource(start_date,end_date,warehouseId);
+        for (ResultStock.StocksBean stocksBean : source) {
+            copyWarehouseFromBean(stocksBean);
+        }
+        //String s = "仓库[ "+warehouseId+" ]数据同步,新增库存记录" + addCount + "条;更新库存记录" + updateCount + "条,搜索引擎同步数据" + updateES() + "条";
+        String s = "仓库[ "+warehouseId+" ]数据同步,新增库存记录" + addCount + "条;更新库存记录" + updateCount + "条";
+        updateCount = 0;
+        addCount = 0;
+        return s;
+    }
+
+
+    @Override
+    public String updateAllStock() {
+        // 清除ES历史搜索数据
+        DeleteByQueryAction.INSTANCE.newRequestBuilder(client.getClient()).source("goods").get();
+        List<ResultStock.StocksBean> source = this.getSource();
+        for (ResultStock.StocksBean stocksBean : source) {
+            copyWarehouseFromBean(stocksBean);
+        }
+        String s = "本次数据同步,新增库存记录" + addCount + "条;更新库存记录" + updateCount + "条,搜索引擎同步数据" + updateES() + "条";
+        updateCount = 0;
+        addCount = 0;
+        return s;
+    }
+
+
+    private void copyWarehouseFromBean(ResultStock.StocksBean bean) {
+        Stock stock = new Stock();
+        /** 该商品为 sku
+         * 根据 item_code(spu 的商品代码)和sku_code(sku 的商品代码)查询出是否包含商品,
+         * 获取 spuId 和 skuId
+         */
+        List<Item> itemList = itemService.findByCode(bean.getItem_code(), bean.getSku_code());
+
+        /**
+         * 复制属性
+         */
+        if (itemList.size() == 1) {
+            stock.setGoodsId(itemList.get(0).getSpuId());
+            stock.setItemId(itemList.get(0).getItemId());
+            // 检查仓库代码是否有效
+            Warehouse one = wareHouseService.findOne(bean.getWarehouse_code());
+            if (one != null) {
+                // 仓库代码
+                stock.setWarehouseId(bean.getWarehouse_code());
+                // 可销售数量,仓储的可销售数量,为电商的库存数量
+                stock.setStockNum(bean.getSalable_qty());
+                // 库存记录状态
+                stock.setIsDel(bean.isDel());
+
+                chooseInsertOrUpdate(stock);
+            }
+
+        }
+
+    }
+
+    private void chooseInsertOrUpdate(Stock stock) {
+        /**
+         * 根据商品 Id 和仓库ID 查询是否存在该商品在该仓库的库存
+         */
+
+        Stock checkExits = service.checkExits(stock);
+        if (checkExits != null) {
+            /**
+             * 存在,说明已经添加该记录,直接更新库存
+             */
+            checkExits.setStockNum(stock.getStockNum());
+            checkExits.setSalableNum(stock.getStockNum() - checkExits.getLockNum());
+            updateCount += service.update(checkExits);
+        } else {
+            /**
+             * 不存在,说明已经未记录,直接插入新纪录
+             */
+            stock.setLockNum(0);
+            stock.setSalableNum(stock.getStockNum());
+            addCount += service.add(stock);
+        }
+    }
+
+
+    /**
+     * 获取数据
+     *
+     * @return
+     */
+    private List<ResultStock.StocksBean> getSource() {
+        /**
+         * 从管易云平台获取数据,并将数据格式转换为当前系统的商品结构
+         */
+
+        /**
+         * 设置分页数量
+         */
+        int pageSize = 50;
+
+        ResultStock result = this.findPageStock(1, pageSize);
+        /**
+         * 获取商品总记录数
+         */
+        int goodsTotal = result.getTotal();
+        /**
+         * 计算总页数
+         */
+        double pageCount = Math.ceil(goodsTotal * 1.0 / pageSize);
+        /**
+         * 创建集合,准备接收所有的商品信息
+         */
+        ArrayList<ResultStock.StocksBean> stocksBeanArrayList = new ArrayList<>();
+
+        for (int i1 = 0; i1 < pageCount; i1++) {
+            ResultStock resultStock = this.findPageStock(i1 + 1, pageSize);
+            stocksBeanArrayList.addAll(resultStock.getStocks());
+        }
+
+        return stocksBeanArrayList;
+    }
+
+
+    private List<ResultStock.StocksBean> getSource(String start_date, String end_date, String warehouseId) {
+        /**
+         * 从管易云平台获取数据,并将数据格式转换为当前系统的商品结构
+         */
+
+        /**
+         * 设置分页数量
+         */
+        int pageSize = 50;
+
+        ResultStock result = this.findPageStock(1, pageSize,start_date,end_date,warehouseId);
+        /**
+         * 获取商品总记录数
+         */
+        int goodsTotal = result.getTotal();
+        /**
+         * 计算总页数
+         */
+        double pageCount = Math.ceil(goodsTotal * 1.0 / pageSize);
+        /**
+         * 创建集合,准备接收所有的商品信息
+         */
+        ArrayList<ResultStock.StocksBean> stocksBeanArrayList = new ArrayList<>();
+
+        for (int i1 = 0; i1 < pageCount; i1++) {
+            ResultStock resultStock = this.findPageStock(i1 + 1, pageSize,start_date,end_date,warehouseId);
+            stocksBeanArrayList.addAll(resultStock.getStocks());
+        }
+        return stocksBeanArrayList;
+    }
+
+
+
+    /**
+     * 发送商品查询请求
+     *
+     * @param page 页码
+     * @param size 记录数
+     * @return
+     */
+    private ResultStock findPageStock(Integer page, Integer size) {
+        LinkedHashMap<String, Object> map = new LinkedHashMap<>();
+        map.put("appkey", appkey);
+        map.put("sessionkey", sessionkey);
+        map.put("method", stockMethod);
+        map.put("page_no", page);
+        map.put("page_size", size);
+        /**
+         * 将请求参数转换为 json 格式的字符串,进行加密处理,获取授权
+         */
+        String json = JSON.toJSONString(map);
+        /**
+         * 获取授权
+         */
+        String sign = getSign.sign(json, secret);
+        map.put("sign", sign);
+        String data = JSON.toJSONString(map);
+        System.err.println(data);
+        String result = post.sendPost(url, data);
+        System.err.println(result);
+        ResultStock resultStock = JSON.parseObject(result, ResultStock.class);
+        return resultStock;
+
+    }
+
+    private ResultStock findPageStock(int page, int size, String start_date, String end_date, String warehouseId) {
+        LinkedHashMap<String, Object> map = new LinkedHashMap<>();
+        map.put("appkey", appkey);
+        map.put("sessionkey", sessionkey);
+        map.put("method", stockMethod);
+        map.put("page_no", page);
+        map.put("page_size", size);
+        map.put("start_date", start_date);
+        map.put("end_date", end_date);
+        map.put("warehouse_code", warehouseId);
+        /**
+         * 将请求参数转换为 json 格式的字符串,进行加密处理,获取授权
+         */
+        String json = JSON.toJSONString(map);
+        /**
+         * 获取授权
+         */
+        String sign = getSign.sign(json, secret);
+        map.put("sign", sign);
+        String data = JSON.toJSONString(map);
+        String result = post.sendPost(url, data);
+        ResultStock resultStock = JSON.parseObject(result, ResultStock.class);
+        return resultStock;
+    }
+
+
+
+    /**
+     * 将数据同步到ES，同步完商品后，再全量增加
+     *
+     * @return
+     */
+    private Integer updateES() {
+        int ESUpdateCount = 0;
+        TransportClient transportClient = client.getClient();
+
+        PageResult pageGoods = goodsService.findPageGoods(null, null, null);
+        if (pageGoods.getTotal() == 0) {
+            return 0;
+        }
+        ArrayList<String> strings = new ArrayList<>();
+        for (Goods one : (List<Goods>) pageGoods.getRows()) {
+           // for (Item item : one.getItems()) {
+
+                try {
+                    XContentBuilder builder = XContentFactory.jsonBuilder().startObject();
+                    builder.field("goodsId", one.getGoodsId());
+                    builder.field("goodsName", one.getName());
+                    builder.field("goodsNote", one.getNote());
+                    builder.field("goodSimpleName", one.getSimpleName());
+                    //builder.field("skuName", item.getName());
+                    builder.field("createTime", new Date());
+                    builder.endObject();
+                    strings.add(builder.string());
+                    transportClient.prepareIndex("goods", "goods")
+                            .setSource(builder).get();
+
+                    ESUpdateCount++;
+                } catch (IOException e) {
+                    e.printStackTrace();
+
+              //  }
+            }
+        }
+        client.closeClient(transportClient);
+        return ESUpdateCount;
+    }
+
+
+}

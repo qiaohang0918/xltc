@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qigan.qiganshop.mapper.TbUserWishesMapper" >
+  <resultMap id="BaseResultMap" type="com.qigan.qiganshop.pojo.TbUserWishes" >
+    <id column="wishesId" property="wishesid" jdbcType="VARCHAR" />
+    <result column="userId" property="userid" jdbcType="VARCHAR" />
+    <result column="wishesType" property="wishestype" jdbcType="VARCHAR" />
+    <result column="wishesDetail" property="wishesdetail" jdbcType="VARCHAR" />
+    <result column="wishesCreateTime" property="wishescreatetime" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    wishesId, userId, wishesType, wishesDetail, wishesCreateTime
+  </sql>
+    <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.qigan.qiganshop.pojo.TbUserWishesExample" >
+        select
+        <if test="distinct" >
+            distinct
+        </if>
+        <include refid="Base_Column_List" />
+        from tb_user_wishes
+        <if test="_parameter != null" >
+            <include refid="Example_Where_Clause" />
+        </if>
+        <if test="orderByClause != null" >
+            order by ${orderByClause}
+        </if>
+    </select>
+    <select id="selectByExampleWith_Name_Phone" resultType="java.util.Map" parameterType="com.qigan.qiganshop.pojo.TbUserWishesExample" >
+        select a.*,b.nickName,b.phone from tb_user_wishes a
+        LEFT JOIN (select userId as userId_ ,phone,nickName from tb_user) b on a.userId =b.userId_
+        <if test="_parameter != null" >
+            <include refid="Example_Where_Clause" />
+        </if>
+        <if test="orderByClause != null" >
+            order by ${orderByClause}
+        </if>
+    </select>
+
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from tb_user_wishes
+    where wishesId = #{wishesid,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from tb_user_wishes
+    where wishesId = #{wishesid,jdbcType=VARCHAR}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.qigan.qiganshop.pojo.TbUserWishesExample" >
+    delete from tb_user_wishes
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.qigan.qiganshop.pojo.TbUserWishes" >
+    insert into tb_user_wishes (wishesId, userId, wishesType, 
+      wishesDetail, wishesCreateTime)
+    values (#{wishesid,jdbcType=VARCHAR}, #{userid,jdbcType=VARCHAR}, #{wishestype,jdbcType=VARCHAR}, 
+      #{wishesdetail,jdbcType=VARCHAR}, #{wishescreatetime,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.qigan.qiganshop.pojo.TbUserWishes" >
+    insert into tb_user_wishes
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="wishesid != null" >
+        wishesId,
+      </if>
+      <if test="userid != null" >
+        userId,
+      </if>
+      <if test="wishestype != null" >
+        wishesType,
+      </if>
+      <if test="wishesdetail != null" >
+        wishesDetail,
+      </if>
+      <if test="wishescreatetime != null" >
+        wishesCreateTime,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="wishesid != null" >
+        #{wishesid,jdbcType=VARCHAR},
+      </if>
+      <if test="userid != null" >
+        #{userid,jdbcType=VARCHAR},
+      </if>
+      <if test="wishestype != null" >
+        #{wishestype,jdbcType=VARCHAR},
+      </if>
+      <if test="wishesdetail != null" >
+        #{wishesdetail,jdbcType=VARCHAR},
+      </if>
+      <if test="wishescreatetime != null" >
+        #{wishescreatetime,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.qigan.qiganshop.pojo.TbUserWishesExample" resultType="java.lang.Integer" >
+    select count(*) from tb_user_wishes
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update tb_user_wishes
+    <set >
+      <if test="record.wishesid != null" >
+        wishesId = #{record.wishesid,jdbcType=VARCHAR},
+      </if>
+      <if test="record.userid != null" >
+        userId = #{record.userid,jdbcType=VARCHAR},
+      </if>
+      <if test="record.wishestype != null" >
+        wishesType = #{record.wishestype,jdbcType=VARCHAR},
+      </if>
+      <if test="record.wishesdetail != null" >
+        wishesDetail = #{record.wishesdetail,jdbcType=VARCHAR},
+      </if>
+      <if test="record.wishescreatetime != null" >
+        wishesCreateTime = #{record.wishescreatetime,jdbcType=VARCHAR},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update tb_user_wishes
+    set wishesId = #{record.wishesid,jdbcType=VARCHAR},
+      userId = #{record.userid,jdbcType=VARCHAR},
+      wishesType = #{record.wishestype,jdbcType=VARCHAR},
+      wishesDetail = #{record.wishesdetail,jdbcType=VARCHAR},
+      wishesCreateTime = #{record.wishescreatetime,jdbcType=VARCHAR}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.qigan.qiganshop.pojo.TbUserWishes" >
+    update tb_user_wishes
+    <set >
+      <if test="userid != null" >
+        userId = #{userid,jdbcType=VARCHAR},
+      </if>
+      <if test="wishestype != null" >
+        wishesType = #{wishestype,jdbcType=VARCHAR},
+      </if>
+      <if test="wishesdetail != null" >
+        wishesDetail = #{wishesdetail,jdbcType=VARCHAR},
+      </if>
+      <if test="wishescreatetime != null" >
+        wishesCreateTime = #{wishescreatetime,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where wishesId = #{wishesid,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.qigan.qiganshop.pojo.TbUserWishes" >
+    update tb_user_wishes
+    set userId = #{userid,jdbcType=VARCHAR},
+      wishesType = #{wishestype,jdbcType=VARCHAR},
+      wishesDetail = #{wishesdetail,jdbcType=VARCHAR},
+      wishesCreateTime = #{wishescreatetime,jdbcType=VARCHAR}
+    where wishesId = #{wishesid,jdbcType=VARCHAR}
+  </update>
+</mapper>

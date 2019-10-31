@@ -1,0 +1,51 @@
+package com.qigan.qiganshop.service.impl;
+
+import com.qigan.qiganshop.mapper.OptInfoMapper;
+import com.qigan.qiganshop.pojo.OptInfo;
+import com.qigan.qiganshop.service.XltcOptInfoService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.test.annotation.Rollback;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.util.Date;
+import java.util.UUID;
+
+/**
+ * @Aurher: QiaoHang
+ * @Description:
+ * @Data: 2019/9/3 8:43
+ * @Modified By:
+ */
+@Service
+@Transactional(rollbackFor = Exception.class)
+public class XltcOptInfoServiceImpl implements XltcOptInfoService {
+
+    @Autowired
+    OptInfoMapper mapper;
+
+    private static SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+    /**
+     * 记录管理员操作日志
+     * @param no
+     * @param name
+     * @return
+     */
+    @Override
+    public int recordOptInfo(String no, String name,String inter, String Func) {
+        OptInfo info = new OptInfo();
+        //工号 no
+        info.setManagerid(no);
+        info.setManagername(name);
+        info.setOptid(UUID.randomUUID().toString().replace("_","").replace("-",""));
+        info.setOpttime(format.format(new Date()));
+        //操作功能
+        info.setOptdetails(Func);
+        //功能接口
+        info.setOptinter(inter);
+        return mapper.insert(info);
+    }
+}

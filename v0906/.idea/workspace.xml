@@ -1,0 +1,1106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ArtifactsWorkspaceSettings">
+    <artifacts-to-build>
+      <artifact name="qiganshop_sit" />
+    </artifacts-to-build>
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="7187b789-a0a4-4bde-8162-e97f5fa66090" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/src/test/java/test/TestQ.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/qiganshop.iml" beforeDir="false" afterPath="$PROJECT_DIR$/qiganshop.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/properties/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/properties/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/properties/db.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/properties/db.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/properties/redis-config.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/properties/redis-config.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/test/TestM.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/test/TestM.java" afterDir="false" />
+    </list>
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="CodeStyleSettingsInfer">
+    <option name="done" value="true" />
+  </component>
+  <component name="DatabaseView">
+    <option name="SHOW_INTERMEDIATE" value="true" />
+    <option name="GROUP_DATA_SOURCES" value="true" />
+    <option name="GROUP_SCHEMA" value="true" />
+    <option name="GROUP_CONTENTS" value="false" />
+    <option name="SORT_POSITIONED" value="false" />
+    <option name="SHOW_EMPTY_GROUPS" value="false" />
+    <option name="AUTO_SCROLL_FROM_SOURCE" value="false" />
+    <option name="HIDDEN_KINDS">
+      <set />
+    </option>
+    <expand />
+    <select />
+  </component>
+  <component name="FavoritesManager">
+    <favorites_list name="qiganshop" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="FxmlFile" />
+        <option value="Interface" />
+        <option value="Class" />
+      </list>
+    </option>
+  </component>
+  <component name="MavenImportPreferences">
+    <option name="generalSettings">
+      <MavenGeneralSettings>
+        <option name="mavenHome" value="D:/soft/maven/apache-maven-3.6.1" />
+        <option name="userSettingsFile" value="D:\soft\maven\apache-maven-3.6.1\conf\settings.xml" />
+      </MavenGeneralSettings>
+    </option>
+    <option name="importingSettings">
+      <MavenImportingSettings>
+        <option name="vmOptionsForImporter" value="-Xmx768m" />
+      </MavenImportingSettings>
+    </option>
+  </component>
+  <component name="MavenRunner">
+    <option name="skipTests" value="true" />
+  </component>
+  <component name="ProjectCodeStyleSettingsMigration">
+    <option name="version" value="1" />
+  </component>
+  <component name="ProjectId" id="1QRTmgcumgglesRUp53oahkPQzO" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true">
+    <ConfirmationsSetting value="1" id="Remove" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_flatOrder0" value="0" />
+    <property name="FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_flatOrder1" value="1" />
+    <property name="FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_flatOrder2" value="2" />
+    <property name="FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_flatOrder3" value="3" />
+    <property name="FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_flatOrder4" value="4" />
+    <property name="FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_flatWidth0" value="258" />
+    <property name="FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_flatWidth1" value="258" />
+    <property name="FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_flatWidth2" value="257" />
+    <property name="FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_flatWidth3" value="258" />
+    <property name="FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_flatWidth4" value="257" />
+    <property name="FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_treeOrder0" value="0" />
+    <property name="FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_treeOrder1" value="1" />
+    <property name="FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_treeOrder2" value="2" />
+    <property name="FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_treeOrder3" value="3" />
+    <property name="FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_treeOrder4" value="4" />
+    <property name="FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_treeWidth0" value="258" />
+    <property name="FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_treeWidth1" value="258" />
+    <property name="FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_treeWidth2" value="257" />
+    <property name="FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_treeWidth3" value="258" />
+    <property name="FileHistory.org.jetbrains.idea.svn.history.SvnHistoryProvider_treeWidth4" value="257" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="aspect.path.notification.shown" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/src/main/resources/properties" />
+    <property name="nodejs_package_manager_path" value="npm" />
+    <property name="project.structure.last.edited" value="Global Libraries" />
+    <property name="project.structure.proportion" value="0.15612802" />
+    <property name="project.structure.side.proportion" value="0.2" />
+    <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\xltc-1\Desktop\v0906\src\main\resources\com\qigan\qiganshop\mapper" />
+      <recent name="C:\Users\xltc-1\Desktop\v0906\src\main\java\com\qigan\qiganshop\controller\utils" />
+    </key>
+    <key name="MoveClassesOrPackagesDialog.RECENTS_KEY">
+      <recent name="com.qigan.qiganshop.mapper" />
+    </key>
+    <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="com.qigan.qiganshop.controller.backstage" />
+      <recent name="com.qigan.qiganshop.service" />
+    </key>
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\xltc-1\Desktop\v0906\src\main\resources\properties" />
+      <recent name="C:\Users\xltc-1\Desktop\v0906\src\main\resources" />
+      <recent name="C:\Users\xltc-1\Desktop\v0906\src\main\resources\com\qigan\qiganshop\mapper" />
+      <recent name="C:\Users\xltc-1\Desktop\v0906\src\main\java\com\qigan\qiganshop\util\pay\wxpay" />
+      <recent name="C:\Users\xltc-1\Desktop\v0906\src\main\java\com\qigan\qiganshop\controller\utils" />
+    </key>
+  </component>
+  <component name="RunDashboard">
+    <option name="ruleStates">
+      <list>
+        <RuleState>
+          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
+        </RuleState>
+        <RuleState>
+          <option name="name" value="StatusDashboardGroupingRule" />
+        </RuleState>
+      </list>
+    </option>
+  </component>
+  <component name="RunManager" selected="Maven.qiganshop [tomcat7:run]">
+    <configuration name="TestQ.setMget" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="qiganshop" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="test.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="test" />
+      <option name="MAIN_CLASS_NAME" value="test.TestQ" />
+      <option name="METHOD_NAME" value="setMget" />
+      <option name="TEST_OBJECT" value="method" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="TestQ.setTrimHset" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="qiganshop" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="test.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="test" />
+      <option name="MAIN_CLASS_NAME" value="test.TestQ" />
+      <option name="METHOD_NAME" value="setTrimHset" />
+      <option name="TEST_OBJECT" value="method" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="TestQ.testFilter" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="qiganshop" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="test.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="test" />
+      <option name="MAIN_CLASS_NAME" value="test.TestQ" />
+      <option name="METHOD_NAME" value="testFilter" />
+      <option name="TEST_OBJECT" value="method" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="TestQ.testSetRedis" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="qiganshop" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="test.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="test" />
+      <option name="MAIN_CLASS_NAME" value="test.TestQ" />
+      <option name="METHOD_NAME" value="testSetRedis" />
+      <option name="TEST_OBJECT" value="method" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="qiganshop [mybatis-generator:generate]" type="MavenRunConfiguration" factoryName="Maven" nameIsGenerated="true">
+      <MavenSettings>
+        <option name="myGeneralSettings" />
+        <option name="myRunnerSettings" />
+        <option name="myRunnerParameters">
+          <MavenRunnerParameters>
+            <option name="profiles">
+              <set />
+            </option>
+            <option name="goals">
+              <list>
+                <option value="mybatis-generator:generate" />
+              </list>
+            </option>
+            <option name="pomFileName" />
+            <option name="profilesMap">
+              <map />
+            </option>
+            <option name="resolveToWorkspace" value="false" />
+            <option name="workingDirPath" value="$PROJECT_DIR$" />
+          </MavenRunnerParameters>
+        </option>
+      </MavenSettings>
+      <method v="2" />
+    </configuration>
+    <configuration name="qiganshop [package]" type="MavenRunConfiguration" factoryName="Maven">
+      <MavenSettings>
+        <option name="myGeneralSettings" />
+        <option name="myRunnerSettings" />
+        <option name="myRunnerParameters">
+          <MavenRunnerParameters>
+            <option name="profiles">
+              <set />
+            </option>
+            <option name="goals">
+              <list>
+                <option value="package" />
+                <option value="-DskipTest" />
+              </list>
+            </option>
+            <option name="pomFileName" value="pom.xml" />
+            <option name="profilesMap">
+              <map />
+            </option>
+            <option name="resolveToWorkspace" value="false" />
+            <option name="workingDirPath" value="$PROJECT_DIR$" />
+          </MavenRunnerParameters>
+        </option>
+      </MavenSettings>
+      <method v="2" />
+    </configuration>
+    <configuration name="qiganshop [tomcat7:run]" type="MavenRunConfiguration" factoryName="Maven" temporary="true">
+      <MavenSettings>
+        <option name="myGeneralSettings" />
+        <option name="myRunnerSettings" />
+        <option name="myRunnerParameters">
+          <MavenRunnerParameters>
+            <option name="profiles">
+              <set />
+            </option>
+            <option name="goals">
+              <list>
+                <option value="tomcat7:run" />
+              </list>
+            </option>
+            <option name="pomFileName" value="pom.xml" />
+            <option name="profilesMap">
+              <map />
+            </option>
+            <option name="resolveToWorkspace" value="false" />
+            <option name="workingDirPath" value="$PROJECT_DIR$" />
+          </MavenRunnerParameters>
+        </option>
+      </MavenSettings>
+      <method v="2" />
+    </configuration>
+    <list>
+      <item itemvalue="JUnit.TestQ.testFilter" />
+      <item itemvalue="JUnit.TestQ.setTrimHset" />
+      <item itemvalue="JUnit.TestQ.setMget" />
+      <item itemvalue="JUnit.TestQ.testSetRedis" />
+      <item itemvalue="Maven.qiganshop [package]" />
+      <item itemvalue="Maven.qiganshop [mybatis-generator:generate]" />
+      <item itemvalue="Maven.qiganshop [tomcat7:run]" />
+    </list>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Maven.qiganshop [tomcat7:run]" />
+        <item itemvalue="JUnit.TestQ.testSetRedis" />
+        <item itemvalue="JUnit.TestQ.setTrimHset" />
+        <item itemvalue="JUnit.TestQ.setMget" />
+        <item itemvalue="JUnit.TestQ.testFilter" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SvnConfiguration" cleanupOnStartRun="true">
+    <configuration>C:\Users\xltc-1\AppData\Roaming\Subversion</configuration>
+    <supportedVersion>125</supportedVersion>
+  </component>
+  <component name="SvnFileUrlMappingImpl">
+    <option name="myMappingRoots">
+      <list>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="C:\Users\xltc-1\Desktop\v0906" />
+          <option name="myCopyRoot" value="C:\Users\xltc-1\Desktop\v0906" />
+        </SvnCopyRootSimple>
+      </list>
+    </option>
+    <option name="myMoreRealMappingRoots">
+      <list>
+        <SvnCopyRootSimple>
+          <option name="myVcsRoot" value="C:\Users\xltc-1\Desktop\v0906" />
+          <option name="myCopyRoot" value="C:\Users\xltc-1\Desktop\v0906" />
+        </SvnCopyRootSimple>
+      </list>
+    </option>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="7187b789-a0a4-4bde-8162-e97f5fa66090" name="Default Changelist" comment="" />
+      <created>1567732569156</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1567732569156</updated>
+      <workItem from="1567732579980" duration="3879000" />
+      <workItem from="1567760287865" duration="3185000" />
+      <workItem from="1567763844559" duration="3160000" />
+      <workItem from="1567815562960" duration="27525000" />
+      <workItem from="1567914811801" duration="2933000" />
+      <workItem from="1567947875714" duration="10597000" />
+      <workItem from="1568012585334" duration="2015000" />
+      <workItem from="1568015261192" duration="604000" />
+      <workItem from="1568016412582" duration="1084000" />
+      <workItem from="1568017505542" duration="67628000" />
+      <workItem from="1568246475313" duration="4009000" />
+      <workItem from="1568514093296" duration="1068000" />
+      <workItem from="1568537843330" duration="10957000" />
+      <workItem from="1568630075205" duration="22469000" />
+      <workItem from="1568765952685" duration="81110000" />
+      <workItem from="1569121185373" duration="18899000" />
+      <workItem from="1569227680111" duration="16722000" />
+      <workItem from="1569383495522" duration="37307000" />
+      <workItem from="1569548517506" duration="14452000" />
+      <workItem from="1570147339513" duration="165368000" />
+      <workItem from="1570666981526" duration="36732000" />
+      <workItem from="1570754095880" duration="61449000" />
+      <workItem from="1570931338741" duration="107252000" />
+      <workItem from="1571357015708" duration="28422000" />
+      <workItem from="1571444393882" duration="1227000" />
+      <workItem from="1571445913489" duration="901000" />
+      <workItem from="1571448169146" duration="17227000" />
+      <workItem from="1571624008165" duration="16150000" />
+      <workItem from="1571647990821" duration="147912000" />
+      <workItem from="1572252781234" duration="10645000" />
+      <workItem from="1572314644655" duration="14000" />
+      <workItem from="1572315380711" duration="21944000" />
+    </task>
+    <task id="LOCAL-00128">
+      <created>1571042389287</created>
+      <option name="number" value="00128" />
+      <option name="presentableId" value="LOCAL-00128" />
+      <option name="project" value="LOCAL" />
+      <updated>1571042389287</updated>
+    </task>
+    <task id="LOCAL-00129">
+      <created>1571044774626</created>
+      <option name="number" value="00129" />
+      <option name="presentableId" value="LOCAL-00129" />
+      <option name="project" value="LOCAL" />
+      <updated>1571044774626</updated>
+    </task>
+    <task id="LOCAL-00130">
+      <created>1571047043518</created>
+      <option name="number" value="00130" />
+      <option name="presentableId" value="LOCAL-00130" />
+      <option name="project" value="LOCAL" />
+      <updated>1571047043518</updated>
+    </task>
+    <task id="LOCAL-00131">
+      <created>1571049525568</created>
+      <option name="number" value="00131" />
+      <option name="presentableId" value="LOCAL-00131" />
+      <option name="project" value="LOCAL" />
+      <updated>1571049525568</updated>
+    </task>
+    <task id="LOCAL-00132">
+      <created>1571100375015</created>
+      <option name="number" value="00132" />
+      <option name="presentableId" value="LOCAL-00132" />
+      <option name="project" value="LOCAL" />
+      <updated>1571100375015</updated>
+    </task>
+    <task id="LOCAL-00133">
+      <created>1571101744474</created>
+      <option name="number" value="00133" />
+      <option name="presentableId" value="LOCAL-00133" />
+      <option name="project" value="LOCAL" />
+      <updated>1571101744474</updated>
+    </task>
+    <task id="LOCAL-00134">
+      <created>1571103071951</created>
+      <option name="number" value="00134" />
+      <option name="presentableId" value="LOCAL-00134" />
+      <option name="project" value="LOCAL" />
+      <updated>1571103071951</updated>
+    </task>
+    <task id="LOCAL-00135">
+      <created>1571103145697</created>
+      <option name="number" value="00135" />
+      <option name="presentableId" value="LOCAL-00135" />
+      <option name="project" value="LOCAL" />
+      <updated>1571103145697</updated>
+    </task>
+    <task id="LOCAL-00136">
+      <created>1571107628901</created>
+      <option name="number" value="00136" />
+      <option name="presentableId" value="LOCAL-00136" />
+      <option name="project" value="LOCAL" />
+      <updated>1571107628902</updated>
+    </task>
+    <task id="LOCAL-00137">
+      <created>1571128804943</created>
+      <option name="number" value="00137" />
+      <option name="presentableId" value="LOCAL-00137" />
+      <option name="project" value="LOCAL" />
+      <updated>1571128804943</updated>
+    </task>
+    <task id="LOCAL-00138">
+      <created>1571133850598</created>
+      <option name="number" value="00138" />
+      <option name="presentableId" value="LOCAL-00138" />
+      <option name="project" value="LOCAL" />
+      <updated>1571133850598</updated>
+    </task>
+    <task id="LOCAL-00139">
+      <created>1571149102458</created>
+      <option name="number" value="00139" />
+      <option name="presentableId" value="LOCAL-00139" />
+      <option name="project" value="LOCAL" />
+      <updated>1571149102458</updated>
+    </task>
+    <task id="LOCAL-00140">
+      <created>1571187333247</created>
+      <option name="number" value="00140" />
+      <option name="presentableId" value="LOCAL-00140" />
+      <option name="project" value="LOCAL" />
+      <updated>1571187333247</updated>
+    </task>
+    <task id="LOCAL-00141">
+      <created>1571189746977</created>
+      <option name="number" value="00141" />
+      <option name="presentableId" value="LOCAL-00141" />
+      <option name="project" value="LOCAL" />
+      <updated>1571189746978</updated>
+    </task>
+    <task id="LOCAL-00142">
+      <created>1571195207285</created>
+      <option name="number" value="00142" />
+      <option name="presentableId" value="LOCAL-00142" />
+      <option name="project" value="LOCAL" />
+      <updated>1571195207286</updated>
+    </task>
+    <task id="LOCAL-00143">
+      <created>1571198063270</created>
+      <option name="number" value="00143" />
+      <option name="presentableId" value="LOCAL-00143" />
+      <option name="project" value="LOCAL" />
+      <updated>1571198063270</updated>
+    </task>
+    <task id="LOCAL-00144">
+      <created>1571198104906</created>
+      <option name="number" value="00144" />
+      <option name="presentableId" value="LOCAL-00144" />
+      <option name="project" value="LOCAL" />
+      <updated>1571198104906</updated>
+    </task>
+    <task id="LOCAL-00145">
+      <created>1571207710357</created>
+      <option name="number" value="00145" />
+      <option name="presentableId" value="LOCAL-00145" />
+      <option name="project" value="LOCAL" />
+      <updated>1571207710357</updated>
+    </task>
+    <task id="LOCAL-00146">
+      <created>1571207752397</created>
+      <option name="number" value="00146" />
+      <option name="presentableId" value="LOCAL-00146" />
+      <option name="project" value="LOCAL" />
+      <updated>1571207752397</updated>
+    </task>
+    <task id="LOCAL-00147">
+      <created>1571207817649</created>
+      <option name="number" value="00147" />
+      <option name="presentableId" value="LOCAL-00147" />
+      <option name="project" value="LOCAL" />
+      <updated>1571207817649</updated>
+    </task>
+    <task id="LOCAL-00148">
+      <created>1571208030546</created>
+      <option name="number" value="00148" />
+      <option name="presentableId" value="LOCAL-00148" />
+      <option name="project" value="LOCAL" />
+      <updated>1571208030546</updated>
+    </task>
+    <task id="LOCAL-00149">
+      <created>1571211127230</created>
+      <option name="number" value="00149" />
+      <option name="presentableId" value="LOCAL-00149" />
+      <option name="project" value="LOCAL" />
+      <updated>1571211127231</updated>
+    </task>
+    <task id="LOCAL-00150">
+      <created>1571286021603</created>
+      <option name="number" value="00150" />
+      <option name="presentableId" value="LOCAL-00150" />
+      <option name="project" value="LOCAL" />
+      <updated>1571286021603</updated>
+    </task>
+    <task id="LOCAL-00151">
+      <created>1571291559459</created>
+      <option name="number" value="00151" />
+      <option name="presentableId" value="LOCAL-00151" />
+      <option name="project" value="LOCAL" />
+      <updated>1571291559459</updated>
+    </task>
+    <task id="LOCAL-00152">
+      <created>1571379233442</created>
+      <option name="number" value="00152" />
+      <option name="presentableId" value="LOCAL-00152" />
+      <option name="project" value="LOCAL" />
+      <updated>1571379233443</updated>
+    </task>
+    <task id="LOCAL-00153">
+      <created>1571381591240</created>
+      <option name="number" value="00153" />
+      <option name="presentableId" value="LOCAL-00153" />
+      <option name="project" value="LOCAL" />
+      <updated>1571381591240</updated>
+    </task>
+    <task id="LOCAL-00154">
+      <created>1571387218913</created>
+      <option name="number" value="00154" />
+      <option name="presentableId" value="LOCAL-00154" />
+      <option name="project" value="LOCAL" />
+      <updated>1571387218913</updated>
+    </task>
+    <task id="LOCAL-00155">
+      <created>1571390396121</created>
+      <option name="number" value="00155" />
+      <option name="presentableId" value="LOCAL-00155" />
+      <option name="project" value="LOCAL" />
+      <updated>1571390396121</updated>
+    </task>
+    <task id="LOCAL-00156">
+      <created>1571457617137</created>
+      <option name="number" value="00156" />
+      <option name="presentableId" value="LOCAL-00156" />
+      <option name="project" value="LOCAL" />
+      <updated>1571457617137</updated>
+    </task>
+    <task id="LOCAL-00157">
+      <created>1571639016089</created>
+      <option name="number" value="00157" />
+      <option name="presentableId" value="LOCAL-00157" />
+      <option name="project" value="LOCAL" />
+      <updated>1571639016089</updated>
+    </task>
+    <task id="LOCAL-00158">
+      <created>1571639112210</created>
+      <option name="number" value="00158" />
+      <option name="presentableId" value="LOCAL-00158" />
+      <option name="project" value="LOCAL" />
+      <updated>1571639112210</updated>
+    </task>
+    <task id="LOCAL-00159">
+      <created>1571884732778</created>
+      <option name="number" value="00159" />
+      <option name="presentableId" value="LOCAL-00159" />
+      <option name="project" value="LOCAL" />
+      <updated>1571884732778</updated>
+    </task>
+    <task id="LOCAL-00160">
+      <created>1571909511283</created>
+      <option name="number" value="00160" />
+      <option name="presentableId" value="LOCAL-00160" />
+      <option name="project" value="LOCAL" />
+      <updated>1571909511283</updated>
+    </task>
+    <task id="LOCAL-00161">
+      <created>1571912211936</created>
+      <option name="number" value="00161" />
+      <option name="presentableId" value="LOCAL-00161" />
+      <option name="project" value="LOCAL" />
+      <updated>1571912211936</updated>
+    </task>
+    <task id="LOCAL-00162">
+      <created>1571964875467</created>
+      <option name="number" value="00162" />
+      <option name="presentableId" value="LOCAL-00162" />
+      <option name="project" value="LOCAL" />
+      <updated>1571964875467</updated>
+    </task>
+    <task id="LOCAL-00163">
+      <created>1571983899579</created>
+      <option name="number" value="00163" />
+      <option name="presentableId" value="LOCAL-00163" />
+      <option name="project" value="LOCAL" />
+      <updated>1571983899579</updated>
+    </task>
+    <task id="LOCAL-00164">
+      <created>1572058623100</created>
+      <option name="number" value="00164" />
+      <option name="presentableId" value="LOCAL-00164" />
+      <option name="project" value="LOCAL" />
+      <updated>1572058623100</updated>
+    </task>
+    <task id="LOCAL-00165">
+      <created>1572058709770</created>
+      <option name="number" value="00165" />
+      <option name="presentableId" value="LOCAL-00165" />
+      <option name="project" value="LOCAL" />
+      <updated>1572058709770</updated>
+    </task>
+    <task id="LOCAL-00166">
+      <created>1572067896680</created>
+      <option name="number" value="00166" />
+      <option name="presentableId" value="LOCAL-00166" />
+      <option name="project" value="LOCAL" />
+      <updated>1572067896680</updated>
+    </task>
+    <task id="LOCAL-00167">
+      <created>1572070117582</created>
+      <option name="number" value="00167" />
+      <option name="presentableId" value="LOCAL-00167" />
+      <option name="project" value="LOCAL" />
+      <updated>1572070117583</updated>
+    </task>
+    <task id="LOCAL-00168">
+      <created>1572073061454</created>
+      <option name="number" value="00168" />
+      <option name="presentableId" value="LOCAL-00168" />
+      <option name="project" value="LOCAL" />
+      <updated>1572073061454</updated>
+    </task>
+    <task id="LOCAL-00169">
+      <created>1572074090665</created>
+      <option name="number" value="00169" />
+      <option name="presentableId" value="LOCAL-00169" />
+      <option name="project" value="LOCAL" />
+      <updated>1572074090665</updated>
+    </task>
+    <task id="LOCAL-00170">
+      <created>1572080849085</created>
+      <option name="number" value="00170" />
+      <option name="presentableId" value="LOCAL-00170" />
+      <option name="project" value="LOCAL" />
+      <updated>1572080849085</updated>
+    </task>
+    <task id="LOCAL-00171">
+      <created>1572081413468</created>
+      <option name="number" value="00171" />
+      <option name="presentableId" value="LOCAL-00171" />
+      <option name="project" value="LOCAL" />
+      <updated>1572081413468</updated>
+    </task>
+    <task id="LOCAL-00172">
+      <created>1572221013092</created>
+      <option name="number" value="00172" />
+      <option name="presentableId" value="LOCAL-00172" />
+      <option name="project" value="LOCAL" />
+      <updated>1572221013092</updated>
+    </task>
+    <task id="LOCAL-00173">
+      <created>1572229643394</created>
+      <option name="number" value="00173" />
+      <option name="presentableId" value="LOCAL-00173" />
+      <option name="project" value="LOCAL" />
+      <updated>1572229643394</updated>
+    </task>
+    <task id="LOCAL-00174">
+      <created>1572235227368</created>
+      <option name="number" value="00174" />
+      <option name="presentableId" value="LOCAL-00174" />
+      <option name="project" value="LOCAL" />
+      <updated>1572235227368</updated>
+    </task>
+    <task id="LOCAL-00175">
+      <created>1572245187629</created>
+      <option name="number" value="00175" />
+      <option name="presentableId" value="LOCAL-00175" />
+      <option name="project" value="LOCAL" />
+      <updated>1572245187629</updated>
+    </task>
+    <task id="LOCAL-00176">
+      <created>1572483910027</created>
+      <option name="number" value="00176" />
+      <option name="presentableId" value="LOCAL-00176" />
+      <option name="project" value="LOCAL" />
+      <updated>1572483910027</updated>
+    </task>
+    <option name="localTasksCounter" value="177" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="1" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <option name="LAST_COMMIT_MESSAGE" value="" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/controller/backstage/XltcReportDeliveryerController.java</url>
+          <line>43</line>
+          <option name="timeStamp" value="8" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/service/impl/XltcClueUserServiceImpl.java</url>
+          <line>59</line>
+          <option name="timeStamp" value="10" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/service/impl/XltcClueUserServiceImpl.java</url>
+          <line>209</line>
+          <option name="timeStamp" value="11" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/controller/backstage/DeliveryOrderController.java</url>
+          <line>109</line>
+          <option name="timeStamp" value="14" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/controller/frontend/AppUserController.java</url>
+          <line>184</line>
+          <option name="timeStamp" value="17" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/controller/frontend/AppUserController.java</url>
+          <line>200</line>
+          <option name="timeStamp" value="20" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/service/impl/XltcClueUserServiceImpl.java</url>
+          <line>64</line>
+          <option name="timeStamp" value="21" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/service/impl/XltcClueUserServiceImpl.java</url>
+          <line>73</line>
+          <option name="timeStamp" value="27" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/service/impl/XltcClueUserServiceImpl.java</url>
+          <line>110</line>
+          <option name="timeStamp" value="29" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/controller/backstage/DeliveryOrderController.java</url>
+          <line>123</line>
+          <option name="timeStamp" value="30" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/service/impl/XltcClueUserServiceImpl.java</url>
+          <line>169</line>
+          <option name="timeStamp" value="31" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/controller/backstage/DeliveryOrderController.java</url>
+          <line>126</line>
+          <option name="timeStamp" value="32" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/controller/backstage/XltcUserWishesController.java</url>
+          <line>29</line>
+          <option name="timeStamp" value="35" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/controller/frontend/AppUserController.java</url>
+          <line>201</line>
+          <option name="timeStamp" value="39" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/controller/backstage/VersionController.java</url>
+          <line>85</line>
+          <option name="timeStamp" value="44" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/service/impl/RefundServiceImpl.java</url>
+          <line>428</line>
+          <option name="timeStamp" value="47" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/test/java/test/TestQ.java</url>
+          <line>412</line>
+          <option name="timeStamp" value="53" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/controller/backstage/XltcExplandControler.java</url>
+          <line>105</line>
+          <option name="timeStamp" value="54" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/service/impl/XltcExpladServiceImpl.java</url>
+          <line>79</line>
+          <option name="timeStamp" value="55" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/service/impl/XltcExpladServiceImpl.java</url>
+          <line>96</line>
+          <option name="timeStamp" value="56" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/controller/utils/RefundController.java</url>
+          <line>158</line>
+          <option name="timeStamp" value="57" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/controller/utils/RefundController.java</url>
+          <line>178</line>
+          <option name="timeStamp" value="58" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/service/impl/UserCouponServiceImpl.java</url>
+          <line>405</line>
+          <option name="timeStamp" value="61" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/service/impl/XltcOrderServiceImpl.java</url>
+          <line>334</line>
+          <option name="timeStamp" value="69" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/service/impl/XltcOrderServiceImpl.java</url>
+          <line>609</line>
+          <option name="timeStamp" value="70" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/service/impl/XltcOrderServiceImpl.java</url>
+          <line>352</line>
+          <option name="timeStamp" value="72" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/util/sms/SmsUtil.java</url>
+          <line>90</line>
+          <option name="timeStamp" value="74" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/controller/backstage/SynchController.java</url>
+          <line>94</line>
+          <option name="timeStamp" value="85" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/controller/frontend/AppUserController.java</url>
+          <line>127</line>
+          <option name="timeStamp" value="104" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/service/impl/XltcClueUserServiceImpl.java</url>
+          <line>69</line>
+          <option name="timeStamp" value="105" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/service/impl/UserCouponServiceImpl.java</url>
+          <line>102</line>
+          <option name="timeStamp" value="106" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/service/impl/RefundServiceImpl.java</url>
+          <line>490</line>
+          <option name="timeStamp" value="113" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/service/impl/XltcPreSellGoodsServiceImpl.java</url>
+          <line>92</line>
+          <option name="timeStamp" value="114" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/service/impl/XltcPreSellGoodsServiceImpl.java</url>
+          <line>271</line>
+          <option name="timeStamp" value="119" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/controller/frontend/AppGoodsController.java</url>
+          <line>101</line>
+          <option name="timeStamp" value="125" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/controller/utils/AlipayController.java</url>
+          <line>330</line>
+          <option name="timeStamp" value="129" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/controller/utils/WxpayController.java</url>
+          <line>457</line>
+          <option name="timeStamp" value="130" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/controller/utils/WxpayController.java</url>
+          <line>514</line>
+          <option name="timeStamp" value="131" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/controller/utils/AlipayController.java</url>
+          <line>385</line>
+          <option name="timeStamp" value="132" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/controller/utils/AlipayController.java</url>
+          <line>412</line>
+          <option name="timeStamp" value="133" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/controller/utils/AlipayController.java</url>
+          <line>471</line>
+          <option name="timeStamp" value="135" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/controller/utils/WxpayController.java</url>
+          <line>554</line>
+          <option name="timeStamp" value="136" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/controller/utils/WxpayController.java</url>
+          <line>564</line>
+          <option name="timeStamp" value="137" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/controller/frontend/SearchController.java</url>
+          <line>161</line>
+          <option name="timeStamp" value="143" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/controller/frontend/SearchController.java</url>
+          <line>175</line>
+          <option name="timeStamp" value="144" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/controller/backstage/XltcPreSellOrderController.java</url>
+          <line>42</line>
+          <option name="timeStamp" value="146" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/service/impl/XltcPreSellOrderServiceImpl.java</url>
+          <line>267</line>
+          <option name="timeStamp" value="149" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/controller/frontend/AppHomePageCateController.java</url>
+          <line>57</line>
+          <option name="timeStamp" value="158" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/service/impl/XltcHomeServiceImpl.java</url>
+          <line>316</line>
+          <option name="timeStamp" value="159" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/service/impl/HomePageCateGoodServiceImpl.java</url>
+          <line>197</line>
+          <option name="timeStamp" value="161" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/service/impl/GoodsServiceImpl.java</url>
+          <line>180</line>
+          <option name="timeStamp" value="163" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/controller/backstage/XltcPreSellOrderController.java</url>
+          <line>66</line>
+          <option name="timeStamp" value="166" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/service/impl/XltcOrderServiceImpl.java</url>
+          <line>306</line>
+          <option name="timeStamp" value="171" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/service/impl/XltcActivityManageServiceImpl.java</url>
+          <line>551</line>
+          <option name="timeStamp" value="180" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/service/impl/XltcActivityManageServiceImpl.java</url>
+          <line>561</line>
+          <option name="timeStamp" value="185" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/service/impl/XltcActivityManageServiceImpl.java</url>
+          <line>458</line>
+          <option name="timeStamp" value="190" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/controller/backstage/XltcActivityManageController.java</url>
+          <line>47</line>
+          <option name="timeStamp" value="191" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/service/impl/XltcActivityManageServiceImpl.java</url>
+          <line>101</line>
+          <option name="timeStamp" value="192" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/service/impl/XltcActivityManageServiceImpl.java</url>
+          <line>119</line>
+          <option name="timeStamp" value="201" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/controller/backstage/XltcActivityManageController.java</url>
+          <line>186</line>
+          <option name="timeStamp" value="202" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/service/impl/XltcSepcialManageServiceImpl.java</url>
+          <line>200</line>
+          <option name="timeStamp" value="203" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/service/impl/XltcSepcialManageServiceImpl.java</url>
+          <line>181</line>
+          <option name="timeStamp" value="207" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/controller/backstage/XltcSepcialManageController.java</url>
+          <line>208</line>
+          <option name="timeStamp" value="208" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/controller/backstage/XltcSepcialManageController.java</url>
+          <line>183</line>
+          <option name="timeStamp" value="210" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/controller/backstage/XltcSepcialManageController.java</url>
+          <line>173</line>
+          <option name="timeStamp" value="213" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/service/impl/XltcSepcialManageServiceImpl.java</url>
+          <line>226</line>
+          <option name="timeStamp" value="214" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/service/impl/XltcSepcialManageServiceImpl.java</url>
+          <line>265</line>
+          <option name="timeStamp" value="221" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/controller/utils/RefundController.java</url>
+          <line>130</line>
+          <option name="timeStamp" value="222" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/util/Redis/RedisLock.java</url>
+          <line>48</line>
+          <option name="timeStamp" value="241" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/controller/backstage/DeliveryOrderController.java</url>
+          <line>54</line>
+          <option name="timeStamp" value="242" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/service/impl/DeliveryOrderServiceImpl.java</url>
+          <line>85</line>
+          <option name="timeStamp" value="243" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/util/Redis/RedisUtil.java</url>
+          <line>30</line>
+          <option name="timeStamp" value="247" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/controller/backstage/XltcPreSellOrderController.java</url>
+          <line>115</line>
+          <option name="timeStamp" value="248" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-field">
+          <url>file://$PROJECT_DIR$/src/main/java/com/qigan/qiganshop/service/impl/XltcClueUserServiceImpl.java</url>
+          <line>44</line>
+          <properties field="explandMapper" class="com.qigan.qiganshop.service.impl.XltcClueUserServiceImpl" />
+          <option name="timeStamp" value="16" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+    <watches-manager>
+      <configuration name="MavenRunConfiguration">
+        <watch expression="receiverMobile" />
+        <watch expression="receiverMobile" />
+        <watch expression="RefundController.managerMap" language="JAVA" />
+        <watch expression="sendSmsResponse" />
+        <watch expression="results.items" />
+        <watch expression="this.sig1" language="JAVA" />
+        <watch expression="results.items" />
+        <watch expression="list" />
+        <watch expression="((NullPointerException)e).stackTrace" custom="java.lang.NullPointerException" />
+        <watch expression="RefundController.managerMap" language="JAVA" />
+        <watch expression="levels.get(4)" />
+        <watch expression="((JedisFactory)jedisPool.internalPool.factory).connectionTimeout" custom="redis.clients.jedis.JedisFactory" />
+      </configuration>
+    </watches-manager>
+  </component>
+</project>

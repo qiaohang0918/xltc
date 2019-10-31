@@ -1,0 +1,59 @@
+package com.qigan.qiganshop.pojo.synchronization;
+
+import com.qigan.qiganshop.pojo.Coupon;
+import com.qigan.qiganshop.util.result.PageResult;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.util.List;
+
+/**
+ * 购物车返回实体
+ *
+ * @author wanghao
+ * @time 2019-05-11 17:35
+ */
+public class ResultCart {
+
+    /**
+     * peisongfei : 3
+     * totalPrice : 500.6
+     * sellOut : []
+     * couponList : {"rows":[{"begin":"2019-04-01 00:00:00","couponId":"93eead6f66474f69a30bcb7a5a3ebaf2","eggNumber":0,"enable":"0","enableTime":"","end":"2020-05-01 00:00:00","fullMoney":100,"reduceMoney":99,"type":"1"},{"begin":"2019-04-01 00:00:00","couponId":"48761fe75ee542dd87880d7b1b0a1365","eggNumber":0,"enable":"1","enableTime":"","end":"2020-05-01 00:00:00","fullMoney":0,"reduceMoney":0,"type":"2"}],"total":2}
+     * sum : 503.6
+     * canBuy : ["117790133021","122826728044","117489926164","122823596099","117814708002","122823597642","122811014677","117814796889","117489921815","122826726344","117791464730","117470594771","117814758570","117791461820"]
+     */
+    @Getter
+    @Setter
+    private double peisongfei;
+    @Getter
+    @Setter
+    private double totalPrice;
+    @Getter
+    @Setter
+    private PageResult couponList;
+    @Getter
+    @Setter
+    private double sum;
+    @Getter
+    @Setter
+    private double realPay;
+    @Getter
+    @Setter
+    private String warehouseCode;
+    @Getter
+    @Setter
+    private double coupon;
+    @Getter
+    @Setter
+    private List sellOut;
+    @Getter
+    @Setter
+    private List canBuy;
+    
+    @Getter
+    @Setter
+    private Coupon useCoupon;
+
+
+}

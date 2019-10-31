@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qigan.qiganshop.mapper.DeliveryOrderMapper">
+    <resultMap id="BaseResultMap" type="com.qigan.qiganshop.pojo.DeliveryOrder">
+        <id column="deliverOrderId" property="deliverOrderId" jdbcType="VARCHAR"/>
+        <result column="deliverId" property="deliverId" jdbcType="INTEGER"/>
+        <result column="orderId" property="orderId" jdbcType="VARCHAR"/>
+        <result column="status" property="status" jdbcType="VARCHAR"/>
+        <result column="deliverStatus" property="deliverStatus" jdbcType="VARCHAR"/>
+        <result column="signer" property="signer" jdbcType="VARCHAR"/>
+        <result column="problem" property="problem" jdbcType="VARCHAR"/>
+        <result column="createTime" property="createTime" jdbcType="VARCHAR"/>
+        <result column="outboundTime" property="outboundTime" jdbcType="VARCHAR"/>
+        <result column="endTime" property="endTime" jdbcType="VARCHAR"/>
+        <result column="deliveryTime" property="deliveryTime" jdbcType="VARCHAR"/>
+        <result column="isTimeout" property="isTimeout" jdbcType="VARCHAR"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        deliverOrderId, deliverId, orderId, status, deliverStatus, signer, problem, createTime,
+        outboundTime, endTime
+    </sql>
+    <select id="findOne" resultMap="BaseResultMap" parameterType="java.lang.String">
+        select
+        <include refid="Base_Column_List"/>
+        from tb_deliver_order
+        where deliverOrderId = #{deliverOrderId,jdbcType=VARCHAR}
+    </select>
+    <insert id="insert" parameterType="com.qigan.qiganshop.pojo.DeliveryOrder">
+        insert into tb_deliver_order (deliverOrderId, deliverId, orderId,
+                                      status, deliverStatus, signer,
+                                      problem, createTime, outboundTime,
+                                      endTime, deliveryTime, isTimeout)
+        values (#{deliverOrderId,jdbcType=VARCHAR}, #{deliverId,jdbcType=INTEGER}, #{orderId,jdbcType=VARCHAR},
+                #{status,jdbcType=VARCHAR}, #{deliverStatus,jdbcType=VARCHAR}, #{signer,jdbcType=VARCHAR},
+                #{problem,jdbcType=VARCHAR}, #{createTime,jdbcType=VARCHAR}, #{outboundTime,jdbcType=VARCHAR},
+                #{endTime,jdbcType=VARCHAR}, #{deliveryTime,jdbcType=VARCHAR}, #{isTimeout,jdbcType=VARCHAR})
+    </insert>
+    <update id="update" parameterType="com.qigan.qiganshop.pojo.DeliveryOrder">
+        update tb_deliver_order
+        <set>
+            <if test="deliverId != null">
+                deliverId = #{deliverId,jdbcType=INTEGER},
+            </if>
+            <if test="orderId != null">
+                orderId = #{orderId,jdbcType=VARCHAR},
+            </if>
+            <if test="status != null">
+                status = #{status,jdbcType=VARCHAR},
+            </if>
+            <if test="deliverStatus != null">
+                deliverStatus = #{deliverStatus,jdbcType=VARCHAR},
+            </if>
+            <if test="signer != null">
+                signer = #{signer,jdbcType=VARCHAR},
+            </if>
+            <if test="problem != null">
+                problem = #{problem,jdbcType=VARCHAR},
+            </if>
+            <if test="createTime != null">
+                createTime = #{createTime,jdbcType=VARCHAR},
+            </if>
+            <if test="outboundTime != null">
+                outboundTime = #{outboundTime,jdbcType=VARCHAR},
+            </if>
+            <if test="endTime != null">
+                endTime = #{endTime,jdbcType=VARCHAR},
+            </if>
+            <if test="deliveryTime != null">
+                deliveryTime = #{deliveryTime,jdbcType=VARCHAR},
+            </if>
+            <if test="isTimeout != null">
+                isTimeout = #{isTimeout,jdbcType=VARCHAR},
+            </if>
+        </set>
+        where deliverOrderId = #{deliverOrderId,jdbcType=VARCHAR}
+    </update>
+
+    <select id="findPage" resultMap="BaseResultMap" parameterType="map">
+        select
+        <include refid="Base_Column_List"/>
+        from tb_deliver_order
+        <if test="record != null">
+            where
+            <if test="record.deliverId != null">
+                deliverId = #{record.deliverId,jdbcType=INTEGER} and
+            </if>
+            <if test="record.orderId != null">
+                orderId = #{record.orderId,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.status != null">
+                status = #{record.status,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.deliverStatus != null">
+                deliverStatus = #{record.deliverStatus,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.signer != null">
+                signer = #{record.signer,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.problem != null">
+                problem = #{record.problem,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.createTime != null">
+                createTime = #{record.createTime,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.outboundTime != null">
+                outboundTime = #{record.outboundTime,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.endTime != null">
+                endTime = #{record.endTime,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.deliveryTime != null">
+                deliveryTime = #{record.deliveryTime,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.isTimeout != null">
+                isTimeout = #{record.isTimeout,jdbcType=VARCHAR} and
+            </if>
+            1 = 1
+        </if>
+        order by createTime desc
+        <if test="page != null and size != null">
+            limit #{page},#{size}
+        </if>
+    </select>
+
+</mapper>

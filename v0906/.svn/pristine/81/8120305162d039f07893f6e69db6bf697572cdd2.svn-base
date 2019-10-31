@@ -1,0 +1,50 @@
+package com.qigan.qiganshop.pojo;
+
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+
+import java.io.Serializable;
+
+/**
+ * 软件版本
+ *
+ * @author wanghao
+ * @time 2019-06-25 16:06
+ */
+
+@ApiModel(description = "version")
+@ToString
+public class Version implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    @ApiModelProperty(value = "版本 ID")
+    @Getter
+    @Setter
+    private String versionId;
+
+    @ApiModelProperty(value = "版本 Code")
+    @Getter
+    @Setter
+    private String versionCode;
+
+    @ApiModelProperty(value = "创建时间")
+    @Getter
+    @Setter
+    private String createTime;
+
+    @ApiModelProperty(value = "URL")
+    @Getter
+    @Setter
+    private String apkUrl;
+
+    @ApiModelProperty(value = "类型")
+    @Getter
+    @Setter
+    private String typeCode;
+
+
+}

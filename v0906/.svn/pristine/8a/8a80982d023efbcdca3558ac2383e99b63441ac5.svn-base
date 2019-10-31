@@ -1,0 +1,252 @@
+package com.qigan.qiganshop.mapper;
+
+import java.util.List;
+import java.util.Map;
+
+import org.apache.ibatis.annotations.Insert;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
+
+import com.qigan.qiganshop.pojo.Goods;
+import com.qigan.qiganshop.pojo.XltcGoodsModel;
+import org.springframework.beans.factory.annotation.Value;
+
+/**
+ * 规格表的 DAO 层
+ *
+ * @author wanghao
+ */
+public interface GoodsMapper {
+
+    /**
+     * 增加
+     *
+     * @param goods
+     * @return
+     */
+    int insert(Goods goods);
+
+
+    /**
+     * 删除
+     *
+     * @param goodsId
+     * @return
+     */
+    int delete(String goodsId);
+
+
+    /**
+     * 修改
+     *
+     * @param goods
+     * @return
+     */
+    int update(@Param("record") Goods goods);
+
+    /**
+     * 查询所有或者查询单个
+     * 当查询所有时,传递 null
+     * 当查询单个时,传递 specification
+     *
+     * @return
+     */
+    List<Goods> findByGoods(@Param("record") Goods goods, @Param("page") Integer page, @Param("rows") Integer rows);
+   
+    List<Goods> findByGoods2(@Param("record") Goods goods, @Param("page") Integer page, @Param("rows") Integer rows);
+
+    /**
+     * 查询单个规格
+     *
+     * @param goodsId
+     * @return
+     */
+    Goods findOne(@Param("goodsId") String goodsId);
+    
+    List<Goods> findOnes(@Param("goodsId") String goodsId, @Param("wsId") String warehouseId);
+
+    /**
+     * 查询推荐商品
+     *
+     * @return
+     */
+    List<Goods> findByRand(String wareHouseId);
+
+    /**
+     * 根据仓库  分类  标签 查询商品列表
+     *
+     * @param warehouseId
+     * @param cateId
+     * @param labelId
+     * @param page
+     * @param size
+     * @return
+     */
+    List<Goods> findByCateLabelStock(
+            @Param("warehouseId") String warehouseId,
+            @Param("cateId") String cateId,
+            @Param("labelId") String labelId,
+            @Param("page") Integer page,
+            @Param("size") Integer size
+
+    );
+
+    /**
+     * 根据仓库ID查询商品信息
+     *
+     * @param goods
+     * @param warehouseId
+     * @return
+     */
+
+    List<Goods> findByWarehouseIdAndAll(@Param("record") Goods goods,
+                                        @Param("warehouseId") String warehouseId,
+                                        @Param("page") Integer page,
+                                        @Param("rows") Integer rows);
+    
+    @Select("select code from tb_goods where goodsId = #{id}")
+    String findGoodsCode(String id);
+    
+    @Select({
+    	"select t.goodsId as goodsId, t.name as goodsName, t.categoryCode as categoryCode, ",
+    	"concat(#{host}, SUBSTRING_INDEX(t.picUrls, ',', 1)) as imageUrl, ",
+    	"t.VIPrice ,t.salesPrice, t.costPrice,x.salableNum ",
+    	"from tb_goods t ",
+    	"left join tb_stock x on x.goodsId = t.goodsId ",
+    	"where x.warehouseId = #{warehoureId} and x.salableNum > 0 ",
+    	"and t.categoryCode = #{cateId} and t.del = '0' "
+    })
+    List<XltcGoodsModel> findGoodsByStock(@Param("warehoureId") String warehoureId, @Param("host") String host, @Param("cateId") String cateId);
+    
+    @Select({
+    	"select t.createDate, t.goodsId, t.name as goodsName, t.simpleName, t.categoryCode, t.VIPrice , ",
+    	"t.salesPrice, t.costPrice,x.salableNum, ",
+    	"concat(#{host}, SUBSTRING_INDEX(t.picUrls, ',', 1)) as imageUrl, z.labelId ",
+    	"from tb_label_goods z",
+    	"left join tb_goods t  on t.goodsId = z.goodsId ",
+    	"left join tb_stock x on x.goodsId = z.goodsId ",
+    	"where x.warehouseId = #{warehoureId} and x.salableNum > 0 and t.categoryCode = #{cateId} and t.del = '0' and status = '2' "
+    })
+    List<XltcGoodsModel> findGoodsByStockAndLabel(@Param("warehoureId") String warehoureId, @Param("host") String host, @Param("cateId") String cateId);
+    
+    @Update("delete from tb_goods where goodsId = #{id}")
+    void truncate(String id);
+    
+    @Insert({
+    	"<script> ",
+    	" insert into tb_goods (goodsId, createDate, modifyDate, ",
+        " code, name, note, weight, ",
+        " combine, del, length, ",
+        " width, height, volume, ",
+        " simpleName, categoryCode, categoryName, ",
+        " labelId, itemUnitCode, itemUnitName, ",
+        " salesPrice, costPrice, stockStatusCode, ",
+        " stockNum, picUrls, originArea, ",
+        " shelfLife, itemAddAttribute, itemBrandCode, ",
+        " itemBrandName, status, push, ",
+        " isSpec, isVIPGoods, VIPrice, headCate, endCate, activePrice, unit) values",
+    	"<foreach collection='list' item='item' index='index' separator=','> ",
+    	"(#{item.goodsId,jdbcType=VARCHAR}, #{item.createDate,jdbcType=VARCHAR}, #{item.modifyDate,jdbcType=VARCHAR},",
+        "#{item.code,jdbcType=VARCHAR}, #{item.name,jdbcType=VARCHAR}, #{item.note,jdbcType=VARCHAR}, #{item.weight,jdbcType=DOUBLE},",
+        "#{item.combine,jdbcType=VARCHAR}, #{item.del,jdbcType=VARCHAR}, #{item.length,jdbcType=DOUBLE},",
+        "#{item.width,jdbcType=DOUBLE}, #{item.height,jdbcType=DOUBLE}, #{item.volume,jdbcType=VARCHAR},",
+        "#{item.simpleName,jdbcType=VARCHAR}, #{item.categoryCode,jdbcType=VARCHAR}, #{item.categoryName,jdbcType=VARCHAR},",
+        "#{item.labelId,jdbcType=VARCHAR}, #{item.itemUnitCode,jdbcType=VARCHAR}, #{item.itemUnitName,jdbcType=VARCHAR},",
+        "#{item.salesPrice,jdbcType=DECIMAL}, #{item.costPrice,jdbcType=DECIMAL}, #{item.stockStatusCode,jdbcType=VARCHAR},",
+        "#{item.stockNum,jdbcType=INTEGER}, #{item.picUrls,jdbcType=VARCHAR}, #{item.originArea,jdbcType=VARCHAR},",
+        "#{item.shelfLife,jdbcType=VARCHAR}, #{item.itemAddAttribute,jdbcType=VARCHAR}, #{item.itemBrandCode,jdbcType=VARCHAR},",
+        "#{item.itemBrandName,jdbcType=VARCHAR}, #{item.status,jdbcType=VARCHAR}, #{item.push,jdbcType=VARCHAR},",
+        "#{item.isSpec,jdbcType=VARCHAR}, #{item.isVIPGoods,jdbcType=VARCHAR}, #{item.VIPrice,jdbcType=DECIMAL},",
+        "#{item.headCate,jdbcType=VARCHAR}, #{item.endCate,jdbcType=VARCHAR}, #{item.activePrice,jdbcType=DECIMAL},",
+        "#{item.unit,jdbcType=VARCHAR}) ",
+    	"</foreach>",
+    	"  ON DUPLICATE KEY UPDATE ",
+    	"goodsId = VALUES(goodsId),",
+    	"code = VALUES(code),",
+    	"name =  VALUES(name), ",
+    	"del =  VALUES(del),",
+    	"categoryCode =  VALUES(categoryCode),",
+    	"categoryName =  VALUES(categoryName), ",
+    	"salesPrice =  VALUES(salesPrice), ",
+    	"simpleName =  VALUES(simpleName) ",
+    	"</script> "
+    })
+    void insertAllByGY(@Param("list") List<Goods> list);
+    
+    @Select({
+    	"select t.goodsId as goodsId, t.name as goodsName, t.categoryCode as categoryCode, ",
+    	"concat(#{host}, SUBSTRING_INDEX(t.picUrls, ',', 1)) as imageUrl, t.simpleName, ",
+    	"t.VIPrice ,t.salesPrice, t.costPrice,x.salableNum ",
+    	"from tb_goods t ",
+    	"left join tb_stock x on x.goodsId = t.goodsId ",
+    	"where x.salableNum > 0 and t.code = #{id} "
+    })
+    List<XltcGoodsModel> findGoodsByIds(@Param("id") String id, @Param("host") String host);
+    
+    @Select({
+    	"select goodsId as goodsId, picUrls as picUrls, note as note, del as del from tb_goods"
+    })
+    List<Map<String, String>> findGoodsAllPic();
+    
+    @Select({
+    	"select distinct t.goodsId from tb_goods t ",
+    	"left join tb_stock x on x.goodsId = t.goodsId ",
+    	"where x.salableNum > 0 and t.del = '0' and t.status = '2' and x.warehouseId = #{warehouseId} "
+    })
+    List<String> findGoodsIdByWarehouse(String warehouseId);
+    
+    
+    @Select({
+        "<script>",
+            "select",
+            "count(0) ",
+            "from tb_goods t1",
+            "where t1.del = '0' and t1.goodsId in (",
+            "<foreach collection='ids' item='id' index='index' separator=','> ",
+                "#{id}",
+                "</foreach>",
+            ")",
+        "</script>"
+    })
+    long findGoodsIsDel(@Param("ids") List<String> goodsIds);
+    
+
+
+    List<Goods> findGoodsInIds(@Param("ids") List<String> ids);
+    
+    
+
+
+    /**
+     * 根据keywords warehouseId 查商品spu
+     * @param keyWord
+     * @param wareHouseId
+     * @return
+     */
+    List<XltcGoodsModel> searchGoodsByWordsAndWareHouse(@Param("keyWord") String keyWord, @Param("wareHouseId") String wareHouseId, @Param("localPicHead") String localPicHead);
+    
+    
+    @Update({
+    	"update tb_goods set del = #{del}",
+    	"where code = #{code}"
+    })
+    int updateGoodsStatus(@Param("code") String code, @Param("del") String del);
+
+
+    /**
+     * 查询商品code
+     * @param goodsId
+     * @return
+     */
+    @Select("select code from tb_goods where goodsId= #{goodsId} limit 0 ,1 ")
+    String findCodeByGoodsId(@Param("goodsId") String goodsId);
+
+    /**
+     * 查询受限商品详情
+     * @param searchCodes
+     * @return
+     */
+    @Select("select * from tb_goods where code in ( ${searchCodes} )")
+    List<Goods> findGoodsByCodes(@Param("searchCodes")String searchCodes);
+}

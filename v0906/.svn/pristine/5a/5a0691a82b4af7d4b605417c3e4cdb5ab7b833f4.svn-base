@@ -1,0 +1,421 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qigan.qiganshop.mapper.OrderMapper">
+    <resultMap id="BaseResultMap" type="com.qigan.qiganshop.pojo.Order">
+        <id column="orderId" property="orderId" jdbcType="VARCHAR"/>
+        <result column="guanyiId" property="guanyiId" jdbcType="VARCHAR"/>
+        <result column="userId" property="userId" jdbcType="VARCHAR"/>
+        <result column="userAddrId" property="userAddrId" jdbcType="VARCHAR"/>
+        <result column="userChooseTime" property="userChooseTime" jdbcType="VARCHAR"/>
+        <result column="dealDatetime" property="dealDatetime" jdbcType="VARCHAR"/>
+        <result column="payTime" property="payTime" jdbcType="VARCHAR"/>
+        <result column="peisongTime" property="peisongTime" jdbcType="VARCHAR"/>
+        <result column="endTime" property="endTime" jdbcType="VARCHAR"/>
+        <result column="shopCode" property="shopCode" jdbcType="VARCHAR"/>
+        <result column="warehouseCode" property="warehouseCode" jdbcType="VARCHAR"/>
+        <result column="expressCode" property="expressCode" jdbcType="VARCHAR"/>
+        <result column="orderTypeCode" property="orderTypeCode" jdbcType="VARCHAR"/>
+        <result column="receiverName" property="receiverName" jdbcType="VARCHAR"/>
+        <result column="receiverMobile" property="receiverMobile" jdbcType="VARCHAR"/>
+        <result column="receiverProvince" property="receiverProvince" jdbcType="VARCHAR"/>
+        <result column="receiverCity" property="receiverCity" jdbcType="VARCHAR"/>
+        <result column="receiverDistrict" property="receiverDistrict" jdbcType="VARCHAR"/>
+        <result column="receiverAddress" property="receiverAddress" jdbcType="VARCHAR"/>
+        <result column="payCode" property="payCode" jdbcType="VARCHAR"/>
+        <result column="money" property="money" jdbcType="DOUBLE"/>
+        <result column="couponMoney" property="couponMoney" jdbcType="DOUBLE"/>
+        <result column="peisongfei" property="peisongfei" jdbcType="DOUBLE"/>
+        <result column="payMoney" property="payMoney" jdbcType="DOUBLE"/>
+        <result column="invoiceId" property="invoiceId" jdbcType="VARCHAR"/>
+        <result column="buyerMemo" property="buyerMemo" jdbcType="VARCHAR"/>
+        <result column="status" property="status" jdbcType="VARCHAR"/>
+        <result column="comment" property="comment" jdbcType="VARCHAR"/>
+    </resultMap>
+    <resultMap id="count_Map" type="com.qigan.qiganshop.pojo.CountMap">
+        <id column="userId" property="userId" jdbcType="VARCHAR"/>
+        <result column="status" property="status" jdbcType="VARCHAR"/>
+        <result column="number" property="number" jdbcType="INTEGER"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        orderId, guanyiId, userId, userAddrId, userChooseTime, dealDatetime, payTime, peisongTime,
+        endTime, shopCode, warehouseCode, expressCode, orderTypeCode, receiverName, receiverMobile,
+        receiverProvince, receiverCity, receiverDistrict, receiverAddress, payCode, money,
+        couponMoney,peisongfei,payMoney,waitingPay,
+        invoiceId, buyerMemo,`status`,comment
+    </sql>
+    <select id="findOne" resultMap="BaseResultMap" parameterType="java.lang.String">
+        select
+        <include refid="Base_Column_List"/>
+        from tb_order
+        where orderId = #{orderId,jdbcType=VARCHAR}
+    </select>
+    <insert id="add" parameterType="com.qigan.qiganshop.pojo.Order">
+        insert into tb_order (orderId, guanyiId, userId,
+                              userAddrId, userChooseTime, dealDatetime,
+                              payTime, peisongTime, endTime,
+                              shopCode, warehouseCode, expressCode,
+                              orderTypeCode, receiverName, receiverMobile,
+                              receiverProvince, receiverCity, receiverDistrict,
+                              receiverAddress, payCode, money, couponMoney, peisongfei, payMoney,
+                              invoiceId, buyerMemo, status,comment)
+        values (#{orderId,jdbcType=VARCHAR}, #{guanyiId,jdbcType=VARCHAR}, #{userId,jdbcType=VARCHAR},
+                #{userAddrId,jdbcType=VARCHAR}, #{userChooseTime,jdbcType=VARCHAR}, #{dealDatetime,jdbcType=VARCHAR},
+                #{payTime,jdbcType=VARCHAR}, #{peisongTime,jdbcType=VARCHAR}, #{endTime,jdbcType=VARCHAR},
+                #{shopCode,jdbcType=VARCHAR}, #{warehouseCode,jdbcType=VARCHAR}, #{expressCode,jdbcType=VARCHAR},
+                #{orderTypeCode,jdbcType=VARCHAR}, #{receiverName,jdbcType=VARCHAR}, #{receiverMobile,jdbcType=VARCHAR},
+                #{receiverProvince,jdbcType=VARCHAR}, #{receiverCity,jdbcType=VARCHAR},
+                #{receiverDistrict,jdbcType=VARCHAR},
+                #{receiverAddress,jdbcType=VARCHAR}, #{payCode,jdbcType=VARCHAR}, #{money,jdbcType=DOUBLE},
+                #{couponMoney,jdbcType=DOUBLE}, #{peisongfei,jdbcType=DOUBLE}, #{payMoney,jdbcType=DOUBLE},
+                #{invoiceId,jdbcType=VARCHAR}, #{buyerMemo,jdbcType=VARCHAR}, #{status,jdbcType=VARCHAR}, #{comment,jdbcType=VARCHAR})
+    </insert>
+    <select id="findPage" resultMap="BaseResultMap" parameterType="map">
+        select
+        <include refid="Base_Column_List"/>
+        from tb_order
+        <if test="record != null">
+            where
+            <if test="record.guanyiId != null">
+                guanyiId = #{record.guanyiId,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.userId != null">
+                userId = #{record.userId,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.userAddrId != null">
+                userAddrId = #{record.userAddrId,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.userChooseTime != null">
+                userChooseTime = #{record.userChooseTime,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.dealDatetime != null">
+                dealDatetime = #{record.dealDatetime,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.payTime != null">
+                payTime = #{record.payTime,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.peisongTime != null">
+                peisongTime = #{record.peisongTime,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.endTime != null">
+                endTime = #{record.endTime,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.shopCode != null">
+                shopCode = #{record.shopCode,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.warehouseCode != null">
+                warehouseCode = #{record.warehouseCode,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.expressCode != null">
+                expressCode = #{record.expressCode,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.orderTypeCode != null">
+                orderTypeCode = #{record.orderTypeCode,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.receiverName != null">
+                receiverName = #{record.receiverName,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.receiverMobile != null">
+                receiverMobile = #{record.receiverMobile,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.receiverProvince != null">
+                receiverProvince = #{record.receiverProvince,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.receiverCity != null">
+                receiverCity = #{record.receiverCity,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.receiverDistrict != null">
+                receiverDistrict = #{record.receiverDistrict,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.receiverAddress != null">
+                receiverAddress = #{record.receiverAddress,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.payCode != null">
+                payCode = #{record.payCode,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.money != null">
+                money = #{record.money,jdbcType=DOUBLE} and
+            </if>
+            <if test="record.invoiceId != null">
+                invoiceId = #{record.invoiceId,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.buyerMemo != null">
+                buyerMemo = #{record.buyerMemo,jdbcType=VARCHAR} and
+            </if>
+           <!--  <if test="record.status != null">
+                status = #{record.status,jdbcType=VARCHAR} and
+            </if> -->
+            <if test="record.status != null">
+                status like '${record.status}%' and
+            </if>
+            1=1
+        </if>
+        order by dealDatetime ${rule}
+        <if test="page != null and size != null">
+            limit #{page},#{size}
+        </if>
+
+    </select>
+
+    <select id="findPayInfoByType" resultType="java.util.Map">
+        select b.* from tb_order a
+        RIGHT  JOIN tb_pay b on a.orderId= b.orderId
+        <if test="map !=null">
+            where
+            <if test="map.payTypeCode !=null">
+                b.payTypeCode=#{map.payTypeCode} and
+            </if>
+            <if test="map.payCode !=null">
+                b.payCode=#{map.payCode} and
+            </if>
+            <if test="map.orderId !=null">
+                b.orderId=#{map.orderId} and
+            </if>
+            <if test="map.outPayCode !=null">
+                b.outPayCode=#{map.outPayCode} and
+            </if>
+            <!-- 判断价钱区间 -->
+            <if test="map.minMoney !=null or map.maxMoney !=null ">
+                <if test="map.minMoney !=null">
+                    b.payment  &gt; ${map.minMoney} and
+                </if>
+                <if test="map.maxMoney !=null">
+                    b.payment  &lt; ${map.maxMoney} and
+                </if>
+            </if>
+            <!-- 判断时间区间 -->
+            <if test="map.startTime !=null or map.endTime !=null ">
+                <if test="map.startTime !=null">
+                    b.paytime <![CDATA[ >= ]]> #{map.startTime} and
+                </if>
+                <if test="map.endTime !=null">
+                    b.paytime <![CDATA[ <= ]]> #{map.endTime} and
+                </if>
+            </if>
+            1=1
+        </if>
+        order by paytime desc
+    </select>
+
+    <update id="update" parameterType="com.qigan.qiganshop.pojo.Order">
+        update tb_order
+        <set>
+            <if test="guanyiId != null">
+                guanyiId = #{guanyiId,jdbcType=VARCHAR},
+            </if>
+            <if test="userId != null">
+                userId = #{userId,jdbcType=VARCHAR},
+            </if>
+            <if test="userAddrId != null">
+                userAddrId = #{userAddrId,jdbcType=VARCHAR},
+            </if>
+            <if test="userChooseTime != null">
+                userChooseTime = #{userChooseTime,jdbcType=VARCHAR},
+            </if>
+            <if test="dealDatetime != null">
+                dealDatetime = #{dealDatetime,jdbcType=VARCHAR},
+            </if>
+            <if test="payTime != null">
+                payTime = #{payTime,jdbcType=VARCHAR},
+            </if>
+            <if test="peisongTime != null">
+                peisongTime = #{peisongTime,jdbcType=VARCHAR},
+            </if>
+            <if test="endTime != null">
+                endTime = #{endTime,jdbcType=VARCHAR},
+            </if>
+            <if test="shopCode != null">
+                shopCode = #{shopCode,jdbcType=VARCHAR},
+            </if>
+            <if test="warehouseCode != null">
+                warehouseCode = #{warehouseCode,jdbcType=VARCHAR},
+            </if>
+            <if test="expressCode != null">
+                expressCode = #{expressCode,jdbcType=VARCHAR},
+            </if>
+            <if test="orderTypeCode != null">
+                orderTypeCode = #{orderTypeCode,jdbcType=VARCHAR},
+            </if>
+            <if test="receiverName != null">
+                receiverName = #{receiverName,jdbcType=VARCHAR},
+            </if>
+            <if test="receiverMobile != null">
+                receiverMobile = #{receiverMobile,jdbcType=VARCHAR},
+            </if>
+            <if test="receiverProvince != null">
+                receiverProvince = #{receiverProvince,jdbcType=VARCHAR},
+            </if>
+            <if test="receiverCity != null">
+                receiverCity = #{receiverCity,jdbcType=VARCHAR},
+            </if>
+            <if test="receiverDistrict != null">
+                receiverDistrict = #{receiverDistrict,jdbcType=VARCHAR},
+            </if>
+            <if test="receiverAddress != null">
+                receiverAddress = #{receiverAddress,jdbcType=VARCHAR},
+            </if>
+            <if test="payCode != null">
+                payCode = #{payCode,jdbcType=VARCHAR},
+            </if>
+            <if test="money != null">
+                money = #{money,jdbcType=DOUBLE},
+            </if>
+            <if test="couponMoney != null">
+                couponMoney = #{couponMoney,jdbcType=DOUBLE},
+            </if>
+            <if test="peisongfei != null">
+                peisongfei = #{peisongfei,jdbcType=DOUBLE},
+            </if>
+            <if test="payMoney != null">
+                payMoney = #{payMoney,jdbcType=DOUBLE},
+            </if>
+            <if test="invoiceId != null">
+                invoiceId = #{invoiceId,jdbcType=VARCHAR},
+            </if>
+            <if test="buyerMemo != null">
+                buyerMemo = #{buyerMemo,jdbcType=VARCHAR},
+            </if>
+            <if test="status != null">
+                status = #{status,jdbcType=VARCHAR},
+            </if>
+            <if test="comment != null">
+                comment = #{comment,jdbcType=VARCHAR},
+            </if>
+            <if test="waitingPay != null">
+                waitingPay = #{waitingPay,jdbcType=VARCHAR},
+            </if>
+        </set>
+        where orderId = #{orderId,jdbcType=VARCHAR}
+    </update>
+    <select id="findLastId" resultType="string">
+        select orderId
+        from tb_order
+        order by orderId desc
+        limit 0,1
+    </select>
+    <select id="findExpired" resultMap="BaseResultMap" parameterType="string">
+        select
+        <include refid="Base_Column_List"/>
+        from tb_order
+        where dealDatetime <![CDATA[<]]> #{late}
+        and status = 0
+        order by dealDatetime
+    </select>
+    <update id="updateStatus" parameterType="map">
+        update tb_order
+        set status = #{status}
+        where orderId = #{orderId}
+    </update>
+    <select id="findByOrder" parameterType="map" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from tb_order
+        <if test="record != null or (beginTime != null and endTime != null)">
+            where
+            <if test="record.orderId != null">
+                orderId = #{record.orderId} and
+            </if>
+            <if test="record.userId != null">
+                userId = #{record.userId} and
+            </if>
+<!--            <if test="record.status != null">-->
+<!--                status = #{record.status} and-->
+<!--            </if>-->
+            <if test="record.status != null">
+                status in( ${record.status} ) and
+            </if>
+            <if test="record.receiverMobile != null">
+                receiverMobile = #{record.receiverMobile}  and
+            </if>
+            <if test="beginTime != null and endTime != null">
+                dealDatetime <![CDATA[ >= ]]> #{beginTime} and
+                dealDatetime <![CDATA[ <= ]]> #{endTime} and
+            </if>
+            1 =1
+        </if>
+        <if test="rule != null">
+            order by dealDatetime ${rule}
+        </if>
+        <if test="page!= null and rows != null">
+            limit #{page},#{rows}
+        </if>
+
+    </select>
+    <select id="findEnd" parameterType="map" resultType="int">
+        select
+        count(0)
+        from tb_order
+        where
+        <if test="beginTime != null and endTime != null">
+            dealDatetime <![CDATA[ >= ]]> #{beginTime} and
+            dealDatetime <![CDATA[ <= ]]> #{endTime} and
+        </if>
+        status = '4'
+    </select>
+    <select id="findHalfway" parameterType="map" resultType="int">
+        select
+        count(0)
+        from tb_order
+        where
+        <if test="beginTime != null and endTime != null">
+            dealDatetime <![CDATA[ >= ]]> #{beginTime} and
+            dealDatetime <![CDATA[ <= ]]> #{endTime} and
+        </if>
+        status = '3'
+    </select>
+    <select id="findQuestion" parameterType="map" resultType="int">
+        select
+        count(0)
+        from tb_order
+        where
+        <if test="beginTime != null and endTime != null">
+            dealDatetime <![CDATA[ >= ]]> #{beginTime} and
+            dealDatetime <![CDATA[ <= ]]> #{endTime} and
+        </if>
+        status = '5'
+    </select>
+    <select id="findByUserId" parameterType="string" resultMap="count_Map">
+        SELECT `userId`, `status`, count(`status`) as number
+        FROM tb_order
+        where userId = #{userId}
+        GROUP BY `status`
+    </select>
+
+    <update id="updateComment" parameterType="map">
+        update tb_order
+        set comment = #{comment},
+            status  = '8'
+        where orderId = #{orderId}
+    </update>
+    
+    
+     <select id="findOrderList" parameterType="map" resultType="com.qigan.qiganshop.pojo.XltcOrderModel">
+        select
+        	orderId,userChooseTime, receiverName, dealDatetime,
+        	receiverMobile, receiverProvince, receiverCity, receiverDistrict,
+        	receiverAddress, money, status, comment
+        from tb_order
+        <if test="record != null">
+            where
+            <if test="record.orderId != null">
+                orderId = #{record.orderId} and
+            </if>
+            <if test="record.userId != null">
+                userId = #{record.userId} and
+            </if>
+<!--            <if test="record.status != null">-->
+<!--                status = #{record.status} and-->
+<!--            </if>-->
+            <if test="record.status != null">
+                status in( ${record.status} ) and
+            </if>
+            <if test="record.receiverMobile != null">
+                receiverMobile = #{record.receiverMobile}  and
+            </if>
+            <if test="record.start != null and record.end != null">
+                dealDatetime between #{record.start} and #{record.end} and
+            </if>
+            1 =1
+        </if>
+        order by dealDatetime desc
+    </select>
+</mapper>

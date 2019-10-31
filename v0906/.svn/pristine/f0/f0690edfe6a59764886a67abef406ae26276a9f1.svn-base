@@ -1,0 +1,218 @@
+package com.qigan.qiganshop.service.impl;
+
+import com.mysql.jdbc.TimeUtil;
+import com.qigan.qiganshop.constant.RedisConstant;
+import com.qigan.qiganshop.constant.TimeFormat;
+import com.qigan.qiganshop.mapper.GoodsMapper;
+import com.qigan.qiganshop.mapper.TbPresellGoodsMapper;
+import com.qigan.qiganshop.myutils.SqlConstructUtils;
+import com.qigan.qiganshop.pojo.*;
+import com.qigan.qiganshop.service.StockService;
+import com.qigan.qiganshop.service.XltcPreSellGoodsService;
+import com.qigan.qiganshop.util.access.JedisUtil;
+import com.qigan.qiganshop.util.notnull.StringNotNull;
+import com.qigan.qiganshop.util.result.XltcResult;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.*;
+
+/**
+ * @Aurher: QiaoHang
+ * @Description:
+ * @Data: 2019/10/5 14:55
+ * @Modified By:
+ */
+@Service
+@Transactional(rollbackFor = Exception.class)
+public class XltcPreSellGoodsServiceImpl implements XltcPreSellGoodsService {
+
+    @Autowired
+    TbPresellGoodsMapper mapper;
+    @Autowired
+    JedisUtil jedisUtil;
+    @Autowired
+    GoodsMapper goodsMapper;
+
+
+    /**
+     * 添加预售商品
+     * @param presellGoods
+     * @return
+     */
+    @Override
+    public XltcResult addPreSellGoods(TbPresellGoods presellGoods) {
+        //插入数据库
+        //未启用
+        //校验开始 / 结束时间！
+        XltcResult xltcResult = this.checkStartAndAfterTime(presellGoods);
+        if(xltcResult!=null)
+            return xltcResult;
+        presellGoods.setEnabled("0");
+        presellGoods.setSellnum("0");
+        presellGoods.setPreSellId(UUID.randomUUID().toString().replace("-",""));
+        int i = mapper.insert(presellGoods);
+        return XltcResult.ok();
+    }
+
+    /**
+     * 修改
+     * @param tbPresellGoods
+     * @return
+     */
+    @Override
+    public XltcResult updatePreSellGoods(TbPresellGoods tbPresellGoods) {
+        if(!StringNotNull.check(tbPresellGoods.getDuringbefore(),
+                tbPresellGoods.getDuringafter())){
+            return XltcResult.error("开始/结束时间  必传！");
+        }
+        //校验开始 / 结束时间！
+        XltcResult xltcResult = this.checkStartAndAfterTime(tbPresellGoods);
+        if(xltcResult!=null)
+            return xltcResult;
+        //如果修改目的是启用，则需要排除是否该code还在上期预售中！
+        if("1".equals(tbPresellGoods.getEnabled())){
+            //查询 code=code   enable=1  验证level equals
+            TbPresellGoodsExample example = new TbPresellGoodsExample();
+            TbPresellGoodsExample.Criteria criteria = example.createCriteria();
+            criteria.andPresellgoodscodeEqualTo(tbPresellGoods.getPresellgoodscode());
+            criteria.andEnabledEqualTo("1");
+            List<TbPresellGoods> goods = mapper.selectByExample(example);
+            if(!SqlConstructUtils.nullList(goods)){
+                if(!tbPresellGoods.getLevel().equals(goods.get(0).getLevel())){
+                    //同一商品  不同期号  不让同时预售，否则覆盖上期(期号和截至时间)
+                    return XltcResult.error("当前商品上一期预售还未结束！请先结束上期预售！");
+                }
+            }
+        }
+        int i = mapper.updateByPrimaryKeySelective(tbPresellGoods);
+        if(i>0){
+            //查询更新后的记录
+            TbPresellGoods goods = mapper.selectByPrimaryKey(tbPresellGoods.getPreSellId());
+            if("0".equals(goods.getEnabled())){
+                //移除受限商品
+                jedisUtil.removeElementFromHash(RedisConstant.PRESELL_GOODS_COODE,goods.getPresellgoodscode());
+            }
+            if("1".equals(tbPresellGoods.getEnabled())){
+                //添加/更新 受限商品
+                jedisUtil.setToHash(RedisConstant.PRESELL_GOODS_COODE,goods.getPresellgoodscode(),goods.getLevel()+"@"+goods.getDuringafter().replace(" ","_"));
+            }
+            return XltcResult.ok();
+        }else {
+            return XltcResult.error("操作错误。联系管理员");
+        }
+    }
+
+
+    /**
+     * 删除预售商品 前提是预售未开始
+     * @param tbPresellGoods
+     * @return
+     */
+    @Override
+    public XltcResult deletePreSellGoods(TbPresellGoods tbPresellGoods) {
+        XltcResult result = checkStartAndAfterTime(tbPresellGoods);
+        if(result!=null)
+            return result;
+        try {
+            Date before = TimeFormat.nomalFormat.parse(tbPresellGoods.getDuringbefore());
+            if(before.getTime() > new Date().getTime()){
+                //开始时间大于当前时间(未开始，才允许删除)
+                mapper.deleteByPrimaryKey(tbPresellGoods.getPreSellId());
+                //删除redis（code）
+                jedisUtil.removeElementFromHash(RedisConstant.PRESELL_GOODS_COODE,tbPresellGoods.getPresellgoodscode());
+            }else {
+                return XltcResult.error("删除预售商品必须在本期预售未开始是操作！");
+            }
+        }catch (Exception e){
+            return XltcResult.error("删除失败，联系管理员！");
+        }
+        return XltcResult.ok();
+    }
+
+
+    /**
+     * 校验时间
+     * @param tbPresellGoods
+     * @return
+     */
+    public XltcResult checkStartAndAfterTime( TbPresellGoods tbPresellGoods){
+        try {
+            Date before = TimeFormat.nomalFormat.parse(tbPresellGoods.getDuringbefore());
+            Date after = TimeFormat.nomalFormat.parse(tbPresellGoods.getDuringafter());
+            if(before.getTime() >= after.getTime()){
+                return XltcResult.error("开始时间必须大于结束时间");
+            }
+        }catch (Exception e){
+            XltcResult.error("开始时间/结束时间  格式有误，应为[ yyyy-MM-dd HH:mm:ss ]！");
+        }
+        return null;
+    }
+
+
+    /**
+     * @param code
+     * @param level
+     * @param enabled
+     * @return
+     */
+    @Override
+    public XltcResult searchPreSellGoods(String enabled, String level, String code) {
+        //查询预售商品 返回售价
+        TbPresellGoodsExample example  = new TbPresellGoodsExample();;
+        TbPresellGoodsExample.Criteria criteria = example.createCriteria();
+        if(StringNotNull.check(enabled)){
+            criteria.andEnabledEqualTo(enabled);
+        }
+        if(StringNotNull.check(level)){
+            criteria.andLevelEqualTo(level);
+        }
+        if(StringNotNull.check(code)){
+            criteria.andPresellgoodscodeEqualTo(code);
+        }
+        //返回预售商品baseMessage  预售message
+        ArrayList<Map<String, Object>> mapList = new ArrayList<>();
+        List<TbPresellGoods> presellGoods = mapper.selectByExample(example);
+        if(!SqlConstructUtils.nullList(presellGoods)){
+            for (TbPresellGoods presellGood : presellGoods) {
+                Goods goods = goodsMapper.findByCode(presellGood.getPresellgoodscode());
+                if(goods!=null){
+                    HashMap<String, Object> map = new HashMap<>();
+                    map.put("goodsDetails",goods);
+                    map.put("preSellDetails",presellGood);
+                    mapList.add(map);
+                }
+            }
+        }
+        return XltcResult.ok(mapList);
+    }
+
+
+    /**
+     * 添加本期该预售商品数量
+     * @param code
+     * @param level
+     * @param count
+     * @return
+     */
+    @Override
+    public int addCurrentPreSelllGoodsSellNum(String code, String level, String count) {
+        if(!StringNotNull.check(code,level,count))
+            return  0;
+        int i = mapper.addCurrentPreSelllGoodsSellNum(code,level,count);
+        return i;
+    }
+
+
+    /**
+     * 查询缓存中的预售商品信息
+     */
+    public Set<String> findPreSellGoods(){
+        Set<String> preSellGoodsCodes = jedisUtil.getElementsFromHash(RedisConstant.PRESELL_GOODS_COODE);
+        return preSellGoodsCodes;
+    }
+
+
+
+}

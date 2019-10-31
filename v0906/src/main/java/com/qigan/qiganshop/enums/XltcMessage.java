@@ -1,0 +1,55 @@
+/**
+ * 
+ */
+package com.qigan.qiganshop.enums;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import com.qigan.qiganshop.pojo.Message;
+import com.qigan.qiganshop.pojo.XltcMessageModel;
+
+/**
+ * @author wyy
+ *
+ */
+public enum XltcMessage {
+	OrderMessage("订单提醒", "1"), SystemMessage("系统消息", "2"), AlertMessage("活动消息", "3");
+	
+	private String text;
+	
+	private String value;
+	
+	private XltcMessage(String text, String value){
+		this.text = text;
+		this.value = value;
+	}
+
+	public String getText() {
+		return text;
+	}
+
+	public String getValue() {
+		return value;
+	}
+	
+	public static List<?> getAllMessageType(List<Message> message){
+		List<XltcMessageModel> list = new ArrayList<>();
+		for (XltcMessage xltcMessage : XltcMessage.values()) {
+			List<Message> size = new ArrayList<>();
+			XltcMessageModel model = new XltcMessageModel();
+			model.setMessageName(xltcMessage.text);
+			model.setMessageType(xltcMessage.value);
+			for (Message resultMessage : message) {
+				if(xltcMessage.value.equals(resultMessage.getType())){
+					if(size != null && size.size() == 10)
+						continue;
+					size.add(resultMessage);
+				}
+			}
+			model.setMessages(size);
+			list.add(model);
+		}
+		return list;
+	}
+}

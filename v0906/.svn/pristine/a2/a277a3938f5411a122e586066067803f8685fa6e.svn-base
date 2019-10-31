@@ -1,0 +1,27 @@
+/**
+ * 
+ */
+package com.qigan.qiganshop.service;
+
+import java.util.List;
+
+import com.qigan.qiganshop.domain.TbActivityMain;
+import com.qigan.qiganshop.pojo.CommonPage;
+
+/**
+ * @author wyy
+ *
+ */
+public interface TbActivityMainService {
+	
+	List<?> findAll(CommonPage page);
+	
+	List<?> findByConditions(TbActivityMain activity);
+	
+	void insert(TbActivityMain activity);
+	
+	void update(TbActivityMain activity);
+	
+	void delete(Long... ids);
+	
+}

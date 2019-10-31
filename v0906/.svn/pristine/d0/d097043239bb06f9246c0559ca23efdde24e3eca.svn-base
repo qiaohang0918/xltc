@@ -1,0 +1,189 @@
+package com.qigan.qiganshop.service.impl;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.qigan.qiganshop.service.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.qigan.qiganshop.mapper.OrderMapper;
+import com.qigan.qiganshop.pojo.Info;
+import com.qigan.qiganshop.pojo.Order;
+import com.qigan.qiganshop.pojo.OrderItem;
+import com.qigan.qiganshop.pojo.Stock;
+import com.qigan.qiganshop.pojo.group.GroupOrder;
+import com.qigan.qiganshop.pojo.synchronization.ResultCart;
+import com.qigan.qiganshop.util.Redis.RedisLock;
+import com.qigan.qiganshop.util.result.format.JsonResult;
+import com.qigan.qiganshop.util.result.format.ResultCode;
+
+@Service
+public class XltcOrderServiceConcatImpl implements XltcOrderServiceConcat {
+
+	@Autowired
+	XltcOrderService orderService;
+
+	@Autowired
+	StockService stockService;
+
+	@Autowired
+	ItemService itemService;
+
+	@Autowired
+	OrderMapper orderMapper;
+
+	@Autowired
+	private InfoService infoService;
+
+	@Autowired
+	private AppUserService userService;
+
+	@Autowired
+	private XltcPreSellGoodsService preSellGoodsService;
+
+	@Autowired
+	private JsonResult jr;
+
+	@Override
+	public JsonResult submit(GroupOrder groupOrder) {
+
+		JsonResult jsonResult;
+
+		Map<String, Object> resultMap = orderService.submit(groupOrder);
+
+		String code = (String) resultMap.get("code");
+
+		// preSubmit 执行结果不满足生成订单
+		if (code != null && !"200".equals(code)) {
+			return new JsonResult(code, (String) resultMap.get("message"), resultMap.get("data"));
+		}
+
+		// 满足生成订单，开始锁存存
+		List<OrderItem> byItems = (List<OrderItem>) resultMap.get("byItems");
+		ResultCart resultCart = (ResultCart) resultMap.get("resultCart");
+		jsonResult = lockStockNum(byItems, resultCart);
+
+		// 判断锁库存的结果选择执行
+		if (!"200".equals(jsonResult.getRes_code())) {
+			return jsonResult;
+		}
+
+		// 锁库存成功，执行tailSubmit
+		jsonResult = orderService.tailSubmit(resultMap);
+
+		return jsonResult;
+	}
+
+	/**
+	 * 锁定库存
+	 */
+	public JsonResult lockStockNum(List<OrderItem> byItems, ResultCart resultCart) {
+		RedisLock lock = new RedisLock();
+		try {
+			lock.lock();
+			List<Stock> canUpdate = new ArrayList<>();
+			for (OrderItem byItem : byItems) {// 2 item 1 >0 - 0
+				Stock stock = stockService.findByItemIdAndWareHouseId(byItem.getItemId(),
+						resultCart.getWarehouseCode());
+				if (stock != null) {
+					Stock update = new Stock();
+					update.setStockId(stock.getStockId());
+					update.setGoodsId(byItem.getGoodsId());
+					update.setItemId(byItem.getItemId());
+					update.setWarehouseId(stock.getWarehouseId());
+					update.setStockNum(stock.getStockNum());
+					// 锁定数
+					update.setLockNum(stock.getLockNum() + byItem.getCount());
+					// 可销售数
+					update.setSalableNum(stock.getStockNum() - update.getLockNum());
+					if (stock.getStockNum() - update.getLockNum() < 0) {
+						return jr.jsonResultData(ResultCode.FAIL.res_code(), "抱歉，" + byItem.getItemName() + " 库存不足");
+					}
+					canUpdate.add(update);
+				} else {
+					return jr.jsonResultData(ResultCode.FAIL.res_code(), "锁定库存失败!");
+				}
+			}
+			stockService.updates(canUpdate);
+		} catch (Exception e) {
+			return jr.jsonResultData(ResultCode.FAIL.res_code(), "抱歉，库存不足");
+		} finally {
+			lock.unlock();
+		}
+		return jr.jsonResultData(ResultCode.SUCCESS.res_code(), "锁库存成功");
+	}
+
+	@Override
+	public JsonResult optStock(String payNo, String payType, String orderId) {
+		// TODO Auto-generated method stub
+		// 执行第一步
+		Map<String, Object> step1 = orderService.payInfo(payNo, payType, orderId);
+		if (step1 != null && step1.containsKey("code"))
+			return jr.jsonResultData(ResultCode.FAIL.res_code(), step1.get("message") + "");
+		// 第一步正常 执行第二步
+		List<OrderItem> list = (List<OrderItem>) step1.get("orderItem");
+		Order one = (Order) step1.get("order");
+		RedisLock lock = new RedisLock("pullToGuanYiLock");
+		try {
+			lock.lock();
+			list.forEach(orderItem -> {
+				Stock stock = stockService.findByItemIdAndWareHouseId(orderItem.getItemId(), one.getWarehouseCode());
+				stock.setWarehouseId(one.getWarehouseCode());
+				stock.setLockNum(stock.getLockNum() - orderItem.getCount());
+				stock.setStockNum(stock.getStockNum() - orderItem.getCount());
+				stock.setSalableNum(stock.getStockNum() - stock.getLockNum());
+				stockService.update(stock);
+				// 增加已销售数量
+				itemService.updateSaleCount(orderItem.getItemId(), orderItem.getCount());
+				//查询是否是预售订单，计入本期预售数量
+				if("preSell".equals(one.getTag())){
+					String level = one.getLevel();
+					String code = orderItem.getCode();
+					String count = String.valueOf(orderItem.getCount());
+					//添加该期该预售商品的数量
+					int i = preSellGoodsService.addCurrentPreSelllGoodsSellNum(code,level,count);
+				}
+			});
+		} finally {
+			// TODO: handle finally clause
+			lock.unlock();
+		}
+		//判断订单tag是否预售，是否推管易
+		if("preSell".equals(one.getTag())){
+			//预售订单, 1.订单状态改成1 已支付    2.添加支付日志
+			return orderService.optPreSellOrder(orderId, one);
+		}
+		// 第三步 往管易下单
+		return orderService.optGuanYiOrder(orderId, one);
+	}
+
+
+	@Override
+	public void test() {
+		// TODO Auto-generated method stub
+		for (int i = 0; i < 30; i++) {
+
+//			new Thread(new Runnable() {
+//
+//				@Override
+//				public void run() {
+//					// TODO Auto-generated method stub
+//					GroupOrder g = new GroupOrder();
+//					Map<String, Integer> map = new HashMap<String, Integer>();
+//					map.put("140571878137", 1);
+//					// map.put("140571876194", 1);
+//					g.setToken("to_c2be88ac3ef64679a69249c1416c31e8");
+//					g.setItems(map);
+//					g.setUserAddrId("d5818f8067ad4397853094b0d7b75704");
+//					g.setUserChooseTime("1小时内");
+//					this.submit(g);
+//				}
+//			}).start();
+
+		}
+	}
+
+}

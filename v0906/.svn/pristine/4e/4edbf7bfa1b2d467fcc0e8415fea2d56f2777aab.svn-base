@@ -1,0 +1,325 @@
+package com.qigan.qiganshop.service.impl;
+
+import com.alibaba.druid.util.StringUtils;
+import com.google.common.base.Strings;
+import com.qigan.qiganshop.annocation.StepRecordWatchAble;
+import com.qigan.qiganshop.mapper.DeliveryOrderMapper;
+import com.qigan.qiganshop.pojo.*;
+import com.qigan.qiganshop.service.DeliveryOrderService;
+import com.qigan.qiganshop.service.DeliveryerService;
+import com.qigan.qiganshop.service.InfoService;
+import com.qigan.qiganshop.service.OrderService;
+import com.qigan.qiganshop.service.XltcReportDeleryerService;
+import com.qigan.qiganshop.util.Redis.RedisLock;
+import com.qigan.qiganshop.util.jiguang.JiGuangSend;
+import com.qigan.qiganshop.util.notnull.NotNull;
+import com.qigan.qiganshop.util.sms.SmsUtil;
+import com.sun.scenario.effect.impl.sw.sse.SSEBlend_SRC_OUTPeer;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
+import java.util.*;
+
+/**
+ * 配送员订单操作接口
+ *
+ * @author wanghao
+ * @time 2019-05-04 18:05
+ */
+@SuppressWarnings("all")
+@Service
+public class DeliveryOrderServiceImpl implements DeliveryOrderService {
+    @Autowired
+    private OrderService orderService;
+    @Autowired
+    private DeliveryOrderMapper mapper;
+    @Autowired
+    private SmsUtil smsUtil;
+    @Autowired
+    private DeliveryerService deliveryerService;
+    @Autowired
+    private InfoService infoService;
+
+    @Value("${delivery.signName}")
+    private String singName;
+
+    @Value("${delivery.templateParam}")
+    private String templateParam;
+    
+    @Value("${jiguang.template.title}")
+    private String jiGuangTitle;
+    
+    @Value("${jiguang.template.receive}")
+    private String jiGuangReceive;
+    
+    @Autowired
+    private JiGuangSend send;
+    
+    @Autowired
+    private XltcReportDeleryerService deService;
+
+
+    /**
+     * 领取订单
+     * 新增配送员领取订单记录
+     *
+     * @param deliveryerId 关联订单
+     * @return
+     */
+    @Override
+    public String receive(Integer deliveryerId, String orderId, Integer num) {
+        Order one;
+        boolean flag  = false;
+        // 订单信息存在,并且订单状态为已支付(待发货状态)
+        RedisLock lock = new RedisLock("deliveryLock");
+        try {
+            lock.lock();
+            one = orderService.findOne(orderId);
+            if (one == null) {
+                return "-2," + orderId;
+            }
+            if("1".equals(one.getStatus())) {
+                orderService.updateStatus(orderId, "3");
+                flag = true;
+            }
+        }finally {
+            lock.unlock();
+        }
+        if (flag) {
+            return stepContinue(one,orderId);
+        }
+        return "-6," + orderId;
+
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public String stepContinue(Order one,String orderId){
+        DeliveryOrder deliveryOrder = new DeliveryOrder();
+        deliveryOrder.setDeliverId(deliveryerId);
+        deliveryOrder.setOrderId(orderId);
+        String uuid = UUID.randomUUID().toString().replace("-", "");
+        deliveryOrder.setDeliverOrderId(uuid);
+        deliveryOrder.setDeliveryTime(one.getUserChooseTime());
+        deliveryOrder.setCreateTime(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+        deliveryOrder.setOutboundTime(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+        // 订单状态
+        deliveryOrder.setStatus("3");
+        // 配送中
+        deliveryOrder.setDeliverStatus("0");
+        int insert = mapper.insert(deliveryOrder);
+
+        //orderService.updateStatus(orderId, "3");
+
+        Deliveryer deliveryer = deliveryerService.findOne(deliveryOrder.getDeliverId());
+        String s = smsUtil.sendDeliveryMessage(one.getReceiverMobile(), orderId.substring(18), deliveryer.getName(), deliveryer.getPhoneNum(), singName, templateParam);
+
+        String sendMessage = String.format(jiGuangReceive, orderId, deliveryer.getName(), deliveryer.getPhoneNum());
+        JiGuangSendModel model = new  JiGuangSendModel(one.getUserId(), sendMessage, jiGuangTitle);
+        send.send(model);
+
+        XltcReportDeliveryerModel deModel = new XltcReportDeliveryerModel();
+        deModel.setOrderNum(one.getOrderId());
+        deModel.setUserId(deliveryer.getDeliveryerId()+"");
+        deModel.setUserProcdNum(new BigDecimal(num));
+        deModel.setUserName(deliveryer.getName());
+        deService.insert(deModel);
+
+        if ("success".equals(s)) {
+            Info info = new Info();
+            info.setOrderId(orderId);
+            info.setUserId(one.getUserId());
+            info.setInfo("订单正在配送中!配送员:" + deliveryer.getName() + "联系方式:" + deliveryer.getPhoneNum());
+            infoService.add(info);
+        }
+        return "1";
+    }
+
+
+    /**
+     * 正常签收商品
+     *
+     * @param deliveryOrderId 关联 ID
+     * @param signer          签收人
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean arrived(Integer deliveryId, String orderId, String signer) {
+        DeliveryOrder deliveryOrder = new DeliveryOrder();
+        deliveryOrder.setDeliverId(deliveryId);
+        deliveryOrder.setOrderId(orderId);
+        List<DeliveryOrder> page = this.findPage(deliveryOrder, 1, 1);
+        if (page.size() > 0 & "0".equals(page.get(0).getDeliverStatus())) {
+            DeliveryOrder one = page.get(0);
+            one.setSigner(signer);
+            Date date = new Date();
+            one.setEndTime(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date));
+            String deliveryTime = one.getDeliveryTime();
+            if (!StringUtils.isEmpty(deliveryTime)) {
+
+                String[] split = deliveryTime.split("-");
+                // 判断是否超时
+                String endTime = split[split.length - 1];
+                Date date1 = new Date(endTime);
+                if (date.before(date1)) {
+                    // 未超时
+                    one.setIsTimeout("0");
+                } else {
+                    // 超时
+                    one.setIsTimeout("1");
+                }
+            } else {
+                one.setIsTimeout("0");
+            }
+            orderService.updateStatus(orderId, "4");
+            one.setStatus("4");
+            one.setDeliverStatus("1");
+            int update = mapper.update(one);
+            if (update > 0) {
+                Info info = new Info();
+                info.setOrderId(orderId);
+                info.setInfo("已送达!");
+                infoService.add(info);
+            }
+            return update > 0 ? true : false;
+        }
+        return false;
+    }
+
+    /**
+     * 根据员工编号查询订单
+     *
+     * @param deliveryId    配送员 ID
+     * @param deliverStatus 配送状态
+     * @return
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<Goods> findByDeliveryId(Integer deliveryId, String deliverStatus) {
+        return null;
+    }
+
+    /**
+     * 查询配送中订单
+     *
+     * @param deliveryerId
+     * @return
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<Map> receiving(Integer deliveryerId) {
+        ArrayList<Map> result = new ArrayList<>();
+        DeliveryOrder deliveryOrder = new DeliveryOrder();
+        deliveryOrder.setDeliverId(deliveryerId);
+        deliveryOrder.setDeliverStatus("0");
+        List<DeliveryOrder> page = this.findPage(deliveryOrder, null, null);
+        if (page.size() > 0) {
+            for (DeliveryOrder order : page) {
+                Map oneFull = orderService.findOneFull(order.getOrderId());
+                result.add(oneFull);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * 三合一
+     *
+     * @param objects
+     * @return
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<DeliveryOrder> findPage(DeliveryOrder deliveryOrder, Integer page, Integer size) {
+        List<DeliveryOrder> list = null;
+        if (NotNull.checkObject(page, size)) {
+            list = mapper.findPage(deliveryOrder, (page - 1) * size, size);
+        } else {
+            list = mapper.findPage(deliveryOrder, null, null);
+        }
+        return list;
+    }
+
+    /**
+     * 问题订单
+     *
+     * @param deliveryerId
+     * @param orderId
+     * @param question
+     * @return
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean question(Integer deliveryerId, String orderId, String problem) {
+        DeliveryOrder deliveryOrder = new DeliveryOrder();
+        deliveryOrder.setDeliverId(deliveryerId);
+        deliveryOrder.setOrderId(orderId);
+        List<DeliveryOrder> page = this.findPage(deliveryOrder, 1, 1);
+        if (page.size() > 0 && "0".equals(page.get(0).getDeliverStatus())) {
+            DeliveryOrder one = page.get(0);
+            one.setProblem(problem);
+            Date date = new Date();
+            one.setEndTime(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date));
+            orderService.updateStatus(orderId, "7");
+            one.setStatus("7");
+            one.setDeliverStatus("1");
+            int update = mapper.update(one);
+            if (update > 0) {
+                Info info = new Info();
+                info.setOrderId(orderId);
+                info.setInfo("问题订单:" + problem);
+                infoService.add(info);
+            }
+            return update > 0 ? true : false;
+        }
+        return false;
+    }
+
+    /**
+     * 其他问题订单
+     *
+     * @param deliveryerId
+     * @param orderId
+     * @param question
+     * @return
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean otherStatus(Integer deliveryerId, String orderId, String flag) {
+        DeliveryOrder deliveryOrder = new DeliveryOrder();
+        deliveryOrder.setDeliverId(deliveryerId);
+        deliveryOrder.setOrderId(orderId);
+        List<DeliveryOrder> page = this.findPage(deliveryOrder, 1, 1);
+        if (page.size() > 0 && "0".equals(page.get(0).getDeliverStatus())) {
+            DeliveryOrder one = page.get(0);
+            if ("Refuse".equals(flag)) {
+
+                one.setProblem("拒收");
+                one.setDeliverStatus("1");
+                one.setStatus("6");
+            } else if ("AddrErr".equals(flag)) {
+                one.setProblem("地址错误");
+                one.setDeliverStatus("1");
+                one.setStatus("5");
+            } else {
+                return false;
+            }
+            Date date = new Date();
+            one.setEndTime(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date));
+            orderService.updateStatus(orderId, one.getStatus());
+            int update = mapper.update(one);
+            if (update > 0) {
+                Info info = new Info();
+                info.setOrderId(orderId);
+                info.setInfo("问题订单" + one.getProblem());
+                infoService.add(info);
+            }
+            return update > 0 ? true : false;
+        }
+        return false;
+    }
+
+}

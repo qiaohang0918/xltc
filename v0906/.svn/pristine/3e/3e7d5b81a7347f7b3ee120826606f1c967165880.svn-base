@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qigan.qiganshop.mapper.UserCartMapper">
+    <resultMap id="BaseResultMap" type="com.qigan.qiganshop.pojo.UserCart">
+        <id column="cartId" property="cartId" jdbcType="VARCHAR"/>
+        <id column="skuId" property="skuId" jdbcType="VARCHAR"/>
+        <result column="num" property="num" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <delete id="deleteCurrentOrderItemsFromCart">
+        delete from tb_usercart where cartId=#{cartId} and skuId in
+            <foreach collection="itemIds" open="(" close=")" separator="," item="itemId">
+                #{itemId}
+            </foreach>
+    </delete>
+
+    <sql id="Base_Column_List">
+        cartId, skuId, num
+    </sql>
+    <delete id="delete" parameterType="java.lang.String">
+        delete
+        from tb_userCart
+        where cartId = #{cartId,jdbcType=VARCHAR}
+    </delete>
+    <delete id="deleteOne" parameterType="map">
+        delete
+        from tb_userCart
+        where cartId = #{cartId}
+          and skuId = #{skuId}
+    </delete>
+    <insert id="insert" parameterType="com.qigan.qiganshop.pojo.UserCart">
+        insert into tb_userCart (cartId, skuId,
+                                 num)
+        values (#{cartId,jdbcType=VARCHAR}, #{skuId,jdbcType=VARCHAR},
+                #{num,jdbcType=INTEGER})
+    </insert>
+    <update id="update" parameterType="com.qigan.qiganshop.pojo.UserCart">
+        update tb_userCart
+        <set>
+
+            <if test="skuId != null">
+                skuId = #{skuId,jdbcType=VARCHAR},
+            </if>
+            <if test="num != null">
+                num = #{num,jdbcType=INTEGER},
+            </if>
+        </set>
+        where cartId = #{cartId,jdbcType=VARCHAR}
+    </update>
+    <select id="findOne" parameterType="map" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from tb_userCart
+        where cartId = #{cartId}
+        and skuId = #{skuId}
+    </select>
+
+    <select id="findByCartId" parameterType="string" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from tb_userCart
+        where cartId = #{cartId}
+    </select>
+</mapper>

@@ -1,0 +1,22 @@
+package com.qigan.qiganshop.controller.backstage;
+
+import com.qigan.qiganshop.service.XltcDepositService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * @Aurher: QiaoHang
+ * @Description:
+ * @Data: 2019/10/8 11:41
+ * @Modified By:
+ */
+@RestController
+@RequestMapping("/deposit")
+public class XltcDepositController {
+
+    @Autowired
+    XltcDepositService depositService;
+
+
+}

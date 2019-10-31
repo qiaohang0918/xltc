@@ -1,0 +1,73 @@
+package com.qigan.qiganshop.util.quartz;
+
+import com.qigan.qiganshop.constant.RedisConstant;
+import com.qigan.qiganshop.constant.TimeFormat;
+import com.qigan.qiganshop.myutils.SqlConstructUtils;
+import com.qigan.qiganshop.pojo.Order;
+import com.qigan.qiganshop.pojo.TbPresellOrder;
+import com.qigan.qiganshop.service.GoodsService;
+import com.qigan.qiganshop.util.access.JedisUtil;
+import com.qigan.qiganshop.util.notnull.StringNotNull;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+import redis.clients.jedis.Jedis;
+
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+/**
+ * @Aurher: QiaoHang
+ * @Description:
+ * @Data: 2019/10/23 16:20
+ * @Modified By:
+ */
+@Component
+@EnableScheduling
+public class LimitedGoodsCacheCheckTask {
+
+    @Autowired
+    private JedisUtil jedisUtil;
+    @Autowired
+    private GoodsService goodsService;
+
+    @Scheduled(cron = "0 0 0/1 * * ? ")
+    public void checkCacheReailyShioNShip(){
+        Jedis conn = jedisUtil.getConn();
+        Set<String> smembers = conn.smembers(RedisConstant.LIMITED_CODES);
+        conn.close();
+        if(smembers!=null && smembers.size()>0){
+            //查询缓存中的限购记录
+            Set<String> limitedRecords = jedisUtil.getElementsFromHash(RedisConstant.LIMITED_CODE_USER);
+            if(limitedRecords!=null && limitedRecords.size()>0) {
+                for (String code : smembers) {
+                    //查询商品id
+                    String goodsId = goodsService.findGoodsIdByCode(code);
+                    //过滤当前商品code的限购记录
+                    List<String> collect = limitedRecords.stream().filter(x -> {
+                        return x.startsWith(code);
+                    }).collect(Collectors.toList());
+                    if(!SqlConstructUtils.nullList(collect)){
+                        //存在该限购商品的限购记录，校验真实性！
+                        List<String> userIds = collect.stream().map(x -> {
+                            return x.split(":")[1];
+                        }).collect(Collectors.toList());
+                        //遍历已存在的用户购买记录，查询真实购买状况
+                        for (String userId : userIds) {
+                            //查询该用户对于该商品的真实购买记录
+                            String havingOrder = goodsService.checkUserLimitedRecord(userId,goodsId);
+                            if(!StringNotNull.check(havingOrder)){
+                                //不存在真实订单记录，删除缓存了限购
+                                jedisUtil.removeElementFromHash(RedisConstant.LIMITED_CODE_USER,code + ":" + userId);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        jedisUtil.set("CacheChecked",TimeFormat.nomalFormat.format(new Date()));
+    }
+}

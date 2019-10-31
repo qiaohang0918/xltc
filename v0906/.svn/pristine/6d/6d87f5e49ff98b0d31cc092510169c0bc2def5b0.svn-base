@@ -1,0 +1,72 @@
+package com.qigan.qiganshop.service.impl;
+
+import com.qigan.qiganshop.constant.RedisConstant;
+import com.qigan.qiganshop.exception.XltcRuntimeException;
+import com.qigan.qiganshop.mapper.ActRecordMapper;
+import com.qigan.qiganshop.pojo.ActRecord;
+import com.qigan.qiganshop.pojo.ActRecordExample;
+import com.qigan.qiganshop.service.XltcActRecordService;
+import com.qigan.qiganshop.util.result.format.JsonResult;
+import com.qigan.qiganshop.util.result.format.ResultCode;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Set;
+import java.util.UUID;
+
+/**
+ * @Aurher: QiaoHang
+ * @Description:
+ * @Data: 2019/9/4 23:16
+ * @Modified By:
+ */
+@Service
+@Transactional(rollbackFor = Exception.class)
+public class XltcActRecordServiceImpl implements XltcActRecordService {
+
+    @Autowired
+    ActRecordMapper mapper;
+
+    @Override
+    public boolean insert(String codes) {
+        ActRecord record = new ActRecord();
+        String[] split = codes.split(",");
+        String format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(new Date());
+        try {
+            for (String code : split) {
+                record.setActrecordid(UUID.randomUUID().toString().replace("-","").replace("_",""));
+                record.setCode(code);
+                record.setStarttime(format);
+                mapper.insert(record);
+            }
+            return true;
+        }catch (Exception e){
+            throw XltcRuntimeException.throwable("添加活动商品异常！");
+        }
+    }
+
+    @Override
+    public boolean deleteByCode(String codes) {
+
+        String[] split = codes.split(",");
+        String format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").format(new Date());
+        StringBuffer buffer = new StringBuffer(" ");
+        try {
+            if(split!=null && split.length>0){
+                for (String code : split) {
+                    buffer.append("'"+code+"',");
+                }
+            }
+            buffer.replace(buffer.length()-1,buffer.length(),"");
+            String needUpdatesCodes = buffer.toString();
+            //修改添加结束时间
+            int i =mapper.deleteByCode(needUpdatesCodes,format);
+            return i == split.length ? true : false;
+        }catch (Exception e){
+            throw XltcRuntimeException.throwable("添加活动商品异常！");
+        }
+    }
+}

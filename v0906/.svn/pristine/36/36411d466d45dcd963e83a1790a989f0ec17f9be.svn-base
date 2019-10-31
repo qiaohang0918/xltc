@@ -1,0 +1,31 @@
+package com.qigan.qiganshop.mapper;
+
+import com.qigan.qiganshop.pojo.OrderItem;
+
+import java.util.List;
+
+/**
+ * 订单商品 oneToMore
+ *
+ * @author wanghao
+ */
+public interface OrderItemMapper {
+
+    /**
+     * 添加订单商品
+     *
+     * @param record
+     * @return
+     */
+    int insert(OrderItem record);
+
+    /**
+     * 查商品
+     *
+     * @param orderId
+     * @return
+     */
+    List<OrderItem> findByOrderId(String orderId);
+
+
+}

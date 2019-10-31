@@ -1,0 +1,10 @@
+package com.qigan.qiganshop.service;
+
+/**
+ * @Aurher: QiaoHang
+ * @Description:
+ * @Data: 2019/10/8 11:23
+ * @Modified By:
+ */
+public interface XltcDepositService {
+}

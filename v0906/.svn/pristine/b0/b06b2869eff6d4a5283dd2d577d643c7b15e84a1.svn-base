@@ -1,0 +1,704 @@
+package com.qigan.qiganshop.controller.utils;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.math.BigDecimal;
+import java.text.ParseException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import com.alibaba.fastjson.JSON;
+import com.alipay.api.AlipayApiException;
+import com.alipay.api.request.AlipayTradeCloseRequest;
+import com.alipay.api.request.AlipayTradePayRequest;
+import com.alipay.api.response.AlipayTradeCloseResponse;
+import com.qigan.qiganshop.constant.PayConstant;
+import com.qigan.qiganshop.constant.RedisConstant;
+import com.qigan.qiganshop.constant.TimeFormat;
+import com.qigan.qiganshop.myutils.SqlConstructUtils;
+import com.qigan.qiganshop.pojo.*;
+import com.qigan.qiganshop.service.*;
+import com.qigan.qiganshop.util.notnull.StringNotNull;
+import com.qigan.qiganshop.util.upload.IDUtils;
+import org.apache.poi.ss.formula.functions.T;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.ServletRequestBindingException;
+import org.springframework.web.bind.ServletRequestUtils;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.alibaba.fastjson.JSONObject;
+import com.alipay.api.AlipayClient;
+import com.alipay.api.DefaultAlipayClient;
+import com.alipay.api.request.AlipayTradeAppPayRequest;
+import com.alipay.api.request.AlipayTradeQueryRequest;
+import com.alipay.api.response.AlipayTradeAppPayResponse;
+import com.alipay.api.response.AlipayTradeQueryResponse;
+import com.qigan.qiganshop.exception.XltcRuntimeException;
+import com.qigan.qiganshop.mapper.OrderMapper;
+import com.qigan.qiganshop.util.access.JedisUtil;
+import com.qigan.qiganshop.util.pay.PayUtil;
+import com.qigan.qiganshop.util.result.format.JsonResult;
+import com.qigan.qiganshop.util.result.format.ResultCode;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+
+/**
+ * @author wanghao
+ */
+@RestController
+@RequestMapping("/app/alipay")
+@Api(tags = {"支付宝支付管理接口"})
+public class AlipayController {
+    @Value("${serverUrl}")
+    public String serverUrl;
+    @Value("${appId}")
+    public String appId;
+    @Value("${app_private_key}")
+    public String app_private_key;
+    @Value("${format}")
+    public String format;
+    @Value("${charset}")
+    public String charset;
+    @Value("${alipay_public_key}")
+    public String alipay_public_key;
+    @Value("${sign_type}")
+    public String sign_type;
+    @Value("${SERVER_URL}")
+    private String SERVER_URL;
+    @Autowired
+    private JsonResult jr;
+    @Autowired
+    private PayService payService;
+    @Autowired
+    private JedisUtil jedisUtil;
+    @Autowired
+    private XltcOrderService service;
+    
+    @Autowired
+	private InfoService infoService;
+    
+    @Autowired
+    private XltcOrderServiceConcat serviceConcat;
+    
+    @Autowired
+	RefundService refoundService;
+    
+    @Autowired
+	private OrderMapper orderMapper;
+
+    @Autowired
+    private AppUserService userService;
+
+    @Autowired
+    private XltcDepositService depositService;
+    @Autowired
+    private UserCouponService userCouponService;
+    @Value("${deposit.member.free.given}")
+    private String freeMemberDays;
+    
+    public static final String SIT_NOTIFY = "http://sit.xiletongcheng.com/";
+    
+    private static final DateTimeFormatter DF = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+
+    @RequestMapping(value = "/pay.do")
+    @ApiOperation(
+            value = "支付接口",
+            notes = "token,total 金额 subject 商品的标题/交易标题/订单标题/订单关键字等,如果是开通会员 一定要写 开通会员 几个字 钱包充值,orderId 订单id",
+            httpMethod = "POST")
+    public JsonResult pay(HttpServletRequest httpRequest,
+                          HttpServletResponse httpResponse) throws ServletException, IOException {
+        AlipayClient alipayClient = new DefaultAlipayClient(serverUrl, appId,
+                app_private_key, format, charset, alipay_public_key, sign_type);
+        AlipayTradeAppPayRequest alipayRequest = new AlipayTradeAppPayRequest();
+        String token = ServletRequestUtils.getStringParameter(httpRequest, "token", "");
+        String total = ServletRequestUtils.getStringParameter(httpRequest, "total");
+        String subject = ServletRequestUtils.getStringParameter(httpRequest, "subject", "喜乐同城");
+        String orderId = ServletRequestUtils.getStringParameter(httpRequest, "orderId", "");
+        Order o = service.findOne(orderId);
+		if(o != null && "1".equals(o.getStatus())){
+			throw XltcRuntimeException.throwable("您已支付过了！");
+		}
+		if(o == null || "2".equals(o.getStatus())){
+			return jr.jsonResultData(ResultCode.FAIL.res_code(), "抱歉:订单超时");
+		}
+        //锁订单
+        boolean lockResult = service.lockOrderWaitingPay(orderId);
+        if(!lockResult){
+            return jr.jsonResultData(ResultCode.FAIL.res_code(), "拉取支付信息失败，订单不存在或已被释放!");
+        }
+        String out_trade_no = PayUtil.getCurrTime() + PayUtil.getRandomString(5);
+        jedisUtil.set(out_trade_no.getBytes(), (token + "&" + orderId).getBytes());
+
+        //插入订单贸易号   ailipay:time:out_trade_no
+//        jedisUtil.setToHash(RedisConstant.ORDER_PAY, orderId,PayConstant.AL_PAY+":"+out_trade_no);
+        String notify_url = SERVER_URL + "qiganshop/app/alipay/notify.do";
+//        String notify_url = SIT_NOTIFY + "qiganshop/app/alipay/notify.do";
+        //String notify_url = "http://8f61c175.ngrok.io/qiganshop/app/alipay/notify.do";
+        String orderTime = o.getDealDatetime();
+        LocalDateTime ldt = LocalDateTime.parse(orderTime.substring(0, orderTime.lastIndexOf(":")), DF);
+        String expire = ldt.plusMinutes(2).format(DF);
+        
+        String biz_content = "{" +
+                "    \"out_trade_no\":\"" + out_trade_no + "\"," +
+                "    \"total_amount\":\"" + total + "\"," +
+                "    \"subject\":\"" + subject + "\"," +
+                "    \"time_expire\":\"" + expire + "\"," +
+                //"    \"notify_url\":\""+notify_url+"\"," +
+                "    \"product_code\":\"" + "QUICK_MSECURITY_PAY" + "\"" +
+                "  }";
+        alipayRequest.setBizContent(biz_content);
+        alipayRequest.setNotifyUrl(notify_url);
+        try {
+            AlipayTradeAppPayResponse response = alipayClient.sdkExecute(alipayRequest);
+            String form = response.getBody();
+            if (response.isSuccess()) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("orderStr", form);
+                map.put("out_trade_no", out_trade_no);
+                return jr.jsonResultData(ResultCode.SUCCESS.res_code(), "调用成功!", map);
+            } else {
+                return jr.jsonResultData(ResultCode.FAIL.res_code(), "调用失败!");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return jr.jsonResultData(ResultCode.ERROR.res_code());
+        }
+    }
+
+    @RequestMapping("/notify.do")
+    @ApiOperation(
+            value = "支付异步通知接口",
+            notes = "服务器内部接口不用调用",
+            httpMethod = "POST")
+    public void notify(HttpServletRequest httpRequest,
+                       HttpServletResponse httpResponse) throws Exception {
+        try {
+            String trade_status = httpRequest.getParameter("trade_status");
+            String out_trade_no = httpRequest.getParameter("out_trade_no");
+            String trade_no = httpRequest.getParameter("trade_no");
+            String total_amount = httpRequest.getParameter("total_amount");
+            String gmt_payment = httpRequest.getParameter("gmt_payment");
+            String subject = httpRequest.getParameter("subject");
+            if ("TRADE_SUCCESS".equals(trade_status)) {
+                com.qigan.qiganshop.pojo.Pay old = payService.selectByOutpaycode(out_trade_no);
+                if (old != null) {
+                    return;
+                }
+                String tokenorderId = new String(jedisUtil.get(out_trade_no.getBytes()));
+                String[] to = tokenorderId.split("&");
+                String token = to[0];
+                String orderId = "";
+                if (to.length == 2) {
+                    orderId = to[1];
+                }
+                
+                Order order = orderMapper.findOne(orderId);
+                if(order == null)
+                	return;
+                
+                if("2".equals(order.getStatus())){
+					order.setStatus("10");
+					orderMapper.update(order);
+					ResponseEntity responseEntity = refoundService.aliRefund(out_trade_no, total_amount);
+					if (responseEntity.getStatusCode().is2xxSuccessful()) {
+						Info info = new Info();
+						info.setOrderId(orderId);
+						info.setUserId(order.getUserId());
+						info.setInfo("订单超时，已将支付金额退还至【支付宝】");
+						infoService.add(info);
+                    }
+					return;
+				}
+                if(!"0".equals(order.getStatus()))
+                	return;
+                
+                
+                if ("开通会员".equals(subject)) {
+                    payService.updateMember(token);
+                } else if ("钱包充值".equals(subject)) {
+                    Double total = Double.parseDouble(total_amount);
+                    payService.updateBalance(token, total);
+                }
+                Pay pay = new Pay();
+                pay.setPayCode(trade_no);
+                pay.setOutPayCode(out_trade_no);
+                pay.setOrderId(orderId);
+                pay.setPayTypeCode("zhifubao");
+                pay.setPayment(total_amount);
+                pay.setPaytime(gmt_payment);
+                
+                order.setStatus("1");
+				order.setPayCode(trade_no);
+				order.setPayTime(pay.getPaytime());
+				order.setWaitingPay("2");
+				orderMapper.update(order);
+                
+                int suc = payService.insertPay(pay);
+                if (suc == 1) {
+                    jedisUtil.del(out_trade_no.getBytes());
+                    PrintWriter pw = httpResponse.getWriter();
+                    pw.write("success");
+                    pw.flush();
+                    pw.close();
+                }
+                //*****************查询未推送的订单进行推送******************
+                Set<String> elementsFromHash = jedisUtil.getElementsFromHash("pub_err");
+                if(elementsFromHash!=null && elementsFromHash.size()>0){
+                    for (String unPubOrderId : elementsFromHash) {
+                        String result = service.pullToGuanYi(unPubOrderId);
+                        if("ok".equals(result.trim()))
+                            jedisUtil.removeElementFromHash("pub_err",unPubOrderId);
+                    }
+                }
+                //***************推送订单到管易（尝试3次）********************
+                label: while (true) {
+                    String message="";
+                    try {
+//                        for (int i = 0; i < 3; i++) {
+                            if (StringNotNull.check(orderId)) { 
+                                // 用实体进行接收订单信息
+                                JsonResult aliPay = serviceConcat.optStock(out_trade_no, "zhifubao", orderId);
+                                String res_code = aliPay.getRes_code();
+                                message = aliPay.getMessage();
+                                if(ResultCode.SUCCESS.res_code().equals(res_code) && "支付成功".equals(message)){
+                                    break label;
+                                }
+                            }
+//                        }
+                    }catch (Exception e){
+                        //记录推送异常的日志
+                        jedisUtil.setToHash("pub_err",orderId,"0");
+                        break label;
+                    }
+                    //记录推送异常的日志
+                    jedisUtil.setToHash("pub_err",orderId,"0");
+                    break label;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 获取支付宝支付信息
+     *
+     * @param out_trade_no
+     * @return
+     */
+    public JSONObject select(String out_trade_no) {
+        try {
+            AlipayClient alipayClient = new DefaultAlipayClient(serverUrl, appId,
+                    app_private_key, format, charset, alipay_public_key, sign_type);
+
+            AlipayTradeQueryRequest request = new AlipayTradeQueryRequest();
+            request.setBizContent("{" +
+                    " \"out_trade_no\":\"" + out_trade_no + "\"" +
+                    //" \"trade_no\":\""+trade_no+"\"" +
+                    " }");//设置业务参数
+            AlipayTradeQueryResponse response = alipayClient.execute(request);
+            JSONObject js = JSONObject.parseObject(response.getBody());
+            JSONObject js1 = JSONObject.parseObject(js.getString("alipay_trade_query_response"));
+            String trade_status = js1.getString("trade_status");
+            return js1;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
+     * ali deposit
+     * @param request
+     * @param response
+     * @return
+     */
+    @RequestMapping(value = "/deposit.do",method = RequestMethod.GET)
+    public JsonResult deposit(HttpServletRequest request, HttpServletResponse response) throws ServletRequestBindingException, AlipayApiException {
+        //开启ali客户端
+        AlipayClient alipayClient = new DefaultAlipayClient(serverUrl, appId,
+                app_private_key, format, charset, alipay_public_key, sign_type);
+        //获取请求参数
+        String token = ServletRequestUtils.getStringParameter(request, "token", "");
+        String deposit_cart_id = ServletRequestUtils.getStringParameter(request, "deposit_cart_id", null);
+        String deposit_type = ServletRequestUtils.getStringParameter(request, "deposit_type", null);
+        String total = ServletRequestUtils.getStringParameter(request, "total");
+        //(业务)充值内容  member / balance  ....
+        String subject = ServletRequestUtils.getStringParameter(request, "subject", "喜乐同城");
+//        String notify_url = SERVER_URL + "qiganshop/app/alipay/depositNotify.do";
+        String notify_url = "http://192.168.3.147:8085/" + "xltc/app/alipay/depositNotify.do";
+        //校验用户
+        if(!StringNotNull.check(token))
+            return new JsonResult(ResultCode.ERROR.res_code(),"token为空！");
+        AppUser user = userService.getAppUserByToken(token);
+        if(user==null)
+            return new JsonResult(ResultCode.ERROR.res_code(),"用户不存在！");
+        //插入预支付记录
+        String nonce_str = PayUtil.getRandomString(20);
+        String out_trade_no = PayUtil.getCurrTime() + PayUtil.getRandomString(5);
+        //生成订单id，载入缓存
+        String depositOrderId = IDUtils.genItemId();
+        //支付falg
+        jedisUtil.set(out_trade_no, token + "&" + depositOrderId);
+
+        //添加冲值对象deposit
+        String depositCreateTime = TimeFormat.nomalFormat.format(new Date());
+        TbDeposit tbDeposit = new TbDeposit();
+        tbDeposit.setDepositType( StringNotNull.check(deposit_type) == true ? deposit_type : "zhifubao" );
+        tbDeposit.setCreatetime(TimeFormat.nomalFormat.format(new Date()));
+        tbDeposit.setOrderId(depositOrderId);
+        tbDeposit.setOutTradeNum(out_trade_no);
+        tbDeposit.setPaytime(null);
+        tbDeposit.setPhone(user.getPhone());
+        tbDeposit.setStatus("0");
+        tbDeposit.setDepositCardId(deposit_cart_id);
+        tbDeposit.setUserId(user.getUserId());
+        tbDeposit.setDepositMoneyUnit(total);
+        tbDeposit.setDepositContent(subject);
+        int i = depositService.insert(tbDeposit);
+        LocalDateTime parse = LocalDateTime.parse(depositCreateTime.substring(0, depositCreateTime.lastIndexOf(":")), DF);
+        String time_expire = parse.plusMinutes(2).format(DF);
+        //创建ali App支付请求
+        AlipayTradeAppPayRequest payRequest = new AlipayTradeAppPayRequest();
+        //封装请求参数
+        Map<String, String> mapParms = new HashMap<>();
+        mapParms.put("total_amount",total);
+        mapParms.put("subject",subject);
+        mapParms.put("out_trade_no",out_trade_no);
+        mapParms.put("time_expire",time_expire);
+        mapParms.put("product_code","QUICK_MSECURITY_PAY");
+        payRequest.setBizContent(JSON.toJSONString(mapParms));
+        payRequest.setNotifyUrl(notify_url);
+        try {
+            //调用ali client ， 获取响应
+            AlipayTradeAppPayResponse payResponse = alipayClient.sdkExecute(payRequest);
+            if(payResponse.isSuccess()){
+                TreeMap<String, String> resultMap = new TreeMap<>();
+                resultMap.put("orderStr",payResponse.getBody());
+                resultMap.put("out_trade_no",out_trade_no);
+                System.out.println(resultMap);
+                return jr.jsonResultData(ResultCode.SUCCESS.res_code(),"调用成功!",resultMap);
+            }else {
+                System.out.println("调用阿里充值失败!");
+                return jr.jsonResultData(ResultCode.FAIL.res_code(),"调用阿里充值失败!");
+            }
+        }catch (Exception e){
+            System.out.println("调用阿里充值异常!");
+            return jr.jsonResultData(ResultCode.FAIL.res_code(),"调用阿里充值异常!");
+        }
+    }
+
+
+    /**
+     * ali deposit notify
+     * @param request
+     * @param response
+     * @return
+     */
+    @RequestMapping(value = "/depositNotify.do",method = RequestMethod.GET)
+    public void depositNotify(HttpServletRequest request,HttpServletResponse response){
+        try {
+            String trade_status = ServletRequestUtils.getStringParameter(request, "trade_status");
+            String gmt_payment = ServletRequestUtils.getStringParameter(request, "gmt_payment");
+            String trade_no = ServletRequestUtils.getStringParameter(request, "trade_no");
+            String subject = ServletRequestUtils.getStringParameter(request, "subject");
+            String out_trade_no = ServletRequestUtils.getStringParameter(request, "out_trade_no");
+            String buyer_pay_amount = ServletRequestUtils.getStringParameter(request, "buyer_pay_amount", "0.00");
+            if("TRADE_SUCCESS".equals(trade_status)){
+                //支付成功
+                //查询redis
+                String tokenAndOrderId = jedisUtil.get(out_trade_no);
+                //查库 ，充值记录
+                List<TbDeposit> list =  depositService.findByOutTradeNum(out_trade_no);
+                if(!SqlConstructUtils.nullList(list)){
+                    TbDeposit tbDeposit = list.get(0);
+                    String status = tbDeposit.getStatus();
+                    String payTime = tbDeposit.getPaytime();
+                    String transactionId = tbDeposit.getTransactionId();
+                    if( "1".equals(status) && StringNotNull.check(payTime,transactionId) ){
+                        //已经处理过了
+
+                    }else {
+                        //支付成功，修改支付记录 ，删除 memory --> out_trade_num
+                        TbDeposit deposit = new TbDeposit();
+                        deposit.setOrderId(tbDeposit.getOrderId());
+                        deposit.setPaytime(gmt_payment);
+                        deposit.setStatus("1");
+                        deposit.setTransactionId(trade_no);
+                        //修改充值记录日志
+                        int i = depositService.updateByPrimaryKeySelective(deposit);
+                        if( i>0 ){
+                            //修改支付日志成功！
+                            //充值用户id
+                            String userId = tbDeposit.getUserId();
+                            try {
+                                if("balance".equals(tbDeposit.getDepositContent())){
+                                    //执行充值业务.....
+                                    int i1 = userService.reGivenUserAmount(userId, buyer_pay_amount);
+                                    //下发账户充值会员（充值就送3天会员）
+                                    boolean memberDepositResult = this.givenMemberDays(userId, "3");
+                                    //充值送优惠卷
+                                    boolean givenCoupons = this.givenDepositCoupons(userId);
+                                    //记录info  异常日志  支付宝充值支付成功，但下发账户余额失败！
+                                    Info info = new Info();
+                                    info.setOrderId(tbDeposit.getOrderId());
+                                    info.setUserId(userId);
+                                    info.setInfo("支付宝充值(balance)成功！本次支付金额："+buyer_pay_amount);
+                                    infoService.add(info);
+                                }
+                                if("member".equals(tbDeposit.getDepositContent())){
+                                    //执行会员业务.......（deys > config > default）
+                                    boolean memberDepositResult = this.givenMemberDays(userId, "30");
+                                    //记录info  异常日志  支付宝充值支付成功，但下发账户余额失败！
+                                    Info info = new Info();
+                                    info.setOrderId(tbDeposit.getOrderId());
+                                    info.setUserId(userId);
+                                    info.setInfo("支付宝充值会员(member)成功！本次支付金额："+buyer_pay_amount);
+                                    infoService.add(info);
+                                }
+                                //删除redis
+                                jedisUtil.del(out_trade_no);
+                            }catch (Exception e){
+                                //记录info  异常日志  支付宝充值支付成功，但下发账户余额失败！
+                                Info info = new Info();
+                                info.setOrderId(tbDeposit.getOrderId());
+                                info.setUserId(userId);
+                                info.setInfo("支付宝充值支付成功，但业务（"+tbDeposit.getDepositContent()+"）执行失败,实付金额:"+buyer_pay_amount);
+                                infoService.add(info);
+                            }
+                        }
+                    }
+                }
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+
+
+    /**
+     * 下发充值优惠卷
+     * @param userId
+     * @return
+     */
+    public boolean givenDepositCoupons(String userId) {
+        Set<String> couponIds = this.fidndDepositCoupons();
+        if(couponIds != null){
+            for (String couponId : couponIds) {
+                UserCoupon userCoupon = new UserCoupon();
+                userCoupon.setCouponId(couponId);
+                userCoupon.setUserId(userId);
+                Integer add = userCouponService.add(userCoupon,false);
+            }
+        }
+        return true;
+    }
+
+    /**
+     * 获取充值优惠卷
+     * @return
+     */
+    public Set<String> fidndDepositCoupons() {
+        Set<String> elements = jedisUtil.getElementsFromHash(RedisConstant.DEPOSIT_COUPONS);
+        if(elements==null || elements.size()<=0)
+            return null;
+        else
+            return elements;
+    }
+
+    /**
+     * 充值会员天数(when days = null then config then default)
+     * @param userId
+     * @param days
+     * @return
+     */
+    public boolean givenMemberDays(String userId,String days) throws ParseException {
+        //查询当亲用户
+        AppUser user = userService.getAppUserById(userId);
+        //计算会员天数
+        String realGivenDays = null;
+        this.opratorMemberDays(realGivenDays,days);
+        if(user!=null){
+            //会员信息新建 / 延期
+            if("1".equals(user.getMember())){
+                //校验是否已经过期(定时任务未来得及修改member状态)
+                if(this.isMemberExpired(user)){
+                    //会员已过期
+                    //新建会员信息
+                    boolean result = this.newMemberInfo(user, realGivenDays);
+                }else {
+                    //会员延期
+                    String mendTime = user.getMendTime();
+                    LocalDateTime parse = LocalDateTime.parse(mendTime, TimeFormat.normalDateTimeFormater);
+                    String formatEndTime = parse.plusDays(Long.parseLong(realGivenDays)).format(TimeFormat.normalDateTimeFormater);
+                    user.setMendTime(formatEndTime);
+                    int i = userService.updateMemberInfo(user);
+                }
+            }else if(StringNotNull.check(user.getMbeginTime(),user.getMendTime())){
+                //当前会员业务暂停  (不是首次享受会员服务) , 更新会员状态
+                //新建会员信息
+                boolean result = this.newMemberInfo(user, realGivenDays);
+            }else {
+                //新入会员
+                //新建会员信息
+                boolean result = this.newMemberInfo(user, realGivenDays);
+            }
+            return true;
+        }else {
+            return false;
+        }
+    };
+
+    /**
+     * 新建会员信息
+     * @param user
+     * @param realGivenDays
+     * @return
+     */
+    public boolean newMemberInfo(AppUser user,String realGivenDays){
+        user.setMember("1");
+        user.setMbeginTime(TimeFormat.nomalFormat.format(new Date()));
+        LocalDateTime emdTime = LocalDateTime.now().plusDays(Long.parseLong(realGivenDays));
+        String formatEndTime = emdTime.format(TimeFormat.normalDateTimeFormater);
+        user.setMendTime(formatEndTime);
+        int i = userService.updateMemberInfo(user);
+        return i>0? true : false;
+    }
+
+    /**
+     * 计算会员下发时间
+     * @param realGivenDays
+     * @param days
+     */
+    public void opratorMemberDays(String realGivenDays,String days){
+        //校验days  为空则走配置时间，配置为null， 则走默认时间
+        if(!StringNotNull.check(days)) {
+            if (!StringNotNull.check(freeMemberDays)) {
+                //默认给三天会员
+                realGivenDays = "3";
+            } else {
+                if (this.checkIntString(freeMemberDays)) {
+                    realGivenDays = freeMemberDays;
+                } else {
+                    realGivenDays = "3";
+                }
+            }
+        }else {
+            if(this.checkIntString(days)){
+                realGivenDays = days;
+            }else {
+                if (!StringNotNull.check(freeMemberDays)) {
+                    //默认给三天会员
+                    realGivenDays = "3";
+                } else {
+                    if (this.checkIntString(freeMemberDays)) {
+                        realGivenDays = freeMemberDays;
+                    } else {
+                        realGivenDays = "3";
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * 校验int 格式的 String
+     * @param waitingCheck
+     * @return
+     */
+    public boolean checkIntString(String waitingCheck){
+        if(!StringNotNull.check(waitingCheck))
+            return false;
+        try {
+            Integer.parseInt(waitingCheck);
+            return true;
+        }catch (Exception e){
+            return false;
+        }
+    }
+
+    /**
+     * 检查会员过期
+     * @param user
+     * @return
+     * @throws ParseException
+     */
+    public boolean isMemberExpired(AppUser user) throws ParseException {
+        if(user == null)
+            return true;
+        if(!StringNotNull.check(user.getMember()) || "0".equals(user.getMember()))
+            return true;
+        String mendTime = user.getMendTime();
+        if(!StringNotNull.check(mendTime)){
+            return true;
+        }
+        Date parse = TimeFormat.nomalFormat.parse(mendTime);
+        if(parse.getTime() < new Date().getTime())
+            return true;
+        else
+            return false;
+    }
+
+
+//    /**
+//     * 关闭交易订单
+//     * @param orderId   订单号
+//     */
+//    public boolean closeTradeOrder(String orderId){
+//        if(!StringNotNull.check(orderId))
+//            return false;
+//        String type_time_outTradeNum = jedisUtil.getFromHash(RedisConstant.ORDER_PAY, orderId);
+//        if(!StringNotNull.check(type_time_outTradeNum) ) {
+//            return false;
+//        }
+//        String[] split = type_time_outTradeNum.split(":");
+//        if(split.length<3){
+//            return false;
+//        }
+//        try {
+//            AlipayClient alipayClient = new DefaultAlipayClient(serverUrl, appId,
+//                    app_private_key, format, charset, alipay_public_key, sign_type);
+//            HashMap<String, String> parmMap = new HashMap<>();
+//
+//            AlipayTradeCloseRequest request = new AlipayTradeCloseRequest();
+//            request.setBizContent("{" +
+////                    "\"trade_no\":\""+split[2]+"\"," +
+//                    "\"out_trade_no\":\""+split[2]+"\"," +
+//                    "\"operator_id\":\"XLTC\"" +
+//                    "  }");
+//            AlipayTradeCloseResponse response = alipayClient.execute(request);
+//            System.out.println(response.getSubCode());
+//            if(response.isSuccess()){
+//                System.out.println("调用成功");
+//                //检查状态码
+//                String subCode = response.getSubCode();
+//                if("ACQ.TRADE_HAS_SUCCESS".equals(subCode)){
+//                    //取消订单成功，--->
+//                    return true;
+//                }else{
+//                    System.out.println(response.getSubMsg());
+//                    return false;
+//                }
+//            } else {
+//               System.out.println("调用失败");
+//                return false;
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            return false;
+//        }
+//    }
+
+}

@@ -1,0 +1,398 @@
+/**
+ * 
+ */
+package com.qigan.qiganshop.service.impl;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.qigan.qiganshop.constant.RedisConstant;
+import com.qigan.qiganshop.enums.BannerModuleType;
+import com.qigan.qiganshop.exception.XltcRuntimeException;
+import com.qigan.qiganshop.exception.XltcTokenRuntimeException;
+import com.qigan.qiganshop.mapper.BannerMapper;
+import com.qigan.qiganshop.mapper.GoodsMapper;
+import com.qigan.qiganshop.mapper.HomepageCateMapper;
+import com.qigan.qiganshop.pojo.AppUser;
+import com.qigan.qiganshop.pojo.Banner;
+import com.qigan.qiganshop.pojo.CommonPage;
+import com.qigan.qiganshop.pojo.Goods;
+import com.qigan.qiganshop.pojo.UserAddress;
+import com.qigan.qiganshop.pojo.XltcGoodsModel;
+import com.qigan.qiganshop.pojo.XltcHomeGoodsModel;
+import com.qigan.qiganshop.pojo.XltcHomeModel;
+import com.qigan.qiganshop.pojo.XltcHomeTypeModel;
+import com.qigan.qiganshop.pojo.XltcPageResult;
+import com.qigan.qiganshop.service.AppUserService;
+import com.qigan.qiganshop.service.BannerService;
+import com.qigan.qiganshop.service.GoodsService;
+import com.qigan.qiganshop.service.UserAddrService;
+import com.qigan.qiganshop.service.UserCouponService;
+import com.qigan.qiganshop.service.XltcHomeService;
+import com.qigan.qiganshop.util.access.JedisUtil;
+import com.qigan.qiganshop.util.picture.PicUtil;
+import com.qigan.qiganshop.util.result.format.JsonResult;
+import com.qigan.qiganshop.utils.json.JsonUtils;
+
+/**
+ * @author wyy
+ *
+ */
+@Service
+@Transactional
+public class XltcHomeServiceImpl implements XltcHomeService {
+
+	@Value("${local_pic_url}")
+	private String localPicHead;
+
+	private static final String ACT_BANNER = "3";
+
+	private static final String AD_BANNER = "2";
+
+	private static final String BANNER = "1";
+	
+	private static final String HEAD = "head";
+	
+	private static final String END = "end";
+	
+	private static final String CENTER = "center";
+	
+	@Autowired
+	private PicUtil picUtil;
+	
+	@Autowired
+	private BannerMapper bannerMapper;
+	
+	@Autowired
+	private HomepageCateMapper homeCateMapper;
+
+	@Autowired
+	UserAddrService addrService;
+
+	@Autowired
+	private GoodsService goodsService;
+	
+	@Autowired
+	private AppUserService userService;
+	
+	@Autowired
+	private GoodsMapper goodsMapper;
+	
+	@Autowired
+	private BannerService bannerService;
+	
+	@Autowired
+	private UserCouponService userCoupon;
+	
+	@Autowired
+	JedisUtil jedis;
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see com.qigan.qiganshop.service.HomeService#home()
+	 */
+	@Override
+	public XltcHomeModel home(CommonPage page) {
+		// TODO Auto-generated method stub
+		if(page.getWheres() == null )
+			throw XltcTokenRuntimeException.throwable("token为空");
+		
+		String token = page.getWheres().get("token") + "";
+		if(StringUtils.isBlank(token))
+			throw XltcTokenRuntimeException.throwable("token为空");
+		
+		AppUser user;
+    	String userStr = null;
+    	if(StringUtils.isNotBlank(userStr)){
+    		user = JsonUtils.readValue(userStr, AppUser.class);
+    	}else{
+    		user = userService.getAppUserByToken(token);
+    	}
+    	
+		if(user == null)
+			throw new XltcTokenRuntimeException("token 失效");
+		
+		XltcHomeModel home = new XltcHomeModel();
+		// 活动 + 轮播 图
+		
+//		String wareId = checkWarehouse(page);
+//		List<Banner> all = bannerMapper.selectAllByConi(localPicHead, wareId) ;
+//		all = all != null && all.size() > 0 ? all : bannerMapper.selectAllByConi(localPicHead, null);
+		
+		List<Banner> all;
+		String banStr = jedis.get(RedisConstant.HOME_BANANER);
+		if(StringUtils.isNotBlank(banStr)){
+			all = JsonUtils.readToList(banStr, Banner.class);
+		}
+		else{
+			all = bannerMapper.selectAll(localPicHead);
+			jedis.set(RedisConstant.HOME_BANANER, JsonUtils.writeValueAsString(all));
+		}
+		List<Banner> banners = new ArrayList<>();
+		List<Banner> activities = new ArrayList<>();
+		List<Banner> ads = new ArrayList<>();
+		for (Banner banner : all) {
+			switch (banner.getModuleType()) {
+			case ACT_BANNER:
+				activities.add(banner);
+				break;
+			case AD_BANNER:
+				ads.add(banner);
+				break;
+			case BANNER:
+				banners.add(banner);
+				break;
+			}
+			/*
+			 * if(ACT_BANNER.equals(banner.getModuleType())){
+			 * activities.add(banner); }else{ banners.add(banner); }
+			 */
+		}
+		home.setActivities(activities);
+		home.setBanners(banners);
+		home.setAds(ads);
+		home.setGoodsData(checkHome(page));
+		// 用户收货地址
+//		home.setUserAddrs(addrService.findPage(page));
+		return home;
+	}
+
+	@Override
+	public XltcHomeModel homeIOS(CommonPage page) {
+		// TODO Auto-generated method stub
+//		if(page.getWheres() == null )
+//			throw XltcTokenRuntimeException.throwable("token为空");
+//
+//		String token = page.getWheres().get("token") + "";
+//		if(StringUtils.isBlank(token))
+//			throw XltcTokenRuntimeException.throwable("token为空");
+//
+//		AppUser user;
+//		String userStr = jedis.getFromHash(RedisConstant.USER, token);
+//		if(StringUtils.isNotBlank(userStr)){
+//			user = JsonUtils.readValue(userStr, AppUser.class);
+//		}else{
+//			user = userService.getAppUserByToken(token);
+//		}
+//
+//		if(user == null)
+//			throw new XltcTokenRuntimeException("token 失效");
+
+		XltcHomeModel home = new XltcHomeModel();
+		// 活动 + 轮播 图
+		List<Banner> all;
+		String banStr = jedis.get(RedisConstant.HOME_BANANER);
+		if(StringUtils.isNotBlank(banStr)){
+			all = JsonUtils.readToList(banStr, Banner.class);
+		}
+		else{
+			all = bannerMapper.selectAll(localPicHead);
+			jedis.set(RedisConstant.HOME_BANANER, JsonUtils.writeValueAsString(all));
+		}
+//		String wareId = checkWarehouse(page);
+//		List<Banner> all = bannerMapper.selectAllByConi(localPicHead, wareId) ;
+//		all = all != null && all.size() > 0 ? all : bannerMapper.selectAllByConi(localPicHead, null);
+		List<Banner> banners = new ArrayList<>();
+		List<Banner> activities = new ArrayList<>();
+		List<Banner> ads = new ArrayList<>();
+		for (Banner banner : all) {
+			switch (banner.getModuleType()) {
+				case ACT_BANNER:
+					activities.add(banner);
+					break;
+				case AD_BANNER:
+					ads.add(banner);
+					break;
+				case BANNER:
+					banners.add(banner);
+					break;
+			}
+			/*
+			 * if(ACT_BANNER.equals(banner.getModuleType())){
+			 * activities.add(banner); }else{ banners.add(banner); }
+			 */
+		}
+		home.setActivities(activities);
+		home.setBanners(banners);
+		home.setAds(ads);
+		home.setGoodsData(checkHome(page));
+		// 用户收货地址
+//		home.setUserAddrs(addrService.findPage(page));
+		return home;
+	}
+
+
+	public static final String MES_NOT_SEND = "当前区域正在策划中,敬请期待";
+	
+	private XltcHomeGoodsModel checkHome(CommonPage page) {
+		// TODO Auto-generated method stub
+		String wareId = this.checkWarehouse(page);
+		XltcHomeGoodsModel model = new XltcHomeGoodsModel();
+		
+		List<XltcHomeTypeModel> homeTypes;
+		String cateStr = jedis.get(RedisConstant.HOME_CATE);
+		if(StringUtils.isNotBlank(cateStr)){
+			homeTypes = JsonUtils.readToList(cateStr, XltcHomeTypeModel.class);
+		}else{
+			homeTypes = homeCateMapper.findHoneTypeAll(localPicHead);
+			jedis.set(RedisConstant.HOME_CATE, JsonUtils.writeValueAsString(homeTypes));
+		}
+		List<XltcHomeTypeModel> heads = new ArrayList<>();
+		List<XltcHomeTypeModel> ends = new ArrayList<>();
+		List<XltcHomeTypeModel> centers = new ArrayList<>();
+		
+		//硬编码 加推荐
+		XltcHomeTypeModel tm = new XltcHomeTypeModel();
+		tm.setSort(-1);
+		tm.setTitle("推荐");
+		tm.setSubTitle("好物推荐");
+		tm.setId("gooodsRand");
+		ends.add(tm);
+		
+		for (XltcHomeTypeModel type : homeTypes) {
+			switch (type.getLocation()) {
+			case HEAD:
+				heads.add(type);
+				break;
+			case CENTER:
+				centers.add(type);
+				break;
+			case END:
+				ends.add(type);
+				break;
+			}
+		}
+		model.setHeadTypes(heads);
+		model.setBottoms(ends);
+
+		page.setPagination(true);
+		for (XltcHomeTypeModel center : centers) {
+			page.startPageHelper();
+			List<XltcGoodsModel> goods =  homeCateMapper.findGoods(center.getId(), wareId, localPicHead);
+//			for (XltcGoodsModel g : goods) {
+//				g.setSort(center.getSort());
+//			}
+			center.setGoods(goods);
+		}
+		model.setCenters(centers);
+		return model;
+	}
+
+	@Override
+	public List<?> gooodsRand(String coordinate) {
+		// TODO Auto-generated method stub
+		if (StringUtils.isBlank(coordinate))
+			throw XltcRuntimeException.throwable("经纬度参数不能为空");
+		
+		JsonResult wareIdJson = goodsService.getWarehouseId(coordinate);
+		String wareId = "";
+		if ("200".equals(wareIdJson.getRes_code())) {
+			wareId = wareIdJson.getMessage();
+		} else {
+			throw XltcRuntimeException.throwable(MES_NOT_SEND);
+		}
+		
+		List<String> ids = goodsMapper.findGoodsIdByWarehouse(wareId);
+		
+		List<String> randIds = new ArrayList<>(this.handleSet(ids, 10));
+		List<Goods> goods = goodsMapper.findGoodsInIds(randIds);
+		for (Goods g : goods) {
+			if(g != null)
+				g.setPicList(picUtil.addUrlHead(g.getPicUrls()));
+		}
+		return goods;
+	}
+
+
+	private <T> Set<T> handleSet(List<T> ids, int num) {
+		Set<T> setIds = new HashSet<>();
+		if (ids.size() == 0) {
+			return setIds;
+		}
+		Set<T> sets = new HashSet<>(ids);
+		if(sets.size() < num)
+			num = sets.size();
+		while (setIds.size() < num) {
+			setIds.add(ids.get(new Random().nextInt(ids.size())));
+		}
+		return setIds;
+	}
+	
+	private String checkWarehouse(CommonPage page){
+		if (page.getWheres() == null)
+			throw XltcRuntimeException.throwable("经纬度参数为空");
+		
+		Object coordinate = page.getWheres().get("coordinate");
+		if (coordinate == null)
+			throw XltcRuntimeException.throwable("经纬度参数不能为空");
+		
+		String ce = String.valueOf(coordinate);
+		String wareId = "";
+		String wareStr = null;
+		if(StringUtils.isNotBlank(wareStr))
+			wareId = wareStr; 
+		else{
+			JsonResult wareIdJson = goodsService.getWarehouseId(ce);
+			if ("200".equals(wareIdJson.getRes_code())) {
+				wareId = wareIdJson.getMessage();
+			} else {
+				XltcPageResult pages = addrService.findPage(page);
+				if (pages == null) 
+					throw XltcRuntimeException.throwable(MES_NOT_SEND);
+				
+				List<?> lis = pages.getResult_list();
+				if (lis == null ) 
+					throw XltcRuntimeException.throwable(MES_NOT_SEND);
+				
+				if(lis.size() <= 0)
+					throw XltcRuntimeException.throwable(MES_NOT_SEND);
+				
+				UserAddress addr = (UserAddress) lis.get(0); // 默认地址或最后使用地址
+				JsonResult userAddr = goodsService.getWarehouseId(addr.getCoordinate());
+				if (!"200".equals(userAddr.getRes_code())) 
+					throw XltcRuntimeException.throwable(MES_NOT_SEND);
+				
+				wareId = userAddr.getMessage();
+			}
+		}
+		return wareId;
+	}
+	
+
+	@Override
+	public List<?> isShowCoupon(String token) {
+		// TODO Auto-generated method stub
+		List<Banner> list = bannerService.selectBanner("4");
+		boolean isReceive = userCoupon.isShowReceive(token);
+		if(isReceive)
+			return new ArrayList<>();
+		
+		for (Banner banner : list) {
+			banner.setReceive(isReceive);
+		}
+		return list;
+	}
+
+	@Override
+	public Map<?, ?> isShowAlertAds(String coni) {
+		// TODO Auto-generated method stub
+		List<?> allAds = bannerService.selectBanner(BannerModuleType.AlertAds.getValue());
+		Map<String, Object> result = new HashMap<>();
+		result.put("isAlert", allAds != null && allAds.size() > 0);
+		result.put("list", allAds);
+		return result;
+	}
+	
+}

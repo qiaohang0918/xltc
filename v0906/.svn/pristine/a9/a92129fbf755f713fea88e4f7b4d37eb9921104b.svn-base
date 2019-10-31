@@ -1,0 +1,724 @@
+package com.qigan.qiganshop.pojo;
+
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * 商品信息类spu
+ *
+ * @author wanghao
+ */
+
+@ApiModel(value = "SPU 商品对象", description = "SPU 商品对象")
+   
+   
+public class Goods implements Serializable {
+
+
+    /**
+     * SPUID
+     */
+    @ApiModelProperty(value = "SPUID")
+    private String goodsId;
+
+    /**
+     * 创建时间
+     */
+    @ApiModelProperty(value = "创建时间")
+       
+       
+    private String createDate;
+    /**
+     * 修改时间
+     */
+    @ApiModelProperty(value = "修改时间")
+       
+       
+    private String modifyDate;
+    /**
+     * 商品代码
+     */
+    @ApiModelProperty(value = "商品代码")
+       
+       
+    private String code;
+    /**
+     * 商品名称
+     */
+    @ApiModelProperty(value = "商品名称")
+       
+       
+    private String name;
+    /**
+     * 备注
+     */
+    @ApiModelProperty(value = "备注OR商品详情")
+       
+       
+    private String note;
+    /**
+     * 重量
+     */
+    @ApiModelProperty(value = "重量")
+       
+       
+    private Double weight;
+    /**
+     * 是否为组合商品
+     */
+    @ApiModelProperty(value = "是否为组合商品")
+       
+       
+    private String combine;
+    /**
+     * 是否已停用
+     */
+    @ApiModelProperty(value = "是否已停用")
+       
+       
+    private String del;
+    /**
+     * 长
+     */
+    @ApiModelProperty(value = "长")
+       
+       
+    private Double length;
+    /**
+     * 宽
+     */
+    @ApiModelProperty(value = "宽")
+       
+       
+    private Double width;
+    /**
+     * 高
+     */
+    @ApiModelProperty(value = "高")
+       
+       
+    private Double height;
+    /**
+     * 体积
+     */
+    @ApiModelProperty(value = "体积")
+       
+       
+    private Double volume;
+    /**
+     * 商品简称
+     */
+    @ApiModelProperty(value = "商品简称")
+       
+       
+    private String simpleName;
+    /**
+     * 分类代码
+     */
+    @ApiModelProperty(value = "分类代码")
+       
+       
+    private String categoryCode;
+    /**
+     * 分类名称
+     */
+    @ApiModelProperty(value = "分类名称")
+       
+       
+    private String categoryName;
+
+    /**
+     * 标签 ID
+     */
+    @ApiModelProperty(value = "标签ID")
+       
+       
+    private String labelId;
+
+    /**
+     * 商品单位代码
+     */
+    @ApiModelProperty(value = "商品单位代码")
+       
+       
+    private String itemUnitCode;
+    /**
+     * 商品单位名称
+     */
+    @ApiModelProperty(value = "商品单位名称")
+       
+       
+    private String itemUnitName;
+    /**
+     * 标准售价
+     */
+    @ApiModelProperty(value = "标准售价")
+       
+       
+    private Double salesPrice;
+    /**
+     * 成本价
+     */
+    @ApiModelProperty(value = "成本价")
+       
+       
+    private Double costPrice;
+    /**
+     * 库存状态代码
+     */
+    @ApiModelProperty(value = "库存状态代码")
+       
+       
+    private String stockStatusCode;
+    /**
+     * 库存数量
+     */
+    @ApiModelProperty(value = "库存数量")
+       
+       
+    private Integer stockNum;
+    /**
+     * 图片地址
+     */
+    @ApiModelProperty(position = 1)
+       
+       
+    private String picUrls;
+    /**
+     * 图片地址集合
+     */
+    @ApiModelProperty(value = "主图图片地址")
+       
+       
+    private List<String> picList;
+    /**
+     * 图片地址集合
+     */
+    @ApiModelProperty(value = "简介图片集合")
+       
+       
+    private List<String> noteList;
+    /**
+     * 原产地
+     */
+    @ApiModelProperty(value = "原产地")
+       
+       
+    private String originArea;
+    /**
+     * 保质期
+     */
+    @ApiModelProperty(value = "保质期")
+       
+       
+    private Integer shelfLife;
+    /**
+     * 是否启用规格
+     */
+    @ApiModelProperty(value = "是否启用规格")
+       
+       
+    private String isSpec;
+    /**
+     * 规格信息
+     */
+    @ApiModelProperty(value = "规格信息(SKU 实际就是规格的完整展现)")
+       
+       
+    private List<Item> items;
+    @ApiModelProperty(value = " 用户购买数量")
+
+       
+    private Integer userChooseNum;
+
+
+    @ApiModelProperty(value = "商品的预售信息")
+    private Map<String,Object> preSellInfo;
+
+
+    @ApiModelProperty(value = "商品其他信息(动态，ex: 配送时间)")
+    private Map<String,Object> otherInfos = new HashMap<String,Object>(){
+        {
+            //默认--配送时间
+            put("nomalPreSendTime"," ");
+        }
+    };
+
+
+
+
+    /**
+     * 自定义属性
+     *//*
+    @ApiModelProperty(value = "自定义属性") 
+   
+   
+private attr[] custom_attr;*/
+    /**
+     * 商品附加属性0:普通商品1:唯一码商品2:批次商品
+     */
+    @ApiModelProperty(value = "商品附加属性0:普通商品1:唯一码商品2:批次商品")
+
+       
+    private Integer itemAddAttribute;
+    /**
+     * 品牌代码
+     */
+    @ApiModelProperty(value = "品牌代码")
+       
+       
+    private String itemBrandCode;
+    /**
+     * 品牌名称
+     */
+    @ApiModelProperty(value = "品牌名称")
+       
+       
+    private String itemBrandName;
+    /**
+     * 状态
+     */
+    @ApiModelProperty(value = "状态")
+       
+       
+    private String status;
+    /**
+     * 是否推荐
+     */
+    @ApiModelProperty(value = "是否推荐")
+       
+       
+    private String push;
+    @ApiModelProperty(value = "是否 VIP 商品")
+       
+       
+    private String isVIPGoods;
+    @ApiModelProperty(value = "VIP 价格")
+       
+       
+    private Double vIPrice;
+    @ApiModelProperty(value = "活动价格")
+       
+       
+    private Double activePrice;
+    @ApiModelProperty(value = "首页顶部分类 ID")
+       
+       
+    private String headCate;
+    @ApiModelProperty(value = "首页底部分类")
+       
+       
+    private String endCate;
+    @ApiModelProperty(value = "计量单位")
+       
+       
+    private String unit;
+    @ApiModelProperty(value = "排序")
+       
+       
+    private Integer sort;
+    @ApiModelProperty(value = "仓库ID")
+       
+       
+    private String warehouseId;
+    @ApiModelProperty(value = "可售数量")
+       
+       
+    private String saleableNum;
+    @ApiModelProperty(value = "仓库名称")
+       
+       
+    private String warehName;
+
+    public Map<String, Object> getOtherInfos() {
+        return otherInfos;
+    }
+
+    public void setOtherInfos(Map<String, Object> otherInfos) {
+        this.otherInfos = otherInfos;
+    }
+
+    public Map<String, Object> getPreSellInfo() {
+        return preSellInfo;
+    }
+
+    public void setPreSellInfo(Map<String, Object> preSellInfo) {
+        this.preSellInfo = preSellInfo;
+    }
+
+    public String getGoodsId() {
+        return goodsId;
+    }
+
+    public void setGoodsId(String goodsId) {
+        this.goodsId = goodsId;
+    }
+
+    public String getCreateDate() {
+        return createDate;
+    }
+
+    public void setCreateDate(String createDate) {
+        this.createDate = createDate;
+    }
+
+    public String getModifyDate() {
+        return modifyDate;
+    }
+
+    public void setModifyDate(String modifyDate) {
+        this.modifyDate = modifyDate;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getNote() {
+        return note;
+    }
+
+    public void setNote(String note) {
+        this.note = note;
+    }
+
+    public Double getWeight() {
+        return weight;
+    }
+
+    public void setWeight(Double weight) {
+        this.weight = weight;
+    }
+
+    public String getCombine() {
+        return combine;
+    }
+
+    public void setCombine(String combine) {
+        this.combine = combine;
+    }
+
+    public String getDel() {
+        return del;
+    }
+
+    public void setDel(String del) {
+        this.del = del;
+    }
+
+    public Double getLength() {
+        return length;
+    }
+
+    public void setLength(Double length) {
+        this.length = length;
+    }
+
+    public Double getWidth() {
+        return width;
+    }
+
+    public void setWidth(Double width) {
+        this.width = width;
+    }
+
+    public Double getHeight() {
+        return height;
+    }
+
+    public void setHeight(Double height) {
+        this.height = height;
+    }
+
+    public Double getVolume() {
+        return volume;
+    }
+
+    public void setVolume(Double volume) {
+        this.volume = volume;
+    }
+
+    public String getSimpleName() {
+        return simpleName;
+    }
+
+    public void setSimpleName(String simpleName) {
+        this.simpleName = simpleName;
+    }
+
+    public String getCategoryCode() {
+        return categoryCode;
+    }
+
+    public void setCategoryCode(String categoryCode) {
+        this.categoryCode = categoryCode;
+    }
+
+    public String getCategoryName() {
+        return categoryName;
+    }
+
+    public void setCategoryName(String categoryName) {
+        this.categoryName = categoryName;
+    }
+
+    public String getLabelId() {
+        return labelId;
+    }
+
+    public void setLabelId(String labelId) {
+        this.labelId = labelId;
+    }
+
+    public String getItemUnitCode() {
+        return itemUnitCode;
+    }
+
+    public void setItemUnitCode(String itemUnitCode) {
+        this.itemUnitCode = itemUnitCode;
+    }
+
+    public String getItemUnitName() {
+        return itemUnitName;
+    }
+
+    public void setItemUnitName(String itemUnitName) {
+        this.itemUnitName = itemUnitName;
+    }
+
+    public Double getSalesPrice() {
+        return salesPrice;
+    }
+
+    public void setSalesPrice(Double salesPrice) {
+        this.salesPrice = salesPrice;
+    }
+
+    public Double getCostPrice() {
+        return costPrice;
+    }
+
+    public void setCostPrice(Double costPrice) {
+        this.costPrice = costPrice;
+    }
+
+    public String getStockStatusCode() {
+        return stockStatusCode;
+    }
+
+    public void setStockStatusCode(String stockStatusCode) {
+        this.stockStatusCode = stockStatusCode;
+    }
+
+    public Integer getStockNum() {
+        return stockNum;
+    }
+
+    public void setStockNum(Integer stockNum) {
+        this.stockNum = stockNum;
+    }
+
+    public String getPicUrls() {
+        return picUrls;
+    }
+
+    public void setPicUrls(String picUrls) {
+        this.picUrls = picUrls;
+    }
+
+    public List<String> getPicList() {
+        return picList;
+    }
+
+    public void setPicList(List<String> picList) {
+        this.picList = picList;
+    }
+
+    public List<String> getNoteList() {
+        return noteList;
+    }
+
+    public void setNoteList(List<String> noteList) {
+        this.noteList = noteList;
+    }
+
+    public String getOriginArea() {
+        return originArea;
+    }
+
+    public void setOriginArea(String originArea) {
+        this.originArea = originArea;
+    }
+
+    public Integer getShelfLife() {
+        return shelfLife;
+    }
+
+    public void setShelfLife(Integer shelfLife) {
+        this.shelfLife = shelfLife;
+    }
+
+    public String getIsSpec() {
+        return isSpec;
+    }
+
+    public void setIsSpec(String isSpec) {
+        this.isSpec = isSpec;
+    }
+
+    public List<Item> getItems() {
+        return items;
+    }
+
+    public void setItems(List<Item> items) {
+        this.items = items;
+    }
+
+    public Integer getUserChooseNum() {
+        return userChooseNum;
+    }
+
+    public void setUserChooseNum(Integer userChooseNum) {
+        this.userChooseNum = userChooseNum;
+    }
+
+    public Integer getItemAddAttribute() {
+        return itemAddAttribute;
+    }
+
+    public void setItemAddAttribute(Integer itemAddAttribute) {
+        this.itemAddAttribute = itemAddAttribute;
+    }
+
+    public String getItemBrandCode() {
+        return itemBrandCode;
+    }
+
+
+    public void setItemBrandCode(String itemBrandCode) {
+        this.itemBrandCode = itemBrandCode;
+    }
+
+    public String getItemBrandName() {
+        return itemBrandName;
+    }
+
+    public void setItemBrandName(String itemBrandName) {
+        this.itemBrandName = itemBrandName;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getPush() {
+        return push;
+    }
+
+    public void setPush(String push) {
+        this.push = push;
+    }
+
+    public String getIsVIPGoods() {
+        return isVIPGoods;
+    }
+
+    public void setIsVIPGoods(String isVIPGoods) {
+        this.isVIPGoods = isVIPGoods;
+    }
+
+    public Double getVIPrice() {
+        return vIPrice;
+    }
+
+    public void setVIPrice(Double vIPrice) {
+        this.vIPrice = vIPrice;
+    }
+
+    public Double getActivePrice() {
+        return activePrice;
+    }
+
+    public void setActivePrice(Double activePrice) {
+        this.activePrice = activePrice;
+    }
+
+    public String getHeadCate() {
+        return headCate;
+    }
+
+    public void setHeadCate(String headCate) {
+        this.headCate = headCate;
+    }
+
+    public String getEndCate() {
+        return endCate;
+    }
+
+    public void setEndCate(String endCate) {
+        this.endCate = endCate;
+    }
+
+    public String getUnit() {
+        return unit;
+    }
+
+    public void setUnit(String unit) {
+        this.unit = unit;
+    }
+
+    public Integer getSort() {
+        return sort;
+    }
+
+    public void setSort(Integer sort) {
+        this.sort = sort;
+    }
+
+    public String getWarehouseId() {
+        return warehouseId;
+    }
+
+    public void setWarehouseId(String warehouseId) {
+        this.warehouseId = warehouseId;
+    }
+
+    public String getSaleableNum() {
+        return saleableNum;
+    }
+
+    public void setSaleableNum(String saleableNum) {
+        this.saleableNum = saleableNum;
+    }
+
+    public String getWarehName() {
+        return warehName;
+    }
+
+    public void setWarehName(String warehName) {
+        this.warehName = warehName;
+    }
+}

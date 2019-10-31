@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qigan.qiganshop.mapper.ActRecordMapper" >
+  <resultMap id="BaseResultMap" type="com.qigan.qiganshop.pojo.ActRecord" >
+    <id column="actRecordId" property="actrecordid" jdbcType="VARCHAR" />
+    <result column="code" property="code" jdbcType="VARCHAR" />
+    <result column="startTime" property="starttime" jdbcType="VARCHAR" />
+    <result column="endTime" property="endtime" jdbcType="VARCHAR" />
+    <result column="casueType" property="casuetype" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    actRecordId, code, startTime, endTime, casueType
+  </sql>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.qigan.qiganshop.pojo.ActRecordExample" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from tb_act_record
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from tb_act_record
+    where actRecordId = #{actrecordid,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from tb_act_record
+    where actRecordId = #{actrecordid,jdbcType=VARCHAR}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.qigan.qiganshop.pojo.ActRecordExample" >
+    delete from tb_act_record
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.qigan.qiganshop.pojo.ActRecord" >
+    insert into tb_act_record (actRecordId, code, startTime, 
+      endTime, casueType)
+    values (#{actrecordid,jdbcType=VARCHAR}, #{code,jdbcType=VARCHAR}, #{starttime,jdbcType=VARCHAR}, 
+      #{endtime,jdbcType=VARCHAR}, #{casuetype,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.qigan.qiganshop.pojo.ActRecord" >
+    insert into tb_act_record
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="actrecordid != null" >
+        actRecordId,
+      </if>
+      <if test="code != null" >
+        code,
+      </if>
+      <if test="starttime != null" >
+        startTime,
+      </if>
+      <if test="endtime != null" >
+        endTime,
+      </if>
+      <if test="casuetype != null" >
+        casueType,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="actrecordid != null" >
+        #{actrecordid,jdbcType=VARCHAR},
+      </if>
+      <if test="code != null" >
+        #{code,jdbcType=VARCHAR},
+      </if>
+      <if test="starttime != null" >
+        #{starttime,jdbcType=VARCHAR},
+      </if>
+      <if test="endtime != null" >
+        #{endtime,jdbcType=VARCHAR},
+      </if>
+      <if test="casuetype != null" >
+        #{casuetype,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.qigan.qiganshop.pojo.ActRecordExample" resultType="java.lang.Integer" >
+    select count(*) from tb_act_record
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update tb_act_record
+    <set >
+      <if test="record.actrecordid != null" >
+        actRecordId = #{record.actrecordid,jdbcType=VARCHAR},
+      </if>
+      <if test="record.code != null" >
+        code = #{record.code,jdbcType=VARCHAR},
+      </if>
+      <if test="record.starttime != null" >
+        startTime = #{record.starttime,jdbcType=VARCHAR},
+      </if>
+      <if test="record.endtime != null" >
+        endTime = #{record.endtime,jdbcType=VARCHAR},
+      </if>
+      <if test="record.casuetype != null" >
+        casueType = #{record.casuetype,jdbcType=VARCHAR},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update tb_act_record
+    set actRecordId = #{record.actrecordid,jdbcType=VARCHAR},
+      code = #{record.code,jdbcType=VARCHAR},
+      startTime = #{record.starttime,jdbcType=VARCHAR},
+      endTime = #{record.endtime,jdbcType=VARCHAR},
+      casueType = #{record.casuetype,jdbcType=VARCHAR}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.qigan.qiganshop.pojo.ActRecord" >
+    update tb_act_record
+    <set >
+      <if test="code != null" >
+        code = #{code,jdbcType=VARCHAR},
+      </if>
+      <if test="starttime != null" >
+        startTime = #{starttime,jdbcType=VARCHAR},
+      </if>
+      <if test="endtime != null" >
+        endTime = #{endtime,jdbcType=VARCHAR},
+      </if>
+      <if test="casuetype != null" >
+        casueType = #{casuetype,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where actRecordId = #{actrecordid,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.qigan.qiganshop.pojo.ActRecord" >
+    update tb_act_record
+    set code = #{code,jdbcType=VARCHAR},
+      startTime = #{starttime,jdbcType=VARCHAR},
+      endTime = #{endtime,jdbcType=VARCHAR},
+      casueType = #{casuetype,jdbcType=VARCHAR}
+    where actRecordId = #{actrecordid,jdbcType=VARCHAR}
+  </update>
+</mapper>

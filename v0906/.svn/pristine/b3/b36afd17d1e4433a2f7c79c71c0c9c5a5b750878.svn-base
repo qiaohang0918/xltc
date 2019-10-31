@@ -1,0 +1,62 @@
+package com.qigan.qiganshop.pojo;
+
+import java.io.Serializable;
+
+public class ActRecord implements Serializable {
+    private String actrecordid;
+
+    private String code;
+
+    private String starttime;
+
+    private String endtime;
+
+    private static final long serialVersionUID = 1L;
+
+    public String getActrecordid() {
+        return actrecordid;
+    }
+
+    public void setActrecordid(String actrecordid) {
+        this.actrecordid = actrecordid == null ? null : actrecordid.trim();
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
+        this.code = code == null ? null : code.trim();
+    }
+
+    public String getStarttime() {
+        return starttime;
+    }
+
+    public void setStarttime(String starttime) {
+        this.starttime = starttime == null ? null : starttime.trim();
+    }
+
+    public String getEndtime() {
+        return endtime;
+    }
+
+    public void setEndtime(String endtime) {
+        this.endtime = endtime == null ? null : endtime.trim();
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(getClass().getSimpleName());
+        sb.append(" [");
+        sb.append("Hash = ").append(hashCode());
+        sb.append(", actrecordid=").append(actrecordid);
+        sb.append(", code=").append(code);
+        sb.append(", starttime=").append(starttime);
+        sb.append(", endtime=").append(endtime);
+        sb.append(", serialVersionUID=").append(serialVersionUID);
+        sb.append("]");
+        return sb.toString();
+    }
+}

@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qigan.qiganshop.mapper.DeliveryerMapper">
+    <resultMap id="BaseResultMap" type="com.qigan.qiganshop.pojo.Deliveryer">
+        <id column="deliveryerId" property="deliveryerId" jdbcType="INTEGER"/>
+        <result column="name" property="name" jdbcType="VARCHAR"/>
+        <result column="passwd" property="passwd" jdbcType="VARCHAR"/>
+        <result column="phoneNum" property="phoneNum" jdbcType="VARCHAR"/>
+        <result column="createTime" property="createTime" jdbcType="VARCHAR"/>
+        <result column="enable" property="enable" jdbcType="VARCHAR"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        deliveryerId, name, passwd, phoneNum, createTime,enable
+    </sql>
+    <select id="findOne" resultMap="BaseResultMap" parameterType="java.lang.Integer">
+        select
+        <include refid="Base_Column_List"/>
+        from tb_deliveryer
+        where deliveryerId = #{deliveryerId,jdbcType=INTEGER}
+    </select>
+    <delete id="delete" parameterType="java.lang.Integer">
+        delete
+        from tb_deliveryer
+        where deliveryerId = #{deliveryerId,jdbcType=INTEGER}
+    </delete>
+    <insert id="insert" parameterType="com.qigan.qiganshop.pojo.Deliveryer">
+        insert into tb_deliveryer (deliveryerId, name, passwd,
+                                   phoneNum, createTime, enable)
+        values (#{deliveryerId,jdbcType=INTEGER}, #{name,jdbcType=VARCHAR}, #{passwd,jdbcType=VARCHAR},
+                #{phoneNum,jdbcType=VARCHAR}, #{createTime,jdbcType=VARCHAR}, #{enable,jdbcType=VARCHAR})
+    </insert>
+    <update id="update" parameterType="com.qigan.qiganshop.pojo.Deliveryer">
+        update tb_deliveryer
+        <set>
+            <if test="name != null">
+                name = #{name,jdbcType=VARCHAR},
+            </if>
+            <if test="passwd != null">
+                passwd = #{passwd,jdbcType=VARCHAR},
+            </if>
+            <if test="phoneNum != null">
+                phoneNum = #{phoneNum,jdbcType=VARCHAR},
+            </if>
+            <if test="createTime != null">
+                createTime = #{createTime,jdbcType=VARCHAR},
+            </if>
+            <if test="enable != null">
+                enable = #{enable,jdbcType=VARCHAR},
+            </if>
+        </set>
+        where deliveryerId = #{deliveryerId,jdbcType=INTEGER}
+    </update>
+    <select id="findPage" resultMap="BaseResultMap" parameterType="map">
+        select
+        <include refid="Base_Column_List"/>
+        from tb_deliveryer
+        <if test="record != null">
+            where
+            <if test="record.name != null">
+                name like '%${record.name,jdbcType=VARCHAR}%' and
+            </if>
+            <if test="record.phoneNum != null">
+                phoneNum = #{record.phoneNum,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.enable != null">
+                enable = #{record.enable,jdbcType=VARCHAR} and
+            </if>
+            1 = 1
+        </if>
+        <if test="page != null and size != null">
+            limit #{page},#{size}
+        </if>
+    </select>
+
+    <select id="getMaxId" resultType="integer">
+        select max(deliveryerId)
+        from tb_deliveryer
+    </select>
+    <select id="getCount" resultType="integer">
+        select count(1)
+        from tb_deliveryer
+    </select>
+
+
+    <select id="getByPhone" parameterType="string" resultType="int">
+        select count(1)
+        from tb_deliveryer
+        where phoneNum = #{phoneNum}
+    </select>
+</mapper>

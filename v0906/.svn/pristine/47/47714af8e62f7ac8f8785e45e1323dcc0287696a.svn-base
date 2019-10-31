@@ -1,0 +1,52 @@
+package com.qigan.qiganshop.service;
+
+import com.qigan.qiganshop.pojo.TbSpecial;
+import com.qigan.qiganshop.pojo.TbSpecialConcat;
+import com.qigan.qiganshop.pojo.TbSpecialTopic;
+import com.qigan.qiganshop.pojo.TbSpecialUnit;
+import com.qigan.qiganshop.util.result.XltcResult;
+
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * @Aurher: QiaoHang
+ * @Description:
+ * @Data: 2019/10/23 15:17
+ * @Modified By:
+ */
+public interface XltcSpecialManageService {
+
+
+    XltcResult addSpecial(TbSpecial special);
+
+    XltcResult updateSpecial(TbSpecial special);
+
+    XltcResult deleteSpecial(TbSpecial special);
+
+    XltcResult findSpecialByConditions(TbSpecial special);
+
+    XltcResult addTopicForSpecial(TbSpecialTopic topic);
+
+    XltcResult deleteTopicCasecade(TbSpecialTopic topic);
+
+    XltcResult updateSpecialTopic(TbSpecialTopic topic);
+
+    XltcResult findSpecialTopic( Map<String,String> parms);
+
+    XltcResult findUnitByCondition(Map<String, String> parms);
+
+    XltcResult addSpecialUnit(TbSpecialUnit specialUnit);
+
+    XltcResult updateSpecialUnit(TbSpecialUnit specialUnit);
+
+    XltcResult deleteSpecialUnit(TbSpecialUnit specialUnit);
+
+    XltcResult findSpecialUnitDetails(TbSpecialUnit specialUnit);
+
+    XltcResult casecadeUnitToTopic(TbSpecialConcat specialConcat);
+
+    XltcResult findSimpleSpecialTopic(TbSpecialTopic specialTopic);
+
+    XltcResult findUnitByConditionForApp(HashMap<String, String> parms);
+}

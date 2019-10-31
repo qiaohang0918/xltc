@@ -1,0 +1,613 @@
+package com.qigan.qiganshop.controller.frontend;
+
+import com.alibaba.druid.util.StringUtils;
+import com.alibaba.fastjson.JSONObject;
+import com.github.pagehelper.PageInfo;
+import com.qigan.qiganshop.constant.RedisConstant;
+import com.qigan.qiganshop.exception.XltcRuntimeException;
+import com.qigan.qiganshop.pojo.AppUser;
+import com.qigan.qiganshop.pojo.TbClueUser;
+import com.qigan.qiganshop.service.AppUserService;
+import com.qigan.qiganshop.service.XltcClueUserService;
+import com.qigan.qiganshop.util.access.JedisUtil;
+import com.qigan.qiganshop.util.notnull.NotNull;
+import com.qigan.qiganshop.util.notnull.StringNotNull;
+import com.qigan.qiganshop.util.picture.PicUtil;
+import com.qigan.qiganshop.util.result.format.JsonResult;
+import com.qigan.qiganshop.util.result.format.ResultCode;
+import com.qigan.qiganshop.util.sms.PhoneFormatCheckUtils;
+import com.qigan.qiganshop.util.sms.SmsUtil;
+import com.qigan.qiganshop.utils.json.JsonUtils;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.bind.ServletRequestUtils;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.text.SimpleDateFormat;
+import java.util.*;
+
+@SuppressWarnings("all")
+@RestController
+@RequestMapping("/app/user")
+@Api(tags = { "APP 用户管理接口" })
+public class AppUserController {
+	@Value("${FILE_SERVER_URL}")
+	private String FILE_SERVER_URL;
+	@Autowired
+	private JsonResult jr;
+	@Autowired
+	private SmsUtil smsUtil;
+	@Autowired
+	private PicUtil picUtil;
+
+	@Autowired
+	private JedisUtil jedisUtil;
+	@Autowired
+	private AppUserService userService;
+	@Autowired
+	private XltcClueUserService clueUserService;
+
+
+	/**
+	 * 短信应用参数 阿里大于
+	 **/
+	private final String signName = "喜乐同城";
+	private final String templateregister = "SMS_163555215";
+	private final String templateretrieve = "SMS_163565289";
+	private final String templateLogin = "SMS_163565292";
+
+	/**
+	 * 微信应用参数
+	 **/
+	private final String wappid = "wxed3d364bdec061ed";
+	private final String wsecret = "c5602b960a69b671bb1f1d2baf4e058d";
+	private final String wgrant_type = "authorization_code";
+
+	/**
+	 * QQ应用参数
+	 **/
+	private final String qappid = "SMS_152513965";
+	private final String qsecret = "SMS_152513965";
+	private final String qgrant_type = "authorization_code";
+	private final String qredirect_uri = "";
+
+	@RequestMapping(value = "/sendCheckCode.do")
+	@ApiOperation(value = "发送验证码", notes = "用于发送验证码 phone 手机号码  type 验证码类型  register 注册时发送验证码  retrieve找回密码时发送验证码", httpMethod = "POST")
+	public JsonResult sendCheckCode(String phone, String type, HttpServletRequest request) {
+		try {
+			if (!PhoneFormatCheckUtils.isPhoneLegal(phone)) {
+				return jr.jsonResultData(ResultCode.FAIL.res_code(), "手机号码格式不正确!");
+			}
+			AppUser userByPhone = userService.findAppUserByPhone(phone);
+			String templateParam = "";
+			if ("register".equals(type)) {
+				if (userByPhone != null) {
+					return jr.jsonResultData(ResultCode.FAIL.res_code(), "当前手机号已被注册!");
+				}
+				templateParam = templateregister;
+			} else if ("retrieve".equals(type)) {
+				if (userByPhone == null) {
+					return jr.jsonResultData(ResultCode.FAIL.res_code(), "当前手机号未被注册!");
+				}
+				templateParam = templateretrieve;
+			} else if ("login".equals(type)) {
+				templateParam = templateLogin;
+			}
+			String ranStr = RandomStringUtils.random(6, false, true);
+			String status = smsUtil.sendMessage(phone, ranStr, signName, templateParam);
+			if ("success".equals(status)) {
+				jedisUtil.set(phone.getBytes(), ranStr.getBytes());
+				jedisUtil.expire(phone.getBytes(), 60 * 5); // 五分钟有效
+				return jr.jsonResultData(ResultCode.SUCCESS.res_code(), "验证码发送成功!");
+			} else {
+				return jr.jsonResultData(ResultCode.FAIL.res_code(), "验证码发送失败!");
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			return jr.jsonResultData(ResultCode.ERROR.res_code(), "验证码发送失败!");
+		}
+	}
+
+	@RequestMapping(value = "/compareCheckCode.do")
+	@ApiOperation(value = "校验验证码", notes = "用于校验验证码 phone 手机号码  registerCode 验证码 ", httpMethod = "POST")
+	public JsonResult compareCheckCode(String phone, String registerCode, HttpServletRequest request) {
+		try {
+			byte[] be = phone.getBytes();
+			byte[] bev = jedisUtil.get(be);
+			String regcodejedis = "";
+			if (bev != null) {
+				regcodejedis = new String(bev);
+			}
+			String regcode = ServletRequestUtils.getStringParameter(request, "registerCode", "");
+			if (regcode.equals(regcodejedis)) {
+				jedisUtil.del(be);
+				return jr.jsonResultData(ResultCode.SUCCESS.res_code(), "校验成功");
+			} else {
+				return jr.jsonResultData(ResultCode.FAIL.res_code(), "校验失败");
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			return jr.jsonResultData(ResultCode.ERROR.res_code(), "校验错误!");
+		}
+	}
+
+
+
+	/**
+	 *
+	 * @param user		新注册用户实体
+	 * @param request
+	 * @param response
+	 * @param orginUserId	源用户ID
+	 * @param clueType	线索类型（1.微信二维码 weixin   2.微博 weibo   3.QQ ...）
+	 * @param couponOrAmount	分发优惠卷还是余额（1.优惠卷 coupon   2.余额 amount  ）
+	 * @return
+	 */
+	@RequestMapping("/register.do")
+	@ApiOperation(value = "前端用户注册接口", notes = "需要填写的参数有： phone 手机号码 password 密码 paypassword 支付密码  其他参数不用填写 ", httpMethod = "POST")
+	public JsonResult register(@RequestBody AppUser user, HttpServletRequest request, HttpServletResponse response,
+							   String orginUserId,String clueType,String couponOrAmount) {
+		try {
+			if (user == null || !NotNull.checkString(user.getPassword(), user.getPaypassword())) {
+				return jr.jsonResultData(ResultCode.FAIL.res_code(), "密码不能为空");
+			}
+			user.setPassword(DigestUtils.md5Hex(user.getPassword()));
+			user.setPaypassword(DigestUtils.md5Hex(user.getPaypassword()));
+			user.setMember("0");
+			user.setSex("0");
+			String newUserId = null;
+			user.setUserId(UUID.randomUUID().toString().replaceAll("-", ""));
+			int au = userService.addAppUser(user);
+			newUserId = userService.getUserId(user.getPhone());
+			if (au != 0 && newUserId!=null) {
+				//新用户注册成功 ， 判断是否是线索用户 ， 线索用户分发优惠卷 ， 源用户判断分发优惠卷还是amount
+				if(StringNotNull.check(orginUserId,clueType,couponOrAmount)){
+					//线索客户,插入线索客户关联记录(给线索客户优惠卷)
+					boolean result = clueUserService.insertRecord(orginUserId, clueType, couponOrAmount, newUserId);
+					if(result){
+						//给源客户下发福利(couponOrAmount)
+						boolean givenResult = clueUserService.givenOrginUserWishes(orginUserId, couponOrAmount, newUserId);
+					}
+				}
+				return jr.jsonResultData(ResultCode.SUCCESS.res_code(), "注册成功");
+			}
+			return jr.jsonResultData(ResultCode.FAIL.res_code());
+		} catch (Exception e) {
+			e.printStackTrace();
+			return jr.jsonResultData(ResultCode.ERROR.res_code());
+		}
+	}
+
+	@RequestMapping("/login.do")
+	@ApiOperation(value = "前端用户登录接口", notes = "需要填写的参数有 phone 手机号 password 登录密码", httpMethod = "POST")
+	public JsonResult sunLogin(AppUser user, HttpServletRequest request, HttpServletResponse response) {
+		String phone = ServletRequestUtils.getStringParameter(request, "phone", "");
+		String password = ServletRequestUtils.getStringParameter(request, "password", "");
+		String code = ServletRequestUtils.getStringParameter(request, "code", "");
+		if (org.apache.commons.lang3.StringUtils.isBlank(phone))
+			return jr.jsonResultData("40x", "手机号为空");
+		try {
+			AppUser appUser = userService.findAppUserByPhone(phone);
+			String uuid = "to_" + UUID.randomUUID().toString().replaceAll("-", "");
+			if (appUser != null) {
+				if (org.apache.commons.lang3.StringUtils.isNotBlank(code)) {
+					byte[] bev = jedisUtil.get(phone.getBytes());
+					String loginCodejedis = "";
+					if (bev != null) 
+						loginCodejedis = new String(bev);
+					if (org.apache.commons.lang3.StringUtils.isBlank(loginCodejedis))
+						return jr.jsonResultData("40x", "验证码已失效,请重新获取");
+					if(loginCodejedis.equals(code)){
+						jedisUtil.del(phone.getBytes());
+						return loginHandle(appUser, uuid);
+					}else{
+						return jr.jsonResultData("40x", "验证码不正确,请重新输入");
+					}
+				}
+
+				String password1 = appUser.getPassword();
+				String password2 = DigestUtils.md5Hex(password);
+				if (password1.equals(password2)) 
+					return loginHandle(appUser, uuid);
+			}
+			return jr.jsonResultData(ResultCode.FAIL.res_code(), "用户名或密码错误");
+		} catch (Exception e) {
+			e.printStackTrace();
+			e.printStackTrace();
+			return jr.jsonResultData(ResultCode.ERROR.res_code());
+		}
+	}
+	
+	private JsonResult loginHandle(AppUser appUser, String uuid){
+		jedisUtil.set(uuid.getBytes(), "".getBytes());
+		String oldtoken = appUser.getToken();
+		if (oldtoken != null && !"".equals(oldtoken)) {
+			jedisUtil.removeElementFromHash(RedisConstant.USER, oldtoken);
+			jedisUtil.del(oldtoken.getBytes());
+		}
+		appUser.setToken(uuid);
+		int au = userService.updateAppUser(appUser);
+		if (au != 0) {
+			HashMap<String, Object> map = new HashMap<String, Object>();
+			map.put("token", uuid);
+			map.put("userId", appUser.getUserId());
+			map.put("member", appUser.getMember());
+			map.put("userHead", appUser.getImageUrl());
+			map.put("userPhone", appUser.getPhone());
+			map.put("nickName", appUser.getNickName());
+			jedisUtil.setToHash(RedisConstant.USER , uuid, JsonUtils.writeValueAsString(appUser));
+			return jr.jsonResultData(ResultCode.SUCCESS.res_code(), "登录成功", map);
+		} else {
+			return jr.jsonResultData(ResultCode.FAIL.res_code());
+		}
+	}
+
+	@RequestMapping("/logout.do")
+	@ApiOperation(value = "前端用户退出接口", notes = "token 需要填写令牌", httpMethod = "POST")
+	public JsonResult logout(String token, HttpServletRequest request, HttpServletResponse response) {
+		try {
+			jedisUtil.del(token.getBytes());
+			AppUser user = userService.getAppUserByToken(token);
+			user.setToken("");
+			user.setImageUrl(null);
+			int au = userService.updateAppUser(user);
+			if (au != 0) {
+				jedisUtil.removeElementFromHash(RedisConstant.USER, token);
+				jr.jsonResultData(ResultCode.SUCCESS.res_code());
+			} else {
+				jr.jsonResultData(ResultCode.FAIL.res_code());
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			jr.jsonResultData(ResultCode.ERROR.res_code());
+		}
+		return jr;
+	}
+
+	@RequestMapping("/updatePass.do")
+	@ApiOperation(value = "前端用户修改密码接口", notes = "token 令牌 newPass 需要填写的新密码 oldPass 旧密码 ", httpMethod = "POST")
+	public JsonResult updatePass(String token, String newPass, String oldPass, HttpServletRequest request,
+			HttpServletResponse response) {
+		try {
+			String tokenStr = ServletRequestUtils.getStringParameter(request, "token", "");
+			String newPassStr = ServletRequestUtils.getStringParameter(request, "newPass", "");
+			String oldPassStr = ServletRequestUtils.getStringParameter(request, "oldPass", "");
+			AppUser user = userService.getAppUserByToken(tokenStr);
+			String oldPassS = DigestUtils.md5Hex(oldPassStr);
+			if (oldPassS.equals(user.getPassword())) {
+				String newPassS = DigestUtils.md5Hex(newPassStr);
+				user.setPassword(newPassS);
+				int au = userService.updateAppUserToken(user);
+				if (au != 0) {
+					jedisUtil.removeElementFromHash(RedisConstant.USER, token);
+					jr.jsonResultData(ResultCode.SUCCESS.res_code());
+				} else {
+					jr.jsonResultData(ResultCode.FAIL.res_code());
+				}
+			} else {
+				jr.jsonResultData(ResultCode.FAIL.res_code(), "原密码错误");
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			jr.jsonResultData(ResultCode.ERROR.res_code());
+		}
+		return jr;
+	}
+
+	@RequestMapping("/retrievePass.do")
+	@ApiOperation(value = "前端用户忘记密码接口", notes = "phone 手机号  newPass 需要填写的新密码 ", httpMethod = "POST")
+	public JsonResult retrievePass(String phone, String newPass, HttpServletRequest request,
+			HttpServletResponse response) {
+		try {
+			String phoneStr = ServletRequestUtils.getStringParameter(request, "phone", "");
+			String newPassStr = ServletRequestUtils.getStringParameter(request, "newPass", "");
+			AppUser user = userService.findAppUserByPhone(phoneStr);
+			if (user == null) {
+				return jr.jsonResultData(ResultCode.FAIL.res_code());
+			}
+
+			String newPassS = DigestUtils.md5Hex(newPassStr);
+			user.setPassword(newPassS);
+			int au = userService.updateAppUser(user);
+			if (au != 0) {
+				jedisUtil.removeElementFromHash(RedisConstant.USER, user.getToken());
+				return jr.jsonResultData(ResultCode.SUCCESS.res_code());
+			} else {
+				return jr.jsonResultData(ResultCode.FAIL.res_code());
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			return jr.jsonResultData(ResultCode.ERROR.res_code());
+		}
+	}
+
+	@RequestMapping("/modifyUser.do")
+	@ApiOperation(value = "前端用户修改信息接口", notes = "需要填写的参数 token ,以及需要修改的信息(userId、token不能修改) sex 0是女 1是男", httpMethod = "POST")
+	public JsonResult modifyUser(@RequestBody AppUser appUser) {
+		if (appUser == null) {
+			return jr.jsonResultData(ResultCode.FAIL.res_code(), "参数为空");
+		}
+		jedisUtil.removeElementFromHash(RedisConstant.USER, appUser.getToken());
+		AppUser appUserByToken = userService.getAppUserByToken(appUser.getToken());
+		if (appUserByToken == null) {
+			return jr.jsonResultData(ResultCode.AUTH.res_code(), "登录信息已失效");
+
+		}
+		if (NotNull.checkString(appUser.getImageUrl())) {
+			appUser.setImageUrl(picUtil.deleteUrlHead(appUser.getImageUrl()));
+		}
+		try {
+			String paypassword = appUser.getPaypassword();
+			String password = appUser.getPassword();
+			if (NotNull.checkString(password, paypassword)) {
+				String ppw = DigestUtils.md5Hex(paypassword);
+				appUser.setPaypassword(ppw);
+				String pw = DigestUtils.md5Hex(password);
+				appUser.setPassword(pw);
+			}
+			int mu = userService.updateAppUserToken(appUser);
+			if (mu != 0) {
+				return jr.jsonResultData(ResultCode.SUCCESS.res_code());
+			} else {
+				return jr.jsonResultData(ResultCode.FAIL.res_code());
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			return jr.jsonResultData(ResultCode.ERROR.res_code());
+		}
+	}
+
+	@RequestMapping("/getUser.do")
+	@ApiOperation(value = "前端用户获取信息接口", notes = "需要通过令牌来获取用户信息 token", httpMethod = "POST")
+	public JsonResult getUser(String token) {
+		AppUser appUser;
+    	String userStr = jedisUtil.getFromHash(RedisConstant.USER, token);;
+    	if(org.apache.commons.lang3.StringUtils.isNotBlank(userStr)){
+    		appUser = JsonUtils.readValue(userStr, AppUser.class);
+    	}else{
+    		appUser = userService.getAppUserByToken(token);
+    	}
+		if (appUser == null) {
+			return jr.jsonResultData(ResultCode.AUTH.res_code(), "登录信息已失效");
+		}
+		appUser.setImageUrl(picUtil.addOneUrlHead(appUser.getImageUrl()));
+		String paypass = appUser.getPaypassword();
+		if (paypass != null & !"".equals(paypass)) {
+			appUser.setPaypasswordExist("1");
+		} else {
+			appUser.setPaypasswordExist("0");
+		}
+		jedisUtil.setToHash(RedisConstant.USER , token, JsonUtils.writeValueAsString(appUser));
+		return jr.jsonResultData(ResultCode.SUCCESS.res_code(), "获取成功", NotNull.checkNull(appUser));
+	}
+
+	@RequestMapping("/updateImage.do")
+	@ApiOperation(value = "用户上传头像", notes = "该接口用户可以上传头像", httpMethod = "POST")
+	public JsonResult updateImage(
+			@ApiParam(required = true, name = "token", value = "token") @RequestParam(value = "token") String token,
+			@ApiParam(required = true, name = "file", value = "file") @RequestParam(value = "file") MultipartFile file) {
+		if (token != null || !"".equals(token)) {
+			Map<String, Object> map = new HashMap<>();
+			String s = userService.updateAppuserImage(token, file);
+			if (!"ERROR".equals(s)) {
+//				map.put("url", FILE_SERVER_URL + s);
+				map.put("url", s);
+				jedisUtil.removeElementFromHash(RedisConstant.USER, token);
+				return jr.jsonResultData(ResultCode.SUCCESS.res_code(), ResultCode.SUCCESS.message(), map);
+			}
+		}
+		return jr.jsonResultData(ResultCode.FAIL.res_code(), ResultCode.FAIL.message(), "");
+
+	}
+
+	/**
+	 * 1. 第三方发起微信授权登录请求，微信用户允许授权第三方应用后，微信会拉起应用或重定向到第三方网站，并且带上授权临时票据code参数； 2.
+	 * 通过code参数加上AppID和AppSecret等，通过API换取access_token； 3.
+	 * 通过access_token进行接口调用，获取用户基本数据资源或帮助用户实现基本操作。
+	 *
+	 * @param code
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping("/wgaccesstoken.do")
+	@ApiOperation(value = "微信登录获取access_token接口", notes = "code 授权临时票据", httpMethod = "POST")
+	public JsonResult wgaccesstoken(String code) {
+		try {
+			HttpClient httpClient = new HttpClient();
+			String url = "https://api.weixin.qq.com/sns/oauth2/access_token?appid=" + wappid + "&secret=" + wsecret
+					+ "&code=" + code + "&grant_type=" + wgrant_type;
+			GetMethod getMethod1 = new GetMethod(url);
+			httpClient.executeMethod(getMethod1);
+			String resultw = getMethod1.getResponseBodyAsString();
+			JSONObject ja = JSONObject.parseObject(resultw);
+			String openid = ja.getString("openid");
+			String access_token = ja.getString("access_token");
+			Map<String, Object> map = new HashMap<>();
+			map.put("openid", openid);
+			map.put("access_token", access_token);
+			String uuid = "to_" + UUID.randomUUID().toString().replaceAll("-", "");
+			AppUser user = userService.getAppUserByOpenid(openid);
+			if (user == null) {
+				AppUser u = new AppUser();
+				u.setWopenid(openid);
+				int suc = userService.addAppUser(u);
+				if (suc == 0) {
+					return jr.jsonResultData(ResultCode.FAIL.res_code());
+				}
+			}
+			user = userService.getAppUserByOpenid(openid);
+			if (user != null && StringNotNull.check(user.getToken())) {
+				jedisUtil.del(user.getToken().getBytes());
+			}
+			map.put("userId", user.getUserId());
+			user.setToken(uuid);
+			user.setImageUrl(null);
+			int suc = userService.updateAppUser(user);
+			if (suc != 1) {
+				return jr.jsonResultData(ResultCode.FAIL.res_code());
+			}
+			map.put("token", uuid);
+			map.put("member", user.getMember());
+			jedisUtil.set(uuid.getBytes(), "".getBytes());
+			jr.jsonResultData(ResultCode.SUCCESS.res_code(), "操作成功", map);
+		} catch (Exception e) {
+			e.printStackTrace();
+			jr.jsonResultData(ResultCode.ERROR.res_code());
+		}
+		return jr;
+	}
+
+	@RequestMapping("/wopenidjudge.do")
+	@ApiOperation(value = "判断微信openid是否和手机号绑定", notes = "openid 授权用户唯一标识", httpMethod = "POST")
+	public JsonResult wopenidjudge(String openid) {
+		try {
+			AppUser user = userService.getAppUserByOpenid(openid);
+			if (user != null) {
+				HashMap<String, Object> map = new HashMap<>();
+				map.put("phone", user.getPhone() == null ? "" : user.getPhone());
+				jr.jsonResultData(ResultCode.SUCCESS.res_code(), "操作成功", true);
+			} else {
+				jr.jsonResultData(ResultCode.FAIL.res_code());
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			jr.jsonResultData(ResultCode.ERROR.res_code());
+		}
+		return jr;
+	}
+
+	@RequestMapping("/qgaccesstoken.do")
+	@ApiOperation(value = "QQ登录获取access_token接口", notes = "code 授权临时票据", httpMethod = "POST")
+	public JsonResult qgaccesstoken(String code) {
+		try {
+			HttpClient httpClient = new HttpClient();
+			String url = "https://graph.qq.com/oauth2.0/token?client_id=" + qappid + "&client_secret=" + qsecret
+					+ "&code=" + code + "&grant_type=" + qgrant_type + "redirect_uri" + qredirect_uri;
+			GetMethod getMethod = new GetMethod(url);
+			httpClient.executeMethod(getMethod);
+			String result = getMethod.getResponseBodyAsString();
+			JSONObject ja = JSONObject.parseObject(result);
+			String access_token = ja.getString("access_token");
+			String url1 = "https://graph.qq.com/oauth2.0/me?access_token=" + access_token;
+			GetMethod getMethod1 = new GetMethod(url1);
+			httpClient.executeMethod(getMethod1);
+			String result1 = getMethod.getResponseBodyAsString();
+			JSONObject ja1 = JSONObject.parseObject(result1);
+			String openid = ja1.getString("openid");
+			Map<String, Object> map = new HashMap<>();
+			map.put("openid", openid);
+			map.put("access_token", access_token);
+			String uuid = "to_" + UUID.randomUUID().toString().replaceAll("-", "");
+			AppUser user = userService.getAppUserByQOpenid(openid);
+			if (user == null) {
+				AppUser u = new AppUser();
+				u.setQopenid(openid);
+				int suc = userService.addAppUser(u);
+				if (suc == 0) {
+					return jr.jsonResultData(ResultCode.FAIL.res_code());
+				}
+			}
+			String oldtoken = user.getToken();
+			if (oldtoken != null && !"".equals(oldtoken)) {
+				jedisUtil.del(oldtoken.getBytes());
+			}
+			user.setToken(uuid);
+			int suc = userService.updateAppUser(user);
+			if (suc != 1) {
+				return jr.jsonResultData(ResultCode.FAIL.res_code());
+			}
+			map.put("token", uuid);
+			map.put("userId", user.getUserId());
+			map.put("member", user.getMember());
+			jedisUtil.set(uuid.getBytes(), "".getBytes());
+			jr.jsonResultData(ResultCode.SUCCESS.res_code(), "操作成功", map);
+		} catch (Exception e) {
+			e.printStackTrace();
+			jr.jsonResultData(ResultCode.ERROR.res_code());
+		}
+		return jr;
+	}
+
+	@RequestMapping("/qopenidjudge.do")
+	@ApiOperation(value = "判断QQopenid是否和手机号绑定", notes = "openid 授权用户唯一标识", httpMethod = "POST")
+	public JsonResult qopenidjudge(String openid) {
+		try {
+			AppUser user = userService.getAppUserByQOpenid(openid);
+			HashMap<String, Object> map = new HashMap<>();
+			if (user != null) {
+				map.put("phone", user.getPhone() == null ? "" : user.getPhone());
+				jr.jsonResultData(ResultCode.SUCCESS.res_code(), "操作成功", NotNull.checkObject(map));
+			} else {
+				jr.jsonResultData(ResultCode.FAIL.res_code());
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			jr.jsonResultData(ResultCode.ERROR.res_code());
+		}
+		return jr;
+	}
+
+	/**
+	 * search Appuser by condition
+	 * @param page
+	 * @param size
+	 * @param phone
+	 * @param startTime
+	 * @param endTime
+	 * @param sortPartten
+	 * @return
+	 */
+	@RequestMapping("/findPage.do")
+	@ApiOperation(value = "后台获取用户信息", notes = "三合一 可分页 可条件 可全部", httpMethod = "POST")
+	public JsonResult findPage(@RequestParam(value = "page",defaultValue = "1")  Integer page,
+							   @RequestParam(value = "size",defaultValue = "10")  Integer size,
+							   String phone,
+							   String startTime,
+						 	   String endTime,
+						 	   @RequestParam(value = "maxOrderNum", required = false) String maxOrderNum,
+						 	   @RequestParam(value = "minOrderNum", required = false) String minOrderNum,
+						 	   @RequestParam(value = "maxAmount", required = false) String maxAmount,
+						 	   @RequestParam(value = "minAmount", required = false) String minAmount,
+							   @RequestParam(value = "sortPartten",defaultValue = "DESC")String sortPartten) {
+		HashMap<String, String> map = new HashMap<>();
+		map.put("page",page+"");
+		map.put("size",size+"");
+		map.put("phone",phone==null || "".equals(phone) ? null:phone);
+		map.put("startTime", startTime==null || "".equals(startTime) ? null:startTime);
+		map.put("endTime",endTime==null || "".equals(endTime) ? null:endTime);
+		map.put("sortPartten",sortPartten);
+		map.put("maxOrderNum",maxOrderNum);
+		map.put("minOrderNum",minOrderNum);
+		map.put("maxAmount",maxAmount);
+		map.put("minAmount",minAmount);
+		PageInfo<AppUser> page1 = userService.findPageByCondition(map);
+
+		return  new JsonResult(ResultCode.SUCCESS.res_code(),"查询成功",page1);
+//		return   userService.findPageByCondition(map);
+//		List<AppUser> page = userService.findPage(null, null, null);
+//		return new JsonResult("200", "success", page);
+	}
+
+	/**
+	 * 查询时间单位内新增的人数
+	 * @param startTime
+	 * @param endTime
+	 * @return
+	 */
+	@RequestMapping(value = "/daysUserRecords.do",method = RequestMethod.GET)
+	public JsonResult  daysUserRecords(String startTime,String endTime){
+		return userService.daysUserRecords(startTime, endTime);
+	}
+	
+}

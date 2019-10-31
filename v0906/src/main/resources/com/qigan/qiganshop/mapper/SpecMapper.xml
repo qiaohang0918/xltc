@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qigan.qiganshop.mapper.SpecMapper">
+
+    <resultMap id="BaseResultMap" type="com.qigan.qiganshop.pojo.Specification">
+        <id column="specId" property="specId" jdbcType="VARCHAR"/>
+        <result column="specName" property="specName" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+    specId,specName
+  </sql>
+    <insert id="insert" parameterType="com.qigan.qiganshop.pojo.Specification">
+     insert into tb_specification (specId, specName)
+     values (#{record.specId,jdbcType=VARCHAR}, #{record.specName,jdbcType=VARCHAR})
+   </insert>
+    <delete id="delete" parameterType="string">
+     delete from tb_specification
+     where specId = #{specId,jdbcType=VARCHAR}
+   </delete>
+    <update id="update" parameterType="com.qigan.qiganshop.pojo.Specification">
+     update tb_specification
+     set specName = #{specName,jdbcType=VARCHAR}
+     where specId = #{specId,jdbcType=VARCHAR}
+   </update>
+    <select id="findBySpecification" resultMap="BaseResultMap" parameterType="java.util.Map">
+        select * from tb_specification
+        <if test="record != null">
+            where
+            <trim prefix="(" suffix=")" suffixOverrides="and">
+                <if test="record.specId != null">
+                    specId = #{record.specId,jdbcType=VARCHAR} and
+                </if>
+                <if test="record.specName != null">
+                    specName like '%${record.specName}%' and
+                </if>
+            </trim>
+        </if>
+        order by specId
+    </select>
+
+    <select id="findOne" resultMap="BaseResultMap" parameterType="java.lang.String">
+        select
+        <include refid="Base_Column_List"/>
+        from tb_specification where specId = #{specId}
+    </select>
+
+
+</mapper>

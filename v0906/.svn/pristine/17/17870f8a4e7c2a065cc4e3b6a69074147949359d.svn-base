@@ -1,0 +1,14 @@
+/**
+ * 
+ */
+package com.qigan.qiganshop.service;
+
+/**
+ * @author wyy
+ *
+ */
+public interface XltcMessageService {
+	
+	void send2JiGuang(String message, String title);
+
+}

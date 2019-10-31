@@ -1,0 +1,309 @@
+package com.qigan.qiganshop.pojo;
+
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.io.Serializable;
+
+/**
+ *
+ */
+@ApiModel(value = "SKU 商品对象", description = "SKU 商品对象")
+
+public class Item implements Serializable {
+    /**
+     * 规格ID
+     */
+    @ApiModelProperty(value = "SKUID")
+    private String itemId;
+    /**
+     * SPUID
+     */
+    @ApiModelProperty(value = "SPUID")
+    private String spuId;
+    /**
+     * 规格代码
+     */
+    @ApiModelProperty(value = "SKU代码")
+    private String code;
+    /**
+     * 规格名称
+     */
+    @ApiModelProperty(value = "SKU名称")
+    private String name;
+    /**
+     * 备注
+     */
+    @ApiModelProperty(value = "备注")
+    private String note;
+    /**
+     * 重量
+     */
+    @ApiModelProperty(value = "重量")
+    private Double weight;
+    /**
+     * 体积
+     */
+    @ApiModelProperty(value = "体积")
+    private Double volume;
+    /**
+     * 标准售价
+     */
+    @ApiModelProperty(value = "标准售价")
+    private Double salesPrice;
+    /**
+     * 成本价
+     */
+    @ApiModelProperty(value = "成本价")
+    private Double costPrice;
+    /**
+     * 库存状态代码
+     */
+    @ApiModelProperty(value = "库存状态代码")
+    private String stockStatusCode;
+    /**
+     * 库存数量
+     */
+    @ApiModelProperty(value = "库存数量")
+    private Integer stockNum;
+    /**
+     * 商品条码
+     */
+    @ApiModelProperty(value = "商品条码")
+    private String barCode;
+    /**
+     * 原产地
+     */
+    @ApiModelProperty(value = "原产地")
+    private String originArea;
+    /**
+     * 是否启用
+     */
+    @ApiModelProperty(value = "是否启用")
+    private String del;
+    @ApiModelProperty(value = "好评率")
+    private String praise;
+    @ApiModelProperty(value = "销售数量")
+    private Integer salesNum;
+    @ApiModelProperty(value = "简介(中国·一小时达·会员免配送费)")
+    private String info;
+    @ApiModelProperty(value = "分享次数")
+    private Integer shareNum;
+    @ApiModelProperty(value = "是否 VIP 商品")
+    private String isVipItem;
+    @ApiModelProperty(value = "会员价格")
+    private double vIPrice;
+    @ApiModelProperty(value = "活动价格")
+    private Double activePrice;
+    @ApiModelProperty(value = "关联")
+    private String collection = "no";
+    @ApiModelProperty(value = "计量单位")
+    private String unit;
+    @ApiModelProperty(value = "计量单位")
+    private String status;
+    @ApiModelProperty(value = "仓库名称")
+    private String warehouseName;
+
+
+    public String getWarehouseName() {
+        return warehouseName;
+    }
+
+    public void setWarehouseName(String warehouseName) {
+        this.warehouseName = warehouseName;
+    }
+
+    public String getItemId() {
+        return itemId;
+    }
+
+    public void setItemId(String itemId) {
+        this.itemId = itemId;
+    }
+
+    public String getSpuId() {
+        return spuId;
+    }
+
+    public void setSpuId(String spuId) {
+        this.spuId = spuId;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getNote() {
+        return note;
+    }
+
+    public void setNote(String note) {
+        this.note = note;
+    }
+
+    public Double getWeight() {
+        return weight;
+    }
+
+    public void setWeight(Double weight) {
+        this.weight = weight;
+    }
+
+    public Double getVolume() {
+        return volume;
+    }
+
+    public void setVolume(Double volume) {
+        this.volume = volume;
+    }
+
+    public Double getSalesPrice() {
+        return salesPrice;
+    }
+
+    public void setSalesPrice(Double salesPrice) {
+        this.salesPrice = salesPrice;
+    }
+
+    public Double getCostPrice() {
+        return costPrice;
+    }
+
+    public void setCostPrice(Double costPrice) {
+        this.costPrice = costPrice;
+    }
+
+    public String getStockStatusCode() {
+        return stockStatusCode;
+    }
+
+    public void setStockStatusCode(String stockStatusCode) {
+        this.stockStatusCode = stockStatusCode;
+    }
+
+    public Integer getStockNum() {
+        return stockNum;
+    }
+
+    public void setStockNum(Integer stockNum) {
+        this.stockNum = stockNum;
+    }
+
+    public String getBarCode() {
+        return barCode;
+    }
+
+    public void setBarCode(String barCode) {
+        this.barCode = barCode;
+    }
+
+    public String getOriginArea() {
+        return originArea;
+    }
+
+    public void setOriginArea(String originArea) {
+        this.originArea = originArea;
+    }
+
+    public String getDel() {
+        return del;
+    }
+
+    public void setDel(String del) {
+        this.del = del;
+    }
+
+    public String getPraise() {
+        return praise;
+    }
+
+    public void setPraise(String praise) {
+        this.praise = praise;
+    }
+
+    public Integer getSalesNum() {
+        return salesNum;
+    }
+
+    public void setSalesNum(Integer salesNum) {
+        this.salesNum = salesNum;
+    }
+
+    public String getInfo() {
+        return info;
+    }
+
+    public void setInfo(String info) {
+        this.info = info;
+    }
+
+    public Integer getShareNum() {
+        return shareNum;
+    }
+
+    public void setShareNum(Integer shareNum) {
+        this.shareNum = shareNum;
+    }
+
+    public String getIsVipItem() {
+        return isVipItem;
+    }
+
+    public void setIsVipItem(String isVipItem) {
+        this.isVipItem = isVipItem;
+    }
+
+    public double getvIPrice() {
+        return vIPrice;
+    }
+
+    public void setvIPrice(double vIPrice) {
+        this.vIPrice = vIPrice;
+    }
+
+    public Double getActivePrice() {
+        return activePrice;
+    }
+
+    public void setActivePrice(Double activePrice) {
+        this.activePrice = activePrice;
+    }
+
+    public String getCollection() {
+        return collection;
+    }
+
+    public void setCollection(String collection) {
+        this.collection = collection;
+    }
+
+    public String getUnit() {
+        return unit;
+    }
+
+    public void setUnit(String unit) {
+        this.unit = unit;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+}

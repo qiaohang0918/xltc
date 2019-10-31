@@ -1,0 +1,659 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qigan.qiganshop.mapper.GoodsMapper">
+
+    <resultMap id="BaseResultMap" type="com.qigan.qiganshop.pojo.Goods">
+        <id column="goodsId" property="goodsId" jdbcType="VARCHAR"/>
+        <result column="createDate" property="createDate" jdbcType="VARCHAR"/>
+        <result column="modifyDate" property="modifyDate" jdbcType="VARCHAR"/>
+        <result column="code" property="code" jdbcType="VARCHAR"/>
+        <result column="name" property="name" jdbcType="VARCHAR"/>
+        <result column="note" property="note" jdbcType="VARCHAR"/>
+        <result column="weight" property="weight" jdbcType="DOUBLE"/>
+        <result column="combine" property="combine" jdbcType="VARCHAR"/>
+        <result column="del" property="del" jdbcType="VARCHAR"/>
+        <result column="length" property="length" jdbcType="DOUBLE"/>
+        <result column="width" property="width" jdbcType="DOUBLE"/>
+        <result column="height" property="height" jdbcType="DOUBLE"/>
+        <result column="volume" property="volume" jdbcType="VARCHAR"/>
+        <result column="simpleName" property="simpleName" jdbcType="VARCHAR"/>
+        <result column="categoryCode" property="categoryCode" jdbcType="VARCHAR"/>
+        <result column="categoryName" property="categoryName" jdbcType="VARCHAR"/>
+        <result column="labelId" property="labelId" jdbcType="VARCHAR"/>
+        <result column="itemUnitCode" property="itemUnitCode" jdbcType="VARCHAR"/>
+        <result column="itemUnitName" property="itemUnitName" jdbcType="VARCHAR"/>
+        <result column="salesPrice" property="salesPrice" jdbcType="VARCHAR"/>
+        <result column="costPrice" property="costPrice" jdbcType="DOUBLE"/>
+        <result column="stockStatusCode" property="stockStatusCode" jdbcType="VARCHAR"/>
+        <result column="stockNum" property="stockNum" jdbcType="INTEGER"/>
+        <result column="picUrls" property="picUrls" jdbcType="VARCHAR"/>
+        <result column="originArea" property="originArea" jdbcType="VARCHAR"/>
+        <result column="shelfLife" property="shelfLife" jdbcType="VARCHAR"/>
+        <result column="itemAddAttribute" property="itemAddAttribute" jdbcType="VARCHAR"/>
+        <result column="itemBrandCode" property="itemBrandCode" jdbcType="VARCHAR"/>
+        <result column="itemBrandName" property="itemBrandName" jdbcType="VARCHAR"/>
+        <result column="status" property="status" jdbcType="VARCHAR"/>
+        <result column="push" property="push" jdbcType="VARCHAR"/>
+        <result column="isSpec" property="isSpec" jdbcType="VARCHAR"/>
+        <result column="isVIPGoods" property="isVIPGoods" jdbcType="VARCHAR"/>
+        <result column="VIPrice" property="vIPrice" jdbcType="DOUBLE"/>
+        <result column="activePrice" property="activePrice" jdbcType="DOUBLE"/>
+        <result column="headCate" property="headCate" jdbcType="VARCHAR"/>
+        <result column="endCate" property="endCate" jdbcType="VARCHAR"/>
+        <result column="unit" property="unit" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <select id="findGoodsInIds" resultType="com.qigan.qiganshop.pojo.Goods">
+        select a.goodsId,a.name,a.code,a.simpleName,a.categoryCode,
+        a.categoryName,a.labelId,a.itemUnitCode,a.itemUnitName,
+        a.salesPrice,a.costPrice,a.picUrls,a.status,a.push,a.isSpec,a.isVIPGoods,format(a.VIPrice, 2) as VIPrice,a.activePrice  from tb_goods a
+        left join tb_category b on a.categoryCode = b.cateId
+         where a.goodsId in (
+            <foreach collection="ids" separator="," item="goodsId">
+                #{goodsId}
+            </foreach>
+         )
+        order by b.sort asc
+    </select>
+
+
+    <select id="searchGoodsByWordsAndWareHouse" resultType="com.qigan.qiganshop.pojo.XltcGoodsModel">
+        select * from (	
+	        select
+	        t.goodsId as goodsId,
+	        t.name as goodsName,
+	        t.simpleName as simpleName,
+	        if(left(t.picUrls,4) = 'http', t.picUrls, concat(#{localPicHead},  SUBSTRING_INDEX(t.picUrls, ',', 1))) as imageUrl,
+	        t.salesPrice  as salesPrice,
+	        t.del,t.status,x.salableNum,x.warehouseId
+	        from tb_goods t
+	        left join tb_stock x on x.goodsId = t.goodsId
+	        where t.name like '%${keyWord}%' or simpleName like '%${keyWord}%'
+         ) r
+        where r.del = '0'
+        and r.status = '2'
+        and r.salableNum > 0 
+        and r.warehouseId = #{wareHouseId}
+    </select>
+
+
+    <sql id="Base_Column_List">
+        goodsId, createDate, modifyDate, code, name, note, weight, combine, del, length,
+        width, height, volume, simpleName, categoryCode, categoryName, labelId, itemUnitCode,
+        itemUnitName, salesPrice as salesPrice , costPrice, stockStatusCode, stockNum, picUrls, originArea,
+        shelfLife, itemAddAttribute, itemBrandCode, itemBrandName, status, push, isSpec,
+        isVIPGoods, VIPrice,headCate,endCate,activePrice,unit
+    </sql>
+    <insert id="insert" parameterType="com.qigan.qiganshop.pojo.Goods">
+        insert into tb_goods (goodsId, createDate, modifyDate,
+                              code, name, note, weight,
+                              combine, del, length,
+                              width, height, volume,
+                              simpleName, categoryCode, categoryName,
+                              labelId, itemUnitCode, itemUnitName,
+                              salesPrice, costPrice, stockStatusCode,
+                              stockNum, picUrls, originArea,
+                              shelfLife, itemAddAttribute, itemBrandCode,
+                              itemBrandName, status, push,
+                              isSpec, isVIPGoods, VIPrice, headCate, endCate, activePrice, unit)
+        values (#{goodsId,jdbcType=VARCHAR}, #{createDate,jdbcType=VARCHAR}, #{modifyDate,jdbcType=VARCHAR},
+                #{code,jdbcType=VARCHAR}, #{name,jdbcType=VARCHAR}, #{note,jdbcType=VARCHAR}, #{weight,jdbcType=DOUBLE},
+                #{combine,jdbcType=VARCHAR}, #{del,jdbcType=VARCHAR}, #{length,jdbcType=DOUBLE},
+                #{width,jdbcType=DOUBLE}, #{height,jdbcType=DOUBLE}, #{volume,jdbcType=VARCHAR},
+                #{simpleName,jdbcType=VARCHAR}, #{categoryCode,jdbcType=VARCHAR}, #{categoryName,jdbcType=VARCHAR},
+                #{labelId,jdbcType=VARCHAR}, #{itemUnitCode,jdbcType=VARCHAR}, #{itemUnitName,jdbcType=VARCHAR},
+                #{salesPrice,jdbcType=DECIMAL}, #{costPrice,jdbcType=DECIMAL}, #{stockStatusCode,jdbcType=VARCHAR},
+                #{stockNum,jdbcType=INTEGER}, #{picUrls,jdbcType=VARCHAR}, #{originArea,jdbcType=VARCHAR},
+                #{shelfLife,jdbcType=VARCHAR}, #{itemAddAttribute,jdbcType=VARCHAR}, #{itemBrandCode,jdbcType=VARCHAR},
+                #{itemBrandName,jdbcType=VARCHAR}, #{status,jdbcType=VARCHAR}, #{push,jdbcType=VARCHAR},
+                #{isSpec,jdbcType=VARCHAR}, #{isVIPGoods,jdbcType=VARCHAR}, #{VIPrice,jdbcType=DECIMAL},
+                #{headCate,jdbcType=VARCHAR}, #{endCate,jdbcType=VARCHAR}, #{activePrice,jdbcType=DECIMAL},
+                #{unit,jdbcType=VARCHAR})
+    </insert>
+    <delete id="delete" parameterType="string">
+        delete
+        from tb_goods
+        where goodsId = #{goodsId,jdbcType=VARCHAR}
+    </delete>
+    <update id="update" parameterType="map">
+        update tb_goods
+        <set>
+            <if test="record.createDate != null">
+                createDate = #{record.createDate,jdbcType=VARCHAR},
+            </if>
+            <if test="record.modifyDate != null">
+                modifyDate = #{record.modifyDate,jdbcType=VARCHAR},
+            </if>
+            <if test="record.code != null">
+                code = #{record.code,jdbcType=VARCHAR},
+            </if>
+            <if test="record.name != null">
+                name = #{record.name,jdbcType=VARCHAR},
+            </if>
+            <if test="record.note != null">
+                note = #{record.note,jdbcType=VARCHAR},
+            </if>
+            <if test="record.weight != null">
+                weight = #{record.weight,jdbcType=DOUBLE},
+            </if>
+            <if test="record.combine != null">
+                combine = #{record.combine,jdbcType=VARCHAR},
+            </if>
+            <if test="record.del != null">
+                del = #{record.del,jdbcType=VARCHAR},
+            </if>
+            <if test="record.length != null">
+                length = #{record.length,jdbcType=DOUBLE},
+            </if>
+            <if test="record.width != null">
+                width = #{record.width,jdbcType=DOUBLE},
+            </if>
+            <if test="record.height != null">
+                height = #{record.height,jdbcType=DOUBLE},
+            </if>
+            <if test="record.volume != null">
+                volume = #{record.volume,jdbcType=VARCHAR},
+            </if>
+            <if test="record.simpleName != null">
+                simpleName = #{record.simpleName,jdbcType=VARCHAR},
+            </if>
+            <if test="record.categoryCode != null">
+                categoryCode = #{record.categoryCode,jdbcType=VARCHAR},
+            </if>
+            <if test="record.categoryName != null">
+                categoryName = #{record.categoryName,jdbcType=VARCHAR},
+            </if>
+            <if test="record.labelId != null">
+                labelId = #{record.labelId,jdbcType=VARCHAR},
+            </if>
+            <if test="record.itemUnitCode != null">
+                itemUnitCode = #{record.itemUnitCode,jdbcType=VARCHAR},
+            </if>
+            <if test="record.itemUnitName != null">
+                itemUnitName = #{record.itemUnitName,jdbcType=VARCHAR},
+            </if>
+            <if test="record.salesPrice != null">
+                salesPrice = #{record.salesPrice,jdbcType=DECIMAL},
+            </if>
+            <if test="record.costPrice != null">
+                costPrice = #{record.costPrice,jdbcType=DECIMAL},
+            </if>
+            <if test="record.stockStatusCode != null">
+                stockStatusCode = #{record.stockStatusCode,jdbcType=VARCHAR},
+            </if>
+            <if test="record.stockNum != null">
+                stockNum = #{record.stockNum,jdbcType=INTEGER},
+            </if>
+            <if test="record.picUrls != null">
+                picUrls = #{record.picUrls,jdbcType=VARCHAR},
+            </if>
+            <if test="record.originArea != null">
+                originArea = #{record.originArea,jdbcType=VARCHAR},
+            </if>
+            <if test="record.shelfLife != null">
+                shelfLife = #{record.shelfLife,jdbcType=VARCHAR},
+            </if>
+            <if test="record.itemAddAttribute != null">
+                itemAddAttribute = #{record.itemAddAttribute,jdbcType=VARCHAR},
+            </if>
+            <if test="record.itemBrandCode != null">
+                itemBrandCode = #{record.itemBrandCode,jdbcType=VARCHAR},
+            </if>
+            <if test="record.itemBrandName != null">
+                itemBrandName = #{record.itemBrandName,jdbcType=VARCHAR},
+            </if>
+            <if test="record.status != null">
+                status = #{record.status,jdbcType=VARCHAR},
+            </if>
+            <if test="record.push != null">
+                push = #{record.push,jdbcType=VARCHAR},
+            </if>
+            <if test="record.isSpec != null">
+                isSpec = #{record.isSpec,jdbcType=VARCHAR},
+            </if>
+            <if test="record.isVIPGoods != null">
+                isVIPGoods = #{record.isVIPGoods,jdbcType=VARCHAR},
+            </if>
+            <if test="record.headCate != null">
+                headCate = #{record.headCate,jdbcType=VARCHAR},
+            </if>
+            <if test="record.endCate != null">
+                endCate = #{record.endCate,jdbcType=VARCHAR},
+            </if>
+            <if test="record.vIPrice != null">
+                VIPrice = #{record.vIPrice,jdbcType=DECIMAL},
+            </if>
+            <if test="record.activePrice != null">
+                activePrice = #{record.activePrice,jdbcType=DECIMAL},
+            </if>
+            <if test="record.unit != null">
+                unit = #{record.unit,jdbcType=DECIMAL},
+            </if>
+        </set>
+        where goodsId = #{record.goodsId,jdbcType=VARCHAR}
+    </update>
+    <select id="findByGoods" resultMap="BaseResultMap" parameterType="java.util.Map">
+        select * from tb_goods
+        <if test="record != null">
+            where
+            <if test="record.goodsId != null">
+                goodsId = #{record.goodsId,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.createDate != null">
+                createDate like '%${record.createDate}%'and
+            </if>
+            <if test="record.modifyDate != null">
+                modifyDate = #{record.modifyDate,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.code != null">
+                code like '%${record.code}%' and
+            </if>
+            <if test="record.name != null">
+                name like '%${record.name}%' and
+            </if>
+            <if test="record.note != null">
+                note = #{record.note,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.weight != null">
+                weight = #{record.weight,jdbcType=DOUBLE} and
+            </if>
+            <if test="record.combine != null">
+                combine = #{record.combine,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.del != null">
+                del = #{record.del,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.length != null">
+                length = #{record.length,jdbcType=DOUBLE} and
+            </if>
+            <if test="record.width != null">
+                width = #{record.width,jdbcType=DOUBLE} and
+            </if>
+            <if test="record.height != null">
+                height = #{record.height,jdbcType=DOUBLE} and
+            </if>
+            <if test="record.volume != null">
+                volume = #{record.volume,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.simpleName != null">
+                simpleName = #{record.simpleName,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.categoryCode != null">
+                categoryCode = #{record.categoryCode,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.categoryName != null">
+                categoryName = #{record.categoryName,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.labelId != null">
+                labelId = #{record.labelId,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.itemUnitCode != null">
+                itemUnitCode = #{record.itemUnitCode,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.itemUnitName != null">
+                itemUnitName = #{record.itemUnitName,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.salesPrice != null">
+                salesPrice = #{record.salesPrice,jdbcType=DECIMAL} and
+            </if>
+            <if test="record.costPrice != null">
+                costPrice = #{record.costPrice,jdbcType=DECIMAL} and
+            </if>
+            <if test="record.stockStatusCode != null">
+                stockStatusCode = #{record.stockStatusCode,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.stockNum != null">
+                stockNum = #{record.stockNum,jdbcType=INTEGER} and
+            </if>
+            <if test="record.picUrls != null">
+                picUrls = #{record.picUrls,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.originArea != null">
+                originArea = #{record.originArea,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.shelfLife != null">
+                shelfLife = #{record.shelfLife,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.itemAddAttribute != null">
+                itemAddAttribute = #{record.itemAddAttribute,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.itemBrandCode != null">
+                itemBrandCode = #{record.itemBrandCode,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.itemBrandName != null">
+                itemBrandName = #{record.itemBrandName,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.status != null">
+                status = #{record.status,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.push != null">
+                push = #{record.push,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.isSpec != null">
+                isSpec = #{record.isSpec,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.isVIPGoods != null">
+                isVIPGoods = #{record.isVIPGoods,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.headCate != null">
+                headCate = #{record.headCate,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.endCate != null">
+                endCate = #{record.endCate,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.vIPrice != null">
+                VIPrice = #{record.vIPrice,jdbcType=DECIMAL} and
+            </if>
+            <if test="record.activePrice != null">
+                activePrice = #{record.activePrice,jdbcType=DECIMAL} and
+            </if>
+            <if test="record.unit != null">
+                unit = #{record.unit,jdbcType=DECIMAL} and
+            </if>
+            1=1
+        </if>
+
+        order by goodsId
+        <if test="page != null and rows != null">
+            limit #{page},#{rows}
+        </if>
+    </select>
+    
+    <select id="findByGoods2" resultType="com.qigan.qiganshop.pojo.Goods" parameterType="java.util.Map">
+        select t.*, x.salableNum as saleableNum, y.name as warehName from tb_goods t
+        left join tb_stock x on t.goodsId = x.goodsId
+        left join tb_warehouse y on y.warehouseId = x.warehouseId
+        where  x.salableNum > 0  
+        <if test="record != null">
+        	and
+            <if test="record.code != null">
+                t.code like '%${record.code}%' and
+            </if>
+            <if test="record.name != null">
+                t.name like '%${record.name}%' and
+            </if>
+            <if test="record.del != null">
+                t.del = #{record.del,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.categoryCode != null">
+                t.categoryCode = #{record.categoryCode,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.status != null">
+                t.status = #{record.status,jdbcType=VARCHAR} and
+            </if>
+            1=1
+        </if>
+
+        order by t.goodsId
+        <if test="page != null and rows != null">
+            limit #{page},#{rows}
+        </if>
+    </select>
+    
+    
+    
+    
+    <select id="findOne" resultMap="BaseResultMap" parameterType="java.lang.String">
+        select
+        <include refid="Base_Column_List"/>
+        from tb_goods where goodsId = #{goodsId}
+        and del = '0'
+    </select>
+    
+    <select id="findOnes" resultType="com.qigan.qiganshop.pojo.Goods">
+        select
+        t.goodsId, t.name, t.simpleName, t.categoryName,  t.salesPrice as salesPrice ,  t.picUrls, 
+        t.status,
+        t.isVIPGoods, t.VIPrice,t.activePrice, x.salableNum as saleableNum 
+        from tb_goods t
+        left join tb_stock x on t.goodsId = x.goodsId
+        where t.goodsId = #{goodsId} and t.status = '2'
+        and t.del = '0' and x.salableNum > 0 and x.warehouseId = #{wsId}
+    </select>
+    
+    <select id="findByRand" resultMap="BaseResultMap">
+        SELECT t1.goodsId,
+               t1.createDate,
+               t1.modifyDate,
+               t1.code,
+               t1.name,
+               t1.note,
+               t1.weight,
+               t1.combine,
+               t1.del,
+               t1.length,
+               t1.width,
+               t1.height,
+               t1.volume,
+               t1.simpleName,
+               t1.categoryCode,
+               t1.categoryName,
+               t1.labelId,
+               t1.itemUnitCode,
+               t1.itemUnitName,
+               t1.salesPrice,
+               t1.costPrice,
+               t1.stockStatusCode,
+               t2.stockNum,
+               t1.picUrls,
+               t1.originArea,
+               t1.shelfLife,
+               t1.itemAddAttribute,
+               t1.itemBrandCode,
+               t1.itemBrandName,
+               t1.status,
+               t1.push,
+               t1.isSpec,
+               t1.isVIPGoods,
+               format(t1.VIPrice, 2) as VIPrice,
+               t1.headCate,
+               t1.endCate,
+               t1.activePrice,
+               t1.unit
+        FROM tb_goods t1,
+             (select distinct warehouseId, goodsId, stockNum, lockNum, salableNum from tb_stock) t2
+        WHERE t1.goodsId = t2.goodsId
+          AND t2.warehouseId = #{warehouseId}
+          AND t1.del = '0'
+          AND t2.salableNum > 0
+          and t1.status = '2'
+        order by push desc, rand()
+        limit 0,20
+    </select>
+    <select id="findByCateLabelStock" parameterType="map" resultMap="BaseResultMap">
+        SELECT
+        distinct
+        t1.goodsId, t1.createDate, t1.modifyDate, t1.code, t1.name, t1.note, t1.weight, t1.combine, t1.del, t1.length,
+        t1.width, t1.height, t1.volume, t1.simpleName, t1.categoryCode, t1.categoryName, t1.labelId, t1.itemUnitCode,
+        t1.itemUnitName,
+        t1.salesPrice, t1.costPrice, t1.stockStatusCode, t1.stockNum, t1.picUrls, t1.originArea, t1.shelfLife,
+        t1.itemAddAttribute,
+        t1.itemBrandCode, t1.itemBrandName, t1.status, t1.push, t1.isSpec, t1.isVIPGoods, format(t1.VIPrice,2) as
+        VIPrice,
+        t1.headCate, t1.endCate,t1.activePrice,t1.unit
+        FROM
+        tb_goods t1,
+        tb_label_goods t2,
+        (select distinct warehouseId,goodsId,stockNum,lockNum,salableNum from tb_stock) t3
+        WHERE
+        t1.goodsId = t2.goodsId
+        AND t1.goodsId = t3.goodsId
+        AND t2.labelId = #{labelId}
+        AND t1.categoryCode = #{cateId}
+        AND t3.warehouseId = #{warehouseId}
+        AND t3.salableNum >0
+        order by push desc
+        <if test="page!= null and size!= null">
+            limit #{page},#{size}
+        </if>
+    </select>
+
+    <select id="findByWarehouseIdAndAll" resultMap="BaseResultMap" parameterType="map">
+        SELECT t1.goodsId,
+        t1.createDate,
+        t1.modifyDate,
+        t1.code,
+        t1.name,
+        t1.note,
+        t1.weight,
+        t1.combine,
+        t1.del,
+        t1.length,
+        t1.width,
+        t1.height,
+        t1.volume,
+        t1.simpleName,
+        t1.categoryCode,
+        t1.categoryName,
+        t1.labelId,
+        t1.itemUnitCode,
+        t1.itemUnitName,
+        t1.salesPrice,
+        t1.costPrice,
+        t1.stockStatusCode,
+        t2.stockNum ,
+        t1.picUrls,
+        t1.originArea,
+        t1.shelfLife,
+        t1.itemAddAttribute,
+        t1.itemBrandCode,
+        t1.itemBrandName,
+        t1.status,
+        t1.push,
+        t1.isSpec,
+        t1.isVIPGoods,
+        format(t1.VIPrice, 2) as VIPrice,
+        t1.headCate,
+        t1.endCate,
+        t1.activePrice,
+        t1.unit
+        FROM tb_goods t1,
+        (select distinct warehouseId, goodsId, stockNum, lockNum, salableNum from tb_stock) t2
+        WHERE t1.goodsId = t2.goodsId
+        AND t2.warehouseId = #{warehouseId}
+        <if test="record != null">
+            and
+            <if test="record.goodsId != null">
+                t1.goodsId = #{record.goodsId,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.createDate != null">
+                t1.createDate like '%${record.createDate}%'and
+            </if>
+            <if test="record.modifyDate != null">
+                t1.modifyDate = #{record.modifyDate,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.code != null">
+                t1.code like '%${record.code}%' and
+            </if>
+            <if test="record.name != null">
+                t1.name like '%${record.name}%' and
+            </if>
+            <if test="record.note != null">
+                t1.note = #{record.note,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.weight != null">
+                t1.weight = #{record.weight,jdbcType=DOUBLE} and
+            </if>
+            <if test="record.combine != null">
+                t1.combine = #{record.combine,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.del != null">
+                t1.del = #{record.del,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.length != null">
+                t1.length = #{record.length,jdbcType=DOUBLE} and
+            </if>
+            <if test="record.width != null">
+                t1.width = #{record.width,jdbcType=DOUBLE} and
+            </if>
+            <if test="record.height != null">
+                t1.height = #{record.height,jdbcType=DOUBLE} and
+            </if>
+            <if test="record.volume != null">
+                t1.volume = #{record.volume,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.simpleName != null">
+                simpleName = #{record.simpleName,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.categoryCode != null">
+                t1.categoryCode = #{record.categoryCode,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.categoryName != null">
+                t1.categoryName = #{record.categoryName,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.labelId != null">
+                t1.labelId = #{record.labelId,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.itemUnitCode != null">
+                t1.itemUnitCode = #{record.itemUnitCode,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.itemUnitName != null">
+                t1.itemUnitName = #{record.itemUnitName,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.salesPrice != null">
+                t1.salesPrice = #{record.salesPrice,jdbcType=DECIMAL} and
+            </if>
+            <if test="record.costPrice != null">
+                t1.costPrice = #{record.costPrice,jdbcType=DECIMAL} and
+            </if>
+            <if test="record.stockStatusCode != null">
+                t1.stockStatusCode = #{record.stockStatusCode,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.stockNum != null">
+                t1.stockNum = #{record.stockNum,jdbcType=INTEGER} and
+            </if>
+            <if test="record.picUrls != null">
+                t1.picUrls = #{record.picUrls,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.originArea != null">
+                t1.originArea = #{record.originArea,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.shelfLife != null">
+                t1.shelfLife = #{record.shelfLife,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.itemAddAttribute != null">
+                t1.itemAddAttribute = #{record.itemAddAttribute,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.itemBrandCode != null">
+                t1.itemBrandCode = #{record.itemBrandCode,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.itemBrandName != null">
+                t1.itemBrandName = #{record.itemBrandName,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.status != null">
+                t1.status = #{record.status,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.push != null">
+                t1.push = #{record.push,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.isSpec != null">
+                t1.isSpec = #{record.isSpec,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.isVIPGoods != null">
+                t1.isVIPGoods = #{record.isVIPGoods,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.headCate != null">
+                t1.headCate = #{record.headCate,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.endCate != null">
+                t1.endCate = #{record.endCate,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.vIPrice != null">
+                t1.VIPrice = #{record.vIPrice,jdbcType=DECIMAL} and
+            </if>
+            <if test="record.activePrice != null">
+                t1.activePrice = #{record.activePrice,jdbcType=DECIMAL} and
+            </if>
+            <if test="record.unit != null">
+                t1.unit = #{record.unit,jdbcType=DECIMAL} and
+            </if>
+            1=1
+        </if>
+        order by t1.goodsId
+        <if test="page != null and rows != null">
+            limit #{page},#{rows}
+        </if>
+    </select>
+
+
+</mapper>

@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qigan.qiganshop.mapper.TbSpecialConcatMapper" >
+  <resultMap id="BaseResultMap" type="com.qigan.qiganshop.pojo.TbSpecialConcat" >
+    <id column="concat_id" property="concatId" jdbcType="VARCHAR" />
+    <result column="topic_id" property="topicId" jdbcType="VARCHAR" />
+    <result column="unit_id" property="unitId" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    concat_id, topic_id, unit_id
+  </sql>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.qigan.qiganshop.pojo.TbSpecialConcatExample" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from tb_special_concat
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from tb_special_concat
+    where concat_id = #{concatId,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from tb_special_concat
+    where concat_id = #{concatId,jdbcType=VARCHAR}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.qigan.qiganshop.pojo.TbSpecialConcatExample" >
+    delete from tb_special_concat
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.qigan.qiganshop.pojo.TbSpecialConcat" >
+    insert into tb_special_concat (concat_id, topic_id, unit_id
+      )
+    values (#{concatId,jdbcType=VARCHAR}, #{topicId,jdbcType=VARCHAR}, #{unitId,jdbcType=VARCHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.qigan.qiganshop.pojo.TbSpecialConcat" >
+    insert into tb_special_concat
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="concatId != null" >
+        concat_id,
+      </if>
+      <if test="topicId != null" >
+        topic_id,
+      </if>
+      <if test="unitId != null" >
+        unit_id,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="concatId != null" >
+        #{concatId,jdbcType=VARCHAR},
+      </if>
+      <if test="topicId != null" >
+        #{topicId,jdbcType=VARCHAR},
+      </if>
+      <if test="unitId != null" >
+        #{unitId,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.qigan.qiganshop.pojo.TbSpecialConcatExample" resultType="java.lang.Integer" >
+    select count(*) from tb_special_concat
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update tb_special_concat
+    <set >
+      <if test="record.concatId != null" >
+        concat_id = #{record.concatId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.topicId != null" >
+        topic_id = #{record.topicId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.unitId != null" >
+        unit_id = #{record.unitId,jdbcType=VARCHAR},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update tb_special_concat
+    set concat_id = #{record.concatId,jdbcType=VARCHAR},
+      topic_id = #{record.topicId,jdbcType=VARCHAR},
+      unit_id = #{record.unitId,jdbcType=VARCHAR}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.qigan.qiganshop.pojo.TbSpecialConcat" >
+    update tb_special_concat
+    <set >
+      <if test="topicId != null" >
+        topic_id = #{topicId,jdbcType=VARCHAR},
+      </if>
+      <if test="unitId != null" >
+        unit_id = #{unitId,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where concat_id = #{concatId,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.qigan.qiganshop.pojo.TbSpecialConcat" >
+    update tb_special_concat
+    set topic_id = #{topicId,jdbcType=VARCHAR},
+      unit_id = #{unitId,jdbcType=VARCHAR}
+    where concat_id = #{concatId,jdbcType=VARCHAR}
+  </update>
+</mapper>

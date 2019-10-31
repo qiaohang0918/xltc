@@ -1,0 +1,455 @@
+package com.qigan.qiganshop.service.impl;
+
+import com.alibaba.druid.util.StringUtils;
+import com.alipay.api.domain.CloudUserInfo;
+import com.qigan.qiganshop.constant.RedisConstant;
+import com.qigan.qiganshop.domain.TbCouponDetailsExample;
+import com.qigan.qiganshop.enums.CouponType;
+import com.qigan.qiganshop.exception.XltcRuntimeException;
+import com.qigan.qiganshop.mapper.TbCouponDetailsMapper;
+import com.qigan.qiganshop.mapper.UserCartMapper;
+import com.qigan.qiganshop.mapper.UserCouponMapper;
+import com.qigan.qiganshop.pojo.*;
+import com.qigan.qiganshop.pojo.synchronization.ResultCart;
+import com.qigan.qiganshop.service.*;
+import com.qigan.qiganshop.util.access.JedisUtil;
+import com.qigan.qiganshop.util.baidumap.BaiDuMapService;
+import com.qigan.qiganshop.util.notnull.StringNotNull;
+import com.qigan.qiganshop.util.picture.PicUtil;
+import com.qigan.qiganshop.util.result.PageResult;
+import com.qigan.qiganshop.util.result.format.JsonResult;
+import com.qigan.qiganshop.util.result.format.ResultCode;
+
+import javassist.expr.NewArray;
+import redis.clients.jedis.Jedis;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.stream.Collectors;
+
+/**
+ * TODO
+ *
+ * @author wanghao
+ * @time 2019-05-04 18:05
+ */
+@Service
+@Transactional(rollbackFor = Exception.class)
+public class CartServiceImpl implements CartService {
+    @Autowired
+    private BaiDuMapService mapService;
+    @Autowired
+    private JsonResult jr;
+    @Autowired
+    private GoodsService goodsService;
+    @Autowired
+    private StockService stockService;
+    @Autowired
+    private ItemService itemService;
+    @Autowired
+    private AppUserService userService;
+    @Autowired
+    private UserCouponService userCouponService;
+    @Autowired
+    private CouponService couponService;
+    @Autowired
+    private PicUtil picUtil;
+    
+    @Autowired
+    UserCouponMapper userCouponMapper;
+    
+    @Autowired
+    TbCouponDetailsMapper detailsMapper;
+    
+    @Autowired
+    private JedisUtil jedisUtil;
+    
+    private static final String DEF_DEVLIER_MAX = "39";
+    
+    @Autowired
+    private UserCartMapper userCartMapper;
+    @Value("${peisongfei}")
+    double peisongfei;
+    
+    /**
+     * 先根据经纬度确定仓库     * 然后查询每个商品的库存     * 返回
+     *
+     * @param coordinate
+     * @param itemIds
+     * @return
+     */
+    @Override
+    public JsonResult check(String coordinate, String itemIds) {
+        /**
+         * 确定仓库
+         */
+        if (StringNotNull.check(coordinate)) {
+            String wareHouseId = null;
+            JsonResult jsonResult = goodsService.getWarehouseId(coordinate);
+            if (!"200".equals(jsonResult.getRes_code())) {
+                jsonResult.setData(new HashMap<>());
+                return jsonResult;
+            }
+            wareHouseId = jsonResult.getMessage();
+
+            /**
+             * 查询商品库存
+             */
+            String[] split = itemIds.split(",");
+            if (split.length == 0) {
+                return jr.jsonResultData(ResultCode.FAIL.res_code(), "itemIds 不能为空", new HashMap<>());
+            }
+            LinkedHashMap<String, Integer> map = new LinkedHashMap<>();
+            for (String s : split) {
+                Stock stock = stockService.findByItemIdAndWareHouseId(s, wareHouseId);
+                if (stock != null) {
+
+                    map.put(s, stock.getSalableNum());
+                } else {
+                    map.put(s, 0);
+
+                }
+            }
+
+            return jr.jsonResultData(ResultCode.SUCCESS.res_code(), ResultCode.SUCCESS.message(), map);
+        }
+        return jr.jsonResultData(ResultCode.FAIL.res_code(), "经纬度为空", new HashMap<>());
+    }
+
+    /**
+     * 去结算按钮
+     * 先确定仓库
+     * 然后查询商品
+     * 然后计算金额
+     * 然后查询优惠券
+     * 返回
+     *
+     * @param cart
+     * @return
+     */
+    @Override
+    public JsonResult settlement(Cart cart) {
+    	long start = System.currentTimeMillis();
+        /**
+         * 确定仓库
+         */
+        if (!StringNotNull.check(cart.getCoordinate())) {
+            return jr.jsonResultData(ResultCode.FAIL.res_code(), "经纬度为空", new Cart());
+        }
+        String wareHouseId = null;
+        JsonResult jsonResult = goodsService.getWarehouseId(cart.getCoordinate());
+        if (!"200".equals(jsonResult.getRes_code())) {
+            jsonResult.setData(new HashMap<>());
+            return jsonResult;
+        }
+        wareHouseId = jsonResult.getMessage();
+
+        /**
+         * 查询商品库存
+         */
+        Map<String, Integer> items = cart.getItems();
+        if (items.keySet().size() == 0) {
+            return jr.jsonResultData(ResultCode.FAIL.res_code(), "itemIds 不能为空", new HashMap<>());
+        }
+        ResultCart result = new ResultCart();
+        ArrayList<Goods> canBuy = new ArrayList<Goods>();
+        ArrayList<Goods> sellOut = new ArrayList<Goods>();
+        List<String> buyCodes = new ArrayList<>();
+        Set<String> buyTypeCodes = new HashSet<>();
+        double total = 0.00;
+        for (String itemId : items.keySet()) {
+
+            Item item = itemService.findOne(itemId);
+            Goods goods = null;
+            if (item != null) {
+                goods = goodsService.findOne(item.getSpuId());
+                goods.getItems().clear();
+                goods.getItems().add(item);
+            }
+            Stock stock = stockService.findByItemIdAndWareHouseId(itemId, wareHouseId);
+            //不能购买
+            if (stock != null) {
+                if (stock.getSalableNum() >= items.get(itemId)) {
+                    // 可以购买
+                    goods.setStockNum(stock.getSalableNum());
+                    goods.setUserChooseNum(items.get(itemId));
+                    canBuy.add(goods);
+                    Item one = itemService.findOne(itemId);
+                    Integer count = items.get(itemId);
+//                    System.err.println(one.getSalesPrice());
+                    total += new BigDecimal(one.getSalesPrice()).multiply(new BigDecimal(count)).doubleValue();
+                    total = Double.parseDouble(String.format("%.2f", total));
+                    buyCodes.add(goods.getCode());
+                    buyTypeCodes.add(goods.getCategoryCode());
+                } else {
+                    if (goods != null && !StringUtils.isEmpty(goods.getGoodsId())) {
+                        sellOut.add(goods);
+                    }
+                }
+            } else {
+                if (goods != null && !StringUtils.isEmpty(goods.getGoodsId())) {
+                    sellOut.add(goods);
+                }
+            }
+        }
+        List<Goods> list = canBuy.stream().distinct().collect(Collectors.toList());
+        result.setCanBuy(list);
+        result.setSellOut(sellOut);
+        result.setTotalPrice(total);
+        /**
+         * 查询用户可用的优惠券信息
+         */
+        AppUser appUser = userService.getAppUserByToken(cart.getToken());
+        List<Coupon> canUse = userCouponService.findCanUse(appUser.getUserId(), total);
+        
+        String value = jedisUtil.getFromHash(RedisConstant.NEW_USER_FIRST_ORDER, appUser.getUserId());
+        //value is null can't use
+        //mobile not is null can't use
+        
+        for (int i = 0; i < canUse.size(); i++) {
+        	Coupon coupon = canUse.get(i);
+        	boolean flag = this.checkCoupon(coupon, buyCodes, buyTypeCodes) || CouponType.checkNewUserCouponCanUse(value, coupon.getType());
+        	if(flag){
+        		canUse.remove(i);
+    			i--;
+        	}
+		}
+        
+//        List<Coupon> sortedList = canUse.stream().sorted(Comparator.comparing(Coupon :: getFullMoney).reversed()).collect(Collectors.toList());
+//        if(sortedList != null && sortedList.size() > 0){// 找出满足满金额最大的优惠券
+//        	Coupon tempCoupon = sortedList.get(0);
+//        	sortedList.clear();
+//        	sortedList.add(tempCoupon);
+//        }
+        List<Coupon> coupons = cart.getCoupons()/* == null ? sortedList : cart.getCoupons()*/;
+        PageResult pageResult = null;
+        pageResult = new PageResult(canUse.size(), canUse);
+        result.setCouponList(pageResult);
+        double sum = total;
+        /**
+         * 检测优惠券信息是否有效
+         */
+        if (canUse != null && canUse.size() > 0 && coupons != null && coupons.size() > 0) {
+            // 选择了优惠券
+            // 先定义可能受到的优惠
+            result.setSum(total);
+            String deliverMoney = jedisUtil.get("deliverMoney");
+            double money = org.apache.commons.lang3.StringUtils.isBlank(deliverMoney)  ? 0.0 : Double.parseDouble(deliverMoney);
+            result.setPeisongfei(money);
+            for (Coupon coupon : coupons) {
+            	boolean flag = this.checkCoupon(coupon, buyCodes, buyTypeCodes) || CouponType.checkNewUserCouponCanUse(value, coupon.getType());
+                result = UseCoupon(result, appUser, coupon, flag);
+            }
+            sum = result.getSum();
+//            result.setRealPay(sum);
+
+        } else {
+        // 未选择优惠券
+        if ("1".equals(appUser.getMember())) {
+            // 会员 有钱人啊  
+            result.setPeisongfei(0.00);
+            result.setRealPay(sum);
+        } else {
+            // 非会员 穷逼
+        	String deliverMoney = jedisUtil.get("deliverMoney");
+        	String deliverMax = jedisUtil.get("deliverMax");
+        	double money = org.apache.commons.lang3.StringUtils.isBlank(deliverMoney)  ? 0.0 : Double.parseDouble(deliverMoney);
+        	String max = org.apache.commons.lang3.StringUtils.isBlank(deliverMax) ? DEF_DEVLIER_MAX : deliverMax;
+        	if(new BigDecimal(sum).compareTo(new BigDecimal(max)) == -1)
+        		result.setPeisongfei(money);
+        	
+        	 result.setRealPay(sum);
+        }
+        }
+        result.setSum(result.getPeisongfei() + result.getRealPay());
+        result.setWarehouseCode(wareHouseId);
+        System.err.println("&&&----->" + result.getRealPay() +"<-----&&&");
+        return jr.jsonResultData(ResultCode.SUCCESS.res_code(), ResultCode.SUCCESS.message(), result);
+    }
+
+    /**
+     * 删除购物车
+     * @param userId
+     * @param itemId
+     * @return
+     */
+    @Override
+    public int deleteCurrentOrderItemsFromCart(String token, List<String> itemIds) {
+        AppUser user = userService.getAppUserByToken(token);
+        if(user==null){
+            return 0;
+        }
+        return  userCartMapper.deleteCurrentOrderItemsFromCart(user.getUserId(),itemIds);
+    }
+
+    /**
+     * @param result
+     * @param appUser
+     * @param coupon
+     * @param flag
+     * @return
+     */
+    private ResultCart UseCoupon(ResultCart result, AppUser appUser, Coupon coupon, boolean flag) {
+    	if(flag) //核验优惠券是否符合使用规则
+    		throw XltcRuntimeException.throwable("该优惠券无法使用,请检查订单商品是否符合规则");
+    	
+        double total = result.getTotalPrice();
+        double sum = result.getSum();
+        // 用户选择了优惠券
+        // 检测有效性以及时效性
+        List<UserCoupon> ones = userCouponMapper.findUserCoupons(appUser.getUserId(), coupon.getCouponId());
+        UserCoupon one = null;
+        if(ones != null && ones.size() > 0){
+        	one = ones.get(0);
+        }
+        if(one == null)
+        	throw XltcRuntimeException.throwable("使用优惠券异常，请更换后再试");
+        
+        if ("0".equals(one.getIsUse()) && org.apache.commons.lang3.StringUtils.isBlank(one.getTimeOut())) {
+        	String type = coupon.getType();
+            // 优惠券信息能查询到,并且没有被使用(用户选择使用优惠券✅✅✅✅✅✅✅✅✅✅✅✅✅✅)
+            Coupon check = couponService.findOne(one.getCouponId());
+            if(check == null)
+            	return result;
+            
+            String beginStr = "", endStr = "";
+            if(org.apache.commons.lang3.StringUtils.isBlank(check.getBegin())){
+//            if("4".equals(check.getType()) || "5".equals(check.getType())){
+            	beginStr = one.getStartTime();
+            	endStr = one.getDisableTime();
+            }else{
+            	beginStr = check.getBegin();
+            	endStr = check.getEnd();
+            }
+            //核验满减金额券
+            boolean isUseSubMoney = CouponType.couponCheck(type, CouponType.ELIMINATE, CouponType.CONTAIN_SIMPLE_GOODS, CouponType.CONTAIN_TYPE);
+            // 检查时效性
+            try {
+                DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                Date begin = format.parse(beginStr);
+                Date end = format.parse(endStr);
+                Date date = new Date();
+                if (!begin.before(date) || !end.after(date)) {
+                    return result;
+                }
+                //说明时间信息合格,可以使用✅✅✅✅✅✅✅✅
+                // 判断会员信息
+                if (!"1".equals(appUser.getMember())) {
+                    // 非会员 穷逼
+                    // 还得他妈的判断优惠券的类型
+                    if (isUseSubMoney) {
+                    	if(CouponType.ForSend.getValue().equals(type)){
+                    		if(total <= check.getReduceMoney()){
+                    			result.setCoupon(new BigDecimal(total + "").subtract(new BigDecimal("0.1")).doubleValue());
+                    			double vipUserTotal = new BigDecimal("0.1").doubleValue(); 
+                    			result.setRealPay(vipUserTotal);
+                                result.setSum(vipUserTotal);
+                    		}else{
+                    			BigDecimal vipUserRealTotal = new BigDecimal(total + "");
+                    			double realPay = vipUserRealTotal.subtract(new BigDecimal(check.getReduceMoney() + "")).doubleValue();
+                    			result.setRealPay(realPay);//result.setRealPay(vipUserTotal);
+                                result.setSum(realPay);
+                                result.setCoupon(new BigDecimal(check.getReduceMoney() + "").doubleValue());
+                    		}
+                    		return result;
+                    	}
+                        // 满减优惠券
+                        if (total >= check.getFullMoney()) {
+                            // 满足使用条件
+                            result.setCoupon(-1 * check.getReduceMoney());
+                            sum = new BigDecimal(sum + "").subtract(new BigDecimal(check.getReduceMoney())).doubleValue();
+                            if(sum <= 0)
+                            	throw XltcRuntimeException.throwable("优惠券使用异常，请重试。");
+                            
+                            result.setRealPay(sum);
+                            result.setSum(sum);
+//                            result.setUseCoupon(coupon);
+                            System.err.println("----->" + result.getRealPay() +"<-----");
+                        }
+                    } else if ("2".equals(coupon.getType())) {
+                        // 免运费
+                        result.setPeisongfei(0.00);
+                        result.setRealPay(sum);
+                        result.setSum(sum);
+                    } else if ("3".equals(coupon.getType())) {
+                        // 鸡蛋券 待定 ❌❌❌❌❌❌❌❌❌❌❌❌
+                        // TODO
+                    }else{
+                        result.setRealPay(sum);
+                        result.setSum(sum);
+                    }
+                } else {
+                    // 会员 有钱人啊  
+                    // 判断优惠券类型
+                    result.setPeisongfei(0.00);
+                    if (isUseSubMoney) {
+                    	if(CouponType.ForSend.getValue().equals(type)){
+                    		if(total <= check.getReduceMoney()){
+                    			result.setCoupon(new BigDecimal(total + "").subtract(new BigDecimal("0.1")).doubleValue());
+                    			double vipUserTotal = new BigDecimal("0.1").doubleValue(); 
+                    			result.setRealPay(vipUserTotal);
+                                result.setSum(vipUserTotal);
+                    		}else{
+                    			BigDecimal vipUserRealTotal = new BigDecimal(total + "");
+                    			double realPay = vipUserRealTotal.subtract(new BigDecimal(check.getReduceMoney() + "")).doubleValue();
+                    			result.setRealPay(realPay);//result.setRealPay(vipUserTotal);
+                                result.setSum(realPay);
+                                result.setCoupon(new BigDecimal(check.getReduceMoney() + "").doubleValue());
+                    		}
+                    		return result;
+                    	}
+                        // 满减优惠券
+                        if (total >= check.getFullMoney()) {
+                            // 满足使用条件
+                            result.setCoupon(-1 * check.getReduceMoney());
+                            sum = new BigDecimal(sum + "").subtract(new BigDecimal(check.getReduceMoney())).doubleValue();
+                            result.setRealPay(sum);
+//                            result.setUseCoupon(coupon);
+                        }
+                    } else if ("3".equals(coupon.getType())) {
+                        // 鸡蛋券 ❌❌❌❌❌❌❌❌❌❌❌❌
+                        //TODO 送几个鸡蛋
+                    }else{
+                        result.setRealPay(sum);
+                        result.setSum(sum);
+                    }
+                }
+
+            } catch (ParseException e) {
+                e.printStackTrace();
+                result.setRealPay(total);
+            }
+        }else {
+             result.setRealPay(total);
+        }
+
+        return result;
+    }
+    
+    private boolean checkCoupon(Coupon coupon, List<String> buyCodes, Set<String> buyTypeCodes){
+    	List<String> goodsCodes = detailsMapper.selectGoodsCodes(coupon.getCouponId());
+    	goodsCodes.retainAll(buyCodes);
+    	String type = coupon.getType();
+    	boolean flag = false;
+    	if(CouponType.couponCheck(type, CouponType.ELIMINATE))
+    		flag = goodsCodes.size() > 0 ? true : false;
+    		
+    	if(CouponType.couponCheck(type, CouponType.CONTAIN_SIMPLE_GOODS))
+    		flag = goodsCodes.size() != buyCodes.size() ? true : false;
+    		
+    	if(CouponType.couponCheck(type, CouponType.CONTAIN_TYPE)){
+    		List<String> typeCodes = detailsMapper.selectTypeCodes(coupon.getCouponId());
+    		typeCodes.retainAll(buyTypeCodes);
+    		flag = typeCodes.size() != buyTypeCodes.size() ? true : false;
+    	}
+    	return flag;
+    }
+}

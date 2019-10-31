@@ -1,0 +1,69 @@
+package com.qigan.qiganshop.pojo;
+
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import lombok.*;
+
+/**
+ * 用户购物车实体
+ *
+ * @author wanghao
+ */
+@ApiModel(value = "UserCart")
+@ToString
+public class UserCart {
+
+    @ApiModelProperty(value = "购物车 ID 同用户 ID")
+       
+       
+    @NonNull
+    private String cartId;
+
+
+    @ApiModelProperty(value = "skuId")
+       
+       
+    @NonNull
+    private String skuId;
+
+
+    @ApiModelProperty(value = "数量")
+       
+       
+    private Integer num;
+    
+    public UserCart() {
+    	
+    }
+
+    public UserCart(String userId, String skuId, Integer integer) {
+        this.cartId = userId;
+        this.skuId = skuId;
+        this.num = integer;
+    }
+
+
+    public String getCartId() {
+        return cartId;
+    }
+
+    public void setCartId(String cartId) {
+        this.cartId = cartId;
+    }
+
+    public String getSkuId() {
+        return skuId;
+    }
+
+    public void setSkuId(String skuId) {
+        this.skuId = skuId;
+    }
+
+    public Integer getNum() {
+        return num;
+    }
+
+    public void setNum(Integer num) {
+        this.num = num;
+    }
+}

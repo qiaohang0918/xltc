@@ -1,0 +1,152 @@
+package com.qigan.qiganshop.mapper;
+
+import com.qigan.qiganshop.pojo.HomepageCate;
+import com.qigan.qiganshop.pojo.XltcGoodsModel;
+import com.qigan.qiganshop.pojo.XltcHomeTypeModel;
+
+import org.apache.ibatis.annotations.Insert;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
+import org.mapstruct.Mapper;
+
+import java.util.List;
+
+/**
+ * 首页分类
+ *
+ * @author wanghao
+ */
+
+public interface HomepageCateMapper {
+    /**
+     * 删除
+     *
+     * @param HomepageCateId
+     * @return
+     */
+    int delete(String HomepageCateId);
+
+    /**
+     * 新增
+     *
+     * @param record
+     * @return
+     */
+    int insert(HomepageCate record);
+
+    /**
+     * 分页查询,条件查询,查询全部
+     *
+     * @param record
+     * @param page
+     * @param size
+     * @return
+     */
+    List<HomepageCate> findPage(@Param("record") HomepageCate record, @Param("page") Integer page, @Param("size") Integer size);
+
+    /**
+     * 查询单个分类
+     *
+     * @param HomepageCateId
+     * @return
+     */
+    HomepageCate findOne(String HomepageCateId);
+
+    /**
+     * 更新分类
+     *
+     * @param record
+     * @return
+     */
+    int update(HomepageCate record);
+    
+    @Select({
+    	"select homepagecateId as id, title as title, subtitle as subTitle, sort, enable, location, ",
+    	"if(left(picUrl,4) = 'http', picUrl, concat(#{host},  SUBSTRING_INDEX(picUrl, ',', 1))) as picUrl ",
+    	"from tb_homepagecate where location in ('head', 'end', 'center') and enable = '1' ",
+    	"order by sort asc",
+    })
+    List<XltcHomeTypeModel> findHoneTypeAll(String host);
+    
+    @Select({
+    	"select a.goodsId, a.name as goodsName, a.simpleName, r.sort,",
+    	"a.code as goodsCode, a.categoryCode, a.salesPrice, a.costPrice, a.VIPrice ,",
+    	"if(left(a.picUrls,4) = 'http', a.picUrls, concat(#{host},  SUBSTRING_INDEX(a.picUrls, ',', 1))) as imageUrl ",
+    	"from tb_goods a ",
+    	"right join ",
+    	"( ",
+    	"select t.goodsId, t.sort from  tb_homepagecate_goods t",
+    	"left join tb_stock x on x.goodsId = t.goodsId",
+    	"where x.salableNum > 0 and t.homepagecateId = #{cateId} and x.warehouseId = #{wId} ",
+    	"order by t.sort) r on a.goodsId = r.goodsId ",
+    	"where a.del = '0'",
+    	"order by r.sort asc"
+    })
+    List<XltcGoodsModel> findGoods(@Param("cateId") String cateId, @Param("wId") String wId, @Param("host") String host);
+    
+    @Select({
+    	"select case when  q.duringBefore > NOW() then '0'  " ,
+				"when  q.duringBefore <= NOW() and NOW() <= q.duringAfter then '1' " ,
+				"when  NOW() > q.duringAfter then '2' " ,
+				"else null end as isSelling , " ,
+				"SUBSTRING_INDEX(UNIX_TIMESTAMP(q.duringBefore), '.', 1)  as beforeTimeStamp , " ,
+				"SUBSTRING_INDEX(UNIX_TIMESTAMP(q.duringAfter), '.', 1)  as afterTimeStamp , " ,
+				"SUBSTRING_INDEX(UNIX_TIMESTAMP(NOW()), '.', 1)  as currentTimeStamp , " ,
+				"q.sellNum, " ,
+				"q.preSendTime, " ,
+				"q.preSellGoodsCode  as preSell , t.goodsId, t.name as goodsName, t.simpleName, ",
+    	"t.code as goodsCode, t.categoryCode, t.salesPrice, t.costPrice, t.VIPrice ,",
+    	"if(left(t.picUrls,4) = 'http', t.picUrls, concat(#{host},  SUBSTRING_INDEX(t.picUrls, ',', 1))) as imageUrl ",
+    	"from tb_goods t ",
+    	 "left join tb_stock x on x.goodsId = t.goodsId ",
+			"LEFT join tb_presell_goods q on t.code = q.preSellGoodsCode and q.enabled = '1' ",
+    	"where x.salableNum > 0 and t.categoryCode = #{cateId} and x.warehouseId = #{wId} ",
+    	"and t.del = '0' and  t.status = '2'",
+    })
+    List<XltcGoodsModel> findGoods1(@Param("cateId") String cateId, @Param("wId") String wId, @Param("host") String host);
+    
+    @Select({
+    	"select  case when  q.duringBefore > NOW() then '0'   ",
+    	"when  q.duringBefore <= NOW() and NOW() <= q.duringAfter then '1' ",
+    	"when  NOW() > q.duringAfter then '2'  ",
+    	"else null end as isSelling ,  ",
+    	"SUBSTRING_INDEX(UNIX_TIMESTAMP(q.duringBefore), '.', 1)  as beforeTimeStamp ,  ",
+    	"SUBSTRING_INDEX(UNIX_TIMESTAMP(q.duringAfter), '.', 1)  as afterTimeStamp ,",
+    	"SUBSTRING_INDEX(UNIX_TIMESTAMP(NOW()), '.', 1)  as currentTimeStamp ,  ",
+    	"q.sellNum,",
+    	"q.preSendTime, ",
+    	"q.preSellGoodsCode  as preSell , y.goodsId, y.name as goodsName, y.simpleName, ",
+    	"y.code as goodsCode, y.categoryCode, y.salesPrice, y.costPrice, y.VIPrice ,",
+    	"if(left(y.picUrls,4) = 'http', y.picUrls, concat(#{host},  SUBSTRING_INDEX(y.picUrls, ',', 1))) as imageUrl ",
+    	"from tb_local_goods t",
+    	"left join tb_local_category x on x.id = t.category_id",
+    	"left join tb_goods y on y.goodsId = t.tb_goodsId",
+    	"left join tb_stock z on z.goodsId = t.tb_goodsId ",
+    	"LEFT join tb_presell_goods q on y.code = q.preSellGoodsCode and q.enabled = '1' ",
+    	"where z.salableNum > 0 and x.id = #{cateId} and z.warehouseId = #{wId} ",
+    	" and y.del = '0' and  y.status = '2' and t.goods_enable = '10'",
+    })
+    List<XltcGoodsModel> findLocalGoods1(@Param("cateId") String cateId, @Param("wId") String wId, @Param("host") String host);
+    
+    @Insert({
+    	"<script> ",
+    	"insert into tb_homepagecate (homepagecateId, title, subtitle, ",
+    	"sort, enable,location,picUrl) values ",
+    	"<foreach collection='list' item='record' index='index' separator=','> ",
+    	"(",
+    	"#{record.homepagecateId,jdbcType=VARCHAR}, #{record.title,jdbcType=VARCHAR}, #{record.subtitle,jdbcType=VARCHAR}, ",
+    	"#{index}, ",
+    	"#{record.enable,jdbcType=VARCHAR}, #{record.location,jdbcType=VARCHAR},#{record.picUrl,jdbcType=VARCHAR})",
+    	"</foreach>",
+    	"  ON DUPLICATE KEY UPDATE ",
+    	"homepagecateId = VALUES(homepagecateId),",
+    	"title = VALUES(title),",
+    	"subtitle = VALUES(subtitle),",
+    	"sort = VALUES(sort)",
+    	"</script> "
+    })
+    void insertByGY(List<HomepageCate> list);
+    
+    
+
+}

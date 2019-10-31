@@ -1,0 +1,12 @@
+/**
+ * 
+ */
+package com.qigan.qiganshop.ding;
+
+/**
+ * @author wyy
+ *
+ */
+public class XltcSendDingMessageImpl {
+
+}

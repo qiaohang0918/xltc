@@ -1,0 +1,65 @@
+///**
+// * 
+// */
+//package com.qigan.qiganshop.redis.event;
+//
+//import org.apache.commons.lang3.StringUtils;
+//import org.springframework.data.redis.connection.Message;
+//import org.springframework.stereotype.Component;
+//
+//import com.qigan.qiganshop.redis.config.RedisSubscribeListenerAbstract;
+//import com.qigan.qiganshop.util.Redis.RedisLock;
+//import com.qigan.qiganshop.util.Redis.RedisUtil;
+//
+//import redis.clients.jedis.Jedis;
+//
+///**
+// * @author wyy
+// *
+// */
+//@Component("keyExpired")
+//public class KeyExpiredListener extends RedisSubscribeListenerAbstract{
+//
+//	private Jedis jedis;
+//	
+//	private static final String SUFF = ":expired";
+//	
+//	private static final String SUCCESS = "success";
+//	
+//	private static final String FAIL = "fail";
+//	
+//	@Override
+//	public void redisChannelHandle(Message message, byte[] pattern) {
+//		// TODO Auto-generated method stub
+//		
+//		RedisLock r = new RedisLock();
+//		final String expiredKey = new String(message.getBody());
+//		String newKey = expiredKey + SUFF;
+//		try {
+//			r.lock();
+//			jedis = RedisUtil.getConnection();
+//			String value = jedis.get(newKey);
+//			if(StringUtils.isNotBlank(value)) {
+//				if(SUCCESS.equalsIgnoreCase(value)) {
+//					System.err.println("已经更新过 直接返回");
+//					return;
+//				}
+//			}
+//			//数据库操作start
+//			System.err.println("没有更新过 数据库操作");
+//			//end
+//			jedis.set(newKey, SUCCESS);
+//			jedis.expire(newKey, 30);
+//		} catch (Exception e) {
+//			// TODO: handle exception
+//			jedis.set(newKey, FAIL);
+//			jedis.hset("KEY_EXPIRED", newKey, "1");
+//		} finally {
+//			// TODO: handle finally clause
+//			r.unlock();
+//		}
+//	}
+//
+//	
+//
+//}

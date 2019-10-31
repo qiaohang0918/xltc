@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qigan.qiganshop.mapper.ScoreSettingMapper">
+
+    <update id="update" parameterType="com.qigan.qiganshop.pojo.game.ScoreSetting" >
+      update tb_score_setting set source_type = #{sourceType}, money = #{money}, score = #{score} , modified_time = now()
+        where 1=1 and source_type = #{sourceType}
+    </update>
+    <select id="getScoreSettings" resultType="com.qigan.qiganshop.pojo.game.ScoreSetting" parameterType="map">
+        select source_type as sourceType,money,score,modified_time as modifiedTime
+          from tb_score_setting
+        where 1=1
+    </select>
+    <select id="getScoreSetting" resultType="com.qigan.qiganshop.pojo.game.ScoreSetting" parameterType="map">
+        select source_type as sourceType,money,score,modified_time as modifiedTime
+          from tb_score_setting
+        where 1=1 and source_type = #{sourceType}
+    </select>
+
+</mapper>
+
+
+

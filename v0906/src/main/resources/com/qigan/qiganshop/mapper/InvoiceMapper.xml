@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qigan.qiganshop.mapper.InvoiceMapper">
+    <resultMap id="BaseResultMap" type="com.qigan.qiganshop.pojo.Invoice">
+        <id column="invoiceId" property="invoiceId" jdbcType="VARCHAR"/>
+        <result column="invoiceType" property="invoiceType" jdbcType="BIGINT"/>
+        <result column="invoiceTitleType" property="invoiceTitleType" jdbcType="INTEGER"/>
+        <result column="invoiceTypeName" property="invoiceTypeName" jdbcType="INTEGER"/>
+        <result column="invoiceTitle" property="invoiceTitle" jdbcType="VARCHAR"/>
+        <result column="invoiceContent" property="invoiceContent" jdbcType="VARCHAR"/>
+        <result column="invoiceTexPayerNumber" property="invoiceTexPayerNumber" jdbcType="VARCHAR"/>
+        <result column="invoicePhone" property="invoicePhone" jdbcType="VARCHAR"/>
+        <result column="invoiceEmail" property="invoiceEmail" jdbcType="VARCHAR"/>
+        <result column="invoiceAmount" property="invoiceAmount" jdbcType="VARCHAR"/>
+        <result column="orderId" property="orderId" jdbcType="VARCHAR"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+    invoiceId, invoiceType, invoiceTitleType, invoiceTypeName, invoiceTitle, invoiceContent, 
+    invoiceTexPayerNumber, invoicePhone, invoiceEmail, invoiceAmount, orderId
+  </sql>
+    <select id="findOne" resultMap="BaseResultMap" parameterType="java.lang.String">
+        select
+        <include refid="Base_Column_List"/>
+        from tb_invoice
+        where invoiceId = #{invoiceId,jdbcType=VARCHAR}
+    </select>
+    <delete id="delete" parameterType="java.lang.String">
+    delete from tb_invoice
+    where invoiceId = #{invoiceId,jdbcType=VARCHAR}
+  </delete>
+    <insert id="insert" parameterType="com.qigan.qiganshop.pojo.Invoice">
+    insert into tb_invoice (invoiceId, invoiceType, invoiceTitleType, 
+      invoiceTypeName, invoiceTitle, invoiceContent, 
+      invoiceTexPayerNumber, invoicePhone, invoiceEmail, 
+      invoiceAmount, orderId)
+    values (#{invoiceId,jdbcType=VARCHAR}, #{invoiceType,jdbcType=BIGINT}, #{invoiceTitleType,jdbcType=INTEGER}, 
+      #{invoiceTypeName,jdbcType=INTEGER}, #{invoiceTitle,jdbcType=VARCHAR}, #{invoiceContent,jdbcType=VARCHAR}, 
+      #{invoiceTexPayerNumber,jdbcType=VARCHAR}, #{invoicePhone,jdbcType=VARCHAR}, #{invoiceEmail,jdbcType=VARCHAR}, 
+      #{invoiceAmount,jdbcType=VARCHAR}, #{orderId,jdbcType=VARCHAR})
+  </insert>
+    <update id="update" parameterType="com.qigan.qiganshop.pojo.Invoice">
+        update tb_invoice
+        <set>
+            <if test="invoiceType != null">
+                invoiceType = #{invoiceType,jdbcType=BIGINT},
+            </if>
+            <if test="invoiceTitleType != null">
+                invoiceTitleType = #{invoiceTitleType,jdbcType=INTEGER},
+            </if>
+            <if test="invoiceTypeName != null">
+                invoiceTypeName = #{invoiceTypeName,jdbcType=INTEGER},
+            </if>
+            <if test="invoiceTitle != null">
+                invoiceTitle = #{invoiceTitle,jdbcType=VARCHAR},
+            </if>
+            <if test="invoiceContent != null">
+                invoiceContent = #{invoiceContent,jdbcType=VARCHAR},
+            </if>
+            <if test="invoiceTexPayerNumber != null">
+                invoiceTexPayerNumber = #{invoiceTexPayerNumber,jdbcType=VARCHAR},
+            </if>
+            <if test="invoicePhone != null">
+                invoicePhone = #{invoicePhone,jdbcType=VARCHAR},
+            </if>
+            <if test="invoiceEmail != null">
+                invoiceEmail = #{invoiceEmail,jdbcType=VARCHAR},
+            </if>
+            <if test="invoiceAmount != null">
+                invoiceAmount = #{invoiceAmount,jdbcType=VARCHAR},
+            </if>
+            <if test="orderId != null">
+                orderId = #{orderId,jdbcType=VARCHAR},
+            </if>
+        </set>
+        where invoiceId = #{invoiceId,jdbcType=VARCHAR}
+    </update>
+    <select id="findPage" resultMap="BaseResultMap" parameterType="map">
+        select
+        <include refid="Base_Column_List"/>
+        from tb_invoice
+        <if test="record!= null">
+            where
+            <if test="invoiceType != null">
+                invoiceType = #{invoiceType,jdbcType=BIGINT} and
+            </if>
+            <if test="invoiceTitleType != null">
+                invoiceTitlesType = #{invoiceTitleType,jdbcType=INTEGER} and
+            </if>
+            <if test="invoiceTypeName != null">
+                invoiceTypeName = #{invoiceTypeName,jdbcType=INTEGER} and
+            </if>
+            <if test="invoiceTitle != null">
+                invoiceTitle = #{invoiceTitle,jdbcType=VARCHAR} and
+            </if>
+            <if test="invoiceContent != null">
+                invoiceContent = #{invoiceContent,jdbcType=VARCHAR} and
+            </if>
+            <if test="invoiceTexPayerNumber != null">
+                invoiceTexPayerNumber = #{invoiceTexPayerNumber,jdbcType=VARCHAR} and
+            </if>
+            <if test="invoicePhone != null">
+                invoicePhone = #{invoicePhone,jdbcType=VARCHAR} and
+            </if>
+            <if test="invoiceEmail != null">
+                invoiceEmail = #{invoiceEmail,jdbcType=VARCHAR} and
+            </if>
+            <if test="invoiceAmount != null">
+                invoiceAmount = #{invoiceAmount,jdbcType=VARCHAR} and
+            </if>
+            <if test="orderId != null">
+                orderId = #{orderId,jdbcType=VARCHAR} and
+            </if>
+            and 1 = 1
+            <if test="page != null and size != null">
+                limit #{page},#{size}
+            </if>
+        </if>
+    </select>
+    <select id="findByOrderId" parameterType="string" resultMap="BaseResultMap">
+        select <include refid="Base_Column_List"/>
+        from tb_invoice where orderId = #{orderId}
+        limit 0,1
+    </select>
+
+</mapper>

@@ -1,0 +1,42 @@
+/**
+ * 
+ */
+package com.qigan.qiganshop.service.impl;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.qigan.qiganshop.pojo.JiGuangSendModel;
+import com.qigan.qiganshop.service.XltcMessageService;
+import com.qigan.qiganshop.util.jiguang.JiGuangSend;
+
+import cn.jpush.api.push.PushResult;
+
+/**
+ * @author wyy
+ *
+ */
+@Service
+@Transactional
+public class XltcMessageServiceImpl implements XltcMessageService {
+	
+	@Autowired
+	JiGuangSend jiguangSend;
+	
+
+	/* (non-Javadoc)
+	 * @see com.qigan.qiganshop.service.XltcMessageService#send2JiGuang(java.lang.String)
+	 */
+	@Override
+	public void send2JiGuang(String message, String title) {
+		// TODO Auto-generated method stub
+		 JiGuangSendModel model = new JiGuangSendModel("", message, title);
+		 PushResult push = jiguangSend.send(model);
+		 if(push == null){
+			 
+		 }
+		 
+	}
+
+}

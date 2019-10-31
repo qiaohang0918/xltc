@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qigan.qiganshop.mapper.HomepageCateGoodsMapper">
+    <resultMap id="BaseResultMap" type="com.qigan.qiganshop.pojo.HomepageCateGoods">
+        <id column="pageId" property="pageId" jdbcType="VARCHAR"/>
+        <result column="homepageCateId" property="homepageCateId" jdbcType="VARCHAR"/>
+        <result column="goodsId" property="goodsId" jdbcType="VARCHAR"/>
+        <result column="sort" property="sort" jdbcType="INTEGER"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+            pageId,
+            homepageCateId,
+            goodsId,
+            sort
+    </sql>
+    <delete id="delete" parameterType="java.lang.String">
+        delete
+        from tb_homepageCate_goods
+        where homepageCateId = #{cateId}
+          and goodsId = #{goodsId}
+    </delete>
+    <insert id="add" parameterType="com.qigan.qiganshop.pojo.HomepageCateGoods">
+        insert into tb_homepageCate_goods (pageId, homepageCateId, goodsId,
+                                           sort)
+        values (#{pageId,jdbcType=VARCHAR}, #{homepageCateId,jdbcType=VARCHAR}, #{goodsId,jdbcType=VARCHAR},
+                (SELECT next
+                 FROM (SELECT if(max(CONVERT(sort, UNSIGNED INTEGER)) is null , 1 , max(CONVERT(sort, UNSIGNED INTEGER)) + 1) AS next
+                       FROM tb_homepageCate_goods
+                       where homepageCateId = #{homepageCateId}) AS temp))
+    </insert>
+    <select id="findByCateId" parameterType="string" resultMap="BaseResultMap">
+        select t1.* from tb_homepagecate t
+        left join tb_homepageCate_goods t1  on t.homepagecateId = t1.homepagecateId
+        where t.homepageCateId = #{cateId}
+    </select>
+    <update id="update" parameterType="string">
+        update tb_homepageCate_goods
+        <set>
+            <if test="record!= null and record.sort != null">
+                sort = #{record.sort}
+            </if>
+        </set>
+        where homepageCateId = #{record.homepageCateId}
+        and goodsId = #{record.goodsId}
+    </update>
+    <select id="findOne" resultMap="BaseResultMap" parameterType="map">
+        select
+        <include refid="Base_Column_List"/>
+        from tb_homepageCate_goods where
+        <if test="cateId!= null">
+            homepageCateId = #{cateId} and
+        </if>
+        <if test="goodsId != null">
+            goodsId = #{goodsId}and
+        </if>
+        1 = 1 limit 0,1
+    </select>
+</mapper>

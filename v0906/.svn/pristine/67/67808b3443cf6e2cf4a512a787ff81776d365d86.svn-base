@@ -1,0 +1,68 @@
+package com.qigan.qiganshop.pojo;
+
+import cn.afterturn.easypoi.excel.annotation.Excel;
+
+import java.io.Serializable;
+
+public class TbExpland implements Serializable {
+
+    @Excel(name = "渠道用户ID")
+    private String explanduserid;
+
+    @Excel(name = "渠道用户邀请的注册数")
+    private String explandregisters;
+
+    @Excel(name = "渠道用户Phone")
+    private String phone;
+
+    @Excel(name = "成功下单的注册数")
+    private int orderedCount;
+
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public int getOrderedCount() {
+        return orderedCount;
+    }
+
+    public void setOrderedCount(int orderedCount) {
+        this.orderedCount = orderedCount;
+    }
+
+    private static final long serialVersionUID = 1L;
+
+    public String getExplanduserid() {
+        return explanduserid;
+    }
+
+    public void setExplanduserid(String explanduserid) {
+        this.explanduserid = explanduserid == null ? null : explanduserid.trim();
+    }
+
+    public String getExplandregisters() {
+        return explandregisters;
+    }
+
+    public void setExplandregisters(String explandregisters) {
+        this.explandregisters = explandregisters == null ? null : explandregisters.trim();
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(getClass().getSimpleName());
+        sb.append(" [");
+        sb.append("Hash = ").append(hashCode());
+        sb.append(", explanduserid=").append(explanduserid);
+        sb.append(", explandregisters=").append(explandregisters);
+        sb.append(", serialVersionUID=").append(serialVersionUID);
+        sb.append("]");
+        return sb.toString();
+    }
+}

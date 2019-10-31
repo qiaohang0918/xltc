@@ -1,0 +1,184 @@
+package com.qigan.qiganshop.controller.backstage;
+
+import com.qigan.qiganshop.controller.utils.PublicControl;
+import com.qigan.qiganshop.exception.XltcRuntimeException;
+import com.qigan.qiganshop.service.DeliveryOrderService;
+import com.qigan.qiganshop.service.XltcClueUserService;
+import com.qigan.qiganshop.service.XltcOrderService;
+import com.qigan.qiganshop.util.notnull.NotNull;
+import com.qigan.qiganshop.util.result.format.JsonResult;
+import com.qigan.qiganshop.util.result.format.ResultCode;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * 配送员
+ *
+ * @author wanghao
+ */
+@SuppressWarnings("all")
+
+@RestController
+@Api(tags = { "(Web App)配送员订单信息操作接口" })
+public class DeliveryOrderController {
+	@Autowired
+	private DeliveryOrderService service;
+	@Autowired
+	private XltcClueUserService clueUserService;
+	@Autowired
+	private JsonResult jr;
+	@Autowired
+	private PublicControl pc;
+
+	/**
+	 * 领取订单
+	 *
+	 * @param deliveryerId
+	 * @return
+	 */
+
+	@RequestMapping(value = "app/DeliveryOrder/receive.do")
+	@ApiOperation(value = "配送员领取订单", notes = "配送员领取订单", httpMethod = "POST")
+	public JsonResult receive(@RequestParam Integer deliveryerId,
+			@RequestParam List<String> orderId) {
+		if(deliveryerId == null || deliveryerId.intValue() == 0)
+			throw XltcRuntimeException.throwable("用户不存在");
+		
+		List<String> resultList = new ArrayList<>();
+		Integer num = 1;
+		for (String string : orderId) {
+			resultList.add(service.receive(deliveryerId, string, num));
+			num = 0;
+		}
+		String result = "";
+		for (String string : resultList) {
+			if (StringUtils.isNotBlank(string) && !string.equals("1")) {
+				result += string.split(",")[1] + ",";
+			} 
+		}
+		if(StringUtils.isNotBlank(result))
+			return jr.jsonResultData("400", "订单：" + result.substring(0, result.length() -1) + "不存在或不能配送");
+		return jr.jsonResultData("200", "领取成功");
+	}
+
+	/**
+	 * 查询当前配送中的订单
+	 *
+	 * @param deliveryerId
+	 * @return
+	 */
+
+	@RequestMapping(value = "app/DeliveryOrder/receiving.do")
+	@ApiOperation(value = "根据配送员查询配送中的订单", notes = "根据配送员查询配送中的订单", httpMethod = "POST")
+	public JsonResult receiving(@RequestParam Integer deliveryerId) {
+		if(deliveryerId == null || deliveryerId.intValue() == 0)
+			throw XltcRuntimeException.throwable("用户不存在");
+		
+		if (deliveryerId != null) {
+			List<Map> list = service.receiving(deliveryerId);
+			return new JsonResult(list);
+		}
+		return jr.jsonResultData(ResultCode.FAIL.res_code(), "deliveryerId 不能为空!");
+	}
+
+	/**
+	 * 正常签收订单
+	 *
+	 * @param deliveryerId
+	 * @return
+	 */
+
+	@RequestMapping(value = "app/DeliveryOrder/arrived.do")
+	@ApiOperation(value = "正常签收订单", notes = "配送员已送达,正常签收 \n" + "deliveryerId 快递员 ID \n" + "orderId 订单 ID \n"
+			+ "singer 签收人名字 ID", httpMethod = "POST")
+	public JsonResult arrived(@RequestParam Integer deliveryerId,
+			@RequestParam(required = true, defaultValue = "") String singer,
+			@RequestParam String orderId) {
+		if(deliveryerId == null || deliveryerId.intValue() == 0)
+			throw XltcRuntimeException.throwable("用户不存在");
+		
+//		if (NotNull.checkObject(deliveryerId, orderId, singer)) {
+//			List<String> r = new ArrayList<>();
+//			for (String id : orderId) {
+//				if(!service.arrived(deliveryerId, id, singer)){
+//					r.add(id);
+//				}
+//			}
+//			if (r == null) {
+//				return jr.jsonResultData(ResultCode.SUCCESS.res_code());
+//			}
+//			return jr.jsonResultData(ResultCode.FAIL.res_code(), r.toString() + "根据订单 Id 未查询到订单 或该订单状态不是配送中状态");
+//		}
+		if (NotNull.checkObject(deliveryerId, orderId, singer)) {
+			if (service.arrived(deliveryerId, orderId, singer)) {
+				//判断是否是首单(下发源用户福利)
+				clueUserService.checkFirstOrderGivenWishes(orderId);
+				return jr.jsonResultData(ResultCode.SUCCESS.res_code());
+			}
+			return jr.jsonResultData(ResultCode.FAIL.res_code(), "根据订单 Id 未查询到订单 或该订单状态不是配送中状态");
+		}
+		return jr.jsonResultData(ResultCode.FAIL.res_code(), "参数不能为空!");
+	}
+
+	/**
+	 * 问题订单
+	 *
+	 * @param deliveryerId
+	 * @return
+	 */
+
+	@RequestMapping(value = "app/DeliveryOrder/question.do")
+	@ApiOperation(value = "问题订单", notes = "问题订单 \n" + "deliveryerId 快递员 ID \n" + "orderId 订单 ID \n"
+			+ "problem 问题描述 ", httpMethod = "POST")
+	public JsonResult question(@RequestParam Integer deliveryerId,
+			@RequestParam(required = true, defaultValue = "") String orderId,
+			@RequestParam(required = true, defaultValue = "") String problem) {
+		if(deliveryerId == null || deliveryerId.intValue() == 0)
+			throw XltcRuntimeException.throwable("用户不存在");
+		
+		if (NotNull.checkObject(deliveryerId, orderId, problem)) {
+			if (service.question(deliveryerId, orderId, problem)) {
+				return jr.jsonResultData(ResultCode.SUCCESS.res_code());
+			}
+			return jr.jsonResultData(ResultCode.FAIL.res_code(), "根据订单 Id 未查询到订单 或该订单状态不是配送中状态");
+		}
+		return jr.jsonResultData(ResultCode.FAIL.res_code(), "参数不能为空!");
+	}
+
+	/**
+	 * 其他问题订单
+	 *
+	 * @param deliveryerId
+	 * @return
+	 */
+
+	@RequestMapping(value = "app/DeliveryOrder/otherStatus.do")
+	@ApiOperation(value = "其他问题订单", notes = "其他问题订单 \n" + "deliveryerId 快递员 ID \n" + "orderId 订单 ID \n"
+			+ "flag 问题类型  Refuse,拒收 AddrErr,地址错误", httpMethod = "POST")
+	public JsonResult otherStatus(@RequestParam Integer deliveryerId,
+			@RequestParam(required = true, defaultValue = "") String orderId,
+			@RequestParam(required = true, defaultValue = "") String flag) {
+		if(deliveryerId == null || deliveryerId.intValue() == 0)
+			throw XltcRuntimeException.throwable("用户不存在");
+		
+		if (NotNull.checkObject(deliveryerId, orderId, flag)) {
+			if (service.otherStatus(deliveryerId, orderId, flag)) {
+				return jr.jsonResultData(ResultCode.SUCCESS.res_code());
+			}
+			return jr.jsonResultData(ResultCode.FAIL.res_code(), "根据订单 Id 未查询到订单 或该订单状态不是配送中状态");
+		}
+		return jr.jsonResultData(ResultCode.FAIL.res_code(), "参数不能为空!");
+	}
+
+}

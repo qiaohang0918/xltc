@@ -1,0 +1,128 @@
+package com.qigan.qiganshop.service.impl;
+
+import com.qigan.qiganshop.constant.DataState;
+import com.qigan.qiganshop.enums.XltcMessage;
+import com.qigan.qiganshop.exception.XltcRuntimeException;
+import com.qigan.qiganshop.mapper.MessageMapper;
+import com.qigan.qiganshop.pojo.AppUser;
+import com.qigan.qiganshop.pojo.CommonPage;
+import com.qigan.qiganshop.pojo.Message;
+import com.qigan.qiganshop.service.AppUserService;
+import com.qigan.qiganshop.service.MessageService;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+@Service
+@Transactional(rollbackFor = Exception.class)
+public class MessageServiceImpl implements MessageService {
+
+    @Autowired
+    private MessageMapper mapper;
+    
+    @Autowired
+    private AppUserService userService;
+
+    @Override
+    public List<Message> unread(String userId) {
+        List<Message> list = mapper.unread(userId);
+        return list;
+    }
+
+    @Override
+    public int markRead(String messageid) {
+        return mapper.markRead(messageid);
+    }
+
+    @Override
+    public Map<String, Object> getunread(String userId) {
+        Map<String,Object> map = new HashMap<>();
+        List<Message> xtlist = new ArrayList<>();
+        List<Message> txlist = new ArrayList<>();
+        List<Message> list = mapper.unread(userId);
+        if(list != null && list.size() > 0){
+            for(Message message : list){
+                String type = message.getType();
+                if("1".equals(type)){
+                    xtlist.add(message);
+                }else{
+                    txlist.add(message);
+                }
+            }
+            map.put("xt",xtlist);
+            map.put("tx",txlist);
+        }
+        return map;
+    }
+
+	@Override
+	public void insert(Message message) {
+		// TODO Auto-generated method stub
+		message.setMessageId(UUID.randomUUID().toString().replaceAll("-", ""));
+		mapper.insert(message);
+	}
+
+	@Override
+	public List<?> findAllByUser(String token) {
+		// TODO Auto-generated method stub
+		return  XltcMessage.getAllMessageType(mapper.findAllByUserId(this.checkUser(token)));
+	}
+
+	@Override
+	public List<?> findMessageByUserAndType(String token, String type, CommonPage page) {
+		// TODO Auto-generated method stub
+		page.startPageHelper();
+		return mapper.findAllByUserIdAndType(this.checkUser(token), type);
+	}
+
+	private String checkUser(String token){
+		if(StringUtils.isBlank(token))
+			throw XltcRuntimeException.throwable("token为空");
+		AppUser user = userService.getAppUserByToken(token);
+		if(user == null)
+			throw XltcRuntimeException.throwable("用户不存在");
+		return user.getUserId();
+	}
+
+	@Override
+	public List<?> findList(String token, CommonPage page) {
+		// TODO Auto-generated method stub
+		String userId = this.checkUser(token);
+		mapper.updateAllRead(userId);
+		page.startPageHelper();
+		return mapper.findAllByUserId(userId);
+	}
+	
+	@Override
+	public boolean isShowMessage(String token){
+		String userId = this.checkUser(token);
+		return mapper.countUnRead(userId) == 0 ? false : true;
+	}
+
+	@Override
+	public void delete(String... ids) {
+		// TODO Auto-generated method stub
+		for (String id : ids) {
+			mapper.deleteById(id, DataState.DEL);
+		}
+	}
+	
+	@Override
+	public Map<?, ?> showAlertMessage(String token){
+		String userId = this.checkUser(token);
+		Map<String, Object> result = new HashMap<>();
+		Integer count = mapper.countUnRead(userId);
+		result.put("isShow",count == 0 ? false : true);
+		result.put("unReadCount", count);
+		return result;
+	}
+
+}

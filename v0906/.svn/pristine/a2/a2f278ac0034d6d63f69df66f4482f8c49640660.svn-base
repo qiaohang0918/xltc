@@ -1,0 +1,276 @@
+package com.qigan.qiganshop.controller.backstage;
+
+import com.qigan.qiganshop.myutils.SqlConstructUtils;
+import com.qigan.qiganshop.pojo.TbSpecial;
+import com.qigan.qiganshop.pojo.TbSpecialConcat;
+import com.qigan.qiganshop.pojo.TbSpecialTopic;
+import com.qigan.qiganshop.pojo.TbSpecialUnit;
+import com.qigan.qiganshop.service.XltcSpecialManageService;
+import com.qigan.qiganshop.util.notnull.StringNotNull;
+import com.qigan.qiganshop.util.result.XltcResult;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * @Aurher: QiaoHang
+ * @Description:
+ * @Data: 2019/10/23 15:17
+ * @Modified By:
+ */
+@RestController
+@RequestMapping("/special/manage")
+public class XltcSepcialManageController {
+
+    @Autowired
+    XltcSpecialManageService specialManageService;
+
+
+    /**
+     * 添加特色栏目
+     * @param special
+     * @return
+     */
+    @RequestMapping(value = "/addSpecial.do",method = RequestMethod.POST)
+    public XltcResult addSpecial(@RequestBody TbSpecial special){
+        if(!StringNotNull.check(special.getSpecialName(),
+                special.getNo(),
+                special.getSpecialSort())){
+            return XltcResult.error("参数不全：[ 特色名称，操作者工号，排序序号 ] 必传!");
+        }
+        SqlConstructUtils.checkNumberString(special.getSpecialSort(), "排序");
+        return specialManageService.addSpecial(special);
+    }
+
+    /**
+     * 修改特色栏目
+     * @param special
+     * @return
+     */
+    @RequestMapping(value = "/updateSpecial.do",method = RequestMethod.POST)
+    public XltcResult updateSpecial(@RequestBody TbSpecial special){
+        if(!StringNotNull.check(special.getSpecialId())){
+            return XltcResult.error("参数不全：[ 特色id ] 必传!");
+        }
+        return specialManageService.updateSpecial(special);
+    }
+
+    /**
+     * 删除特色栏目(连带删除其他的所有主题，以及主题所关联的商品记录)
+     * @param special
+     * @return
+     */
+    @RequestMapping(value = "/deleteSpecial.do",method = RequestMethod.POST)
+    public XltcResult deleteSpecial(@RequestBody TbSpecial special){
+        if(!StringNotNull.check(special.getSpecialId())){
+            return XltcResult.error("参数不全：[ 特色id ] 必传!");
+        }
+        return specialManageService.deleteSpecial(special);
+    }
+
+    /**
+     * 查询特色栏目(支持条件) 【未完成】
+     * @param special
+     * @return
+     */
+    @RequestMapping(value = "/findSpecialByConditions.do",method = RequestMethod.POST)
+    public XltcResult findSpecialByConditions(TbSpecial special){
+        return specialManageService.findSpecialByConditions(special);
+    }
+
+    //*************************************以上内容暂时舍弃*************************************************
+
+    /**
+     * 添加特色主题
+     * @param topic
+     * @return
+     */
+    @RequestMapping(value = "/addTopicForSpecial.do",method = RequestMethod.POST)
+    public XltcResult addTopicForSpecial(@RequestBody TbSpecialTopic topic){
+        if(!StringNotNull.check(topic.getNo(),
+                topic.getTopicName(),
+                topic.getTopicSort())){
+            return XltcResult.error("参数不全：[ 工号，主题名称，主题排序 ] 必传!");
+        }
+        SqlConstructUtils.checkNumberString( topic.getTopicSort(),"主题排序");
+        return specialManageService.addTopicForSpecial(topic);
+    }
+
+    /**
+     * 删除主题(考虑级联)
+     * @param topic
+     * @return
+     */
+    @RequestMapping(value = "/deleteTopicCasecade.do",method = RequestMethod.POST)
+    public XltcResult deleteTopicCasecade(@RequestBody TbSpecialTopic topic){
+        if(!StringNotNull.check(topic.getTopicId())){
+            return XltcResult.error("参数不全：[ 主题id ] 必传!");
+        }
+        return specialManageService.deleteTopicCasecade(topic);
+    }
+
+    /**
+     * 修改主题
+     * @param topic
+     * @return
+     */
+    @RequestMapping(value = "/updateSpecialTopic.do",method = RequestMethod.POST)
+    public XltcResult updateSpecialTopic(@RequestBody TbSpecialTopic topic){
+        if(!StringNotNull.check(topic.getTopicId())){
+            return XltcResult.error("参数不全：[ 主题id ] 必传!");
+        }
+        return specialManageService.updateSpecialTopic(topic);
+    }
+
+    /**
+     * 查询主题(支持多条件),分页
+     * @param parms
+     * @return
+     */
+    @RequestMapping(value = "/findSpecialTopic.do",method = RequestMethod.POST)
+    public XltcResult findSpecialTopic(@RequestBody Map<String,String> parms){
+        return specialManageService.findSpecialTopic(parms);
+    }
+
+    /**
+     * 查询主题(支持多条件),分页
+     * @param parms
+     * @return
+     */
+    @RequestMapping(value = "/findSpecialTopicForApp.do",method = RequestMethod.POST)
+    public XltcResult findSpecialTopicForApp( Map<String,String> parms){
+        return specialManageService.findSpecialTopic(parms==null?new HashMap<String,String>():parms);
+    }
+
+    /**
+     * 查询主题下的单元(支持条件) waiting .....
+     * @param parms
+     * @return
+     */
+    @RequestMapping(value = "/findUnitByCondition.do",method = RequestMethod.POST)
+    public XltcResult findUnitByCondition(@RequestBody Map<String,String> parms){
+        XltcResult unitByCondition = specialManageService.findUnitByCondition(parms);
+        return unitByCondition;
+    }
+
+    /**
+     * 查询主题下的单元(支持条件) waiting .....
+     * @return
+     */
+    @RequestMapping(value = "/findUnitByConditionForApp.do",method = RequestMethod.POST)
+    public XltcResult findUnitByConditionForApp( String page,String size,String topicId,String enable){
+        HashMap<String, String> parms = new HashMap<>();
+        parms.put("enable",enable);
+        parms.put("page",page);
+        parms.put("size",size);
+        parms.put("topicId",topicId);
+        XltcResult unitByCondition = specialManageService.findUnitByCondition(parms);
+        return unitByCondition;
+    }
+
+    /**
+     * 添加关联单元
+     * @return
+     */
+    @RequestMapping(value = "/addSpecialUnit.do",method = RequestMethod.POST)
+    public XltcResult addSpecialUnit(@RequestBody TbSpecialUnit specialUnit){
+        if(!StringNotNull.check(specialUnit.getUnitDetails(),
+                specialUnit.getUnitPicture(),
+                specialUnit.getUnitTitle(),
+                specialUnit.getUnitId(),
+                specialUnit.getUnitSubNotice(),
+                specialUnit.getUnitOwnerPicture())){
+            return XltcResult.error("参数不全：[ 主图，副图序列，主图标题, 分类id, icon图，icon标题 ] 必传!");
+        }
+        if(!StringNotNull.check(specialUnit.getUnitStored())){
+            specialUnit.setSort(String.valueOf(new Date().getTime()));
+        }
+        return  specialManageService.addSpecialUnit(specialUnit);
+    }
+
+    /**
+     * 修改特色单元
+     * @param specialUnit
+     * @return
+     */
+    @RequestMapping(value = "/updateSpecialUnit.do",method = RequestMethod.POST)
+    public XltcResult updateSpecialUnit(@RequestBody TbSpecialUnit specialUnit){
+        if(!StringNotNull.check(specialUnit.getUnitId())){
+            return XltcResult.error("参数不全：[ 特色单元id (unitId) ] 必传!");
+        }
+        specialUnit.setSort(String.valueOf(new Date().getTime()));
+        return specialManageService.updateSpecialUnit(specialUnit);
+    }
+
+    /**
+     * 删除特色单元 （级联删除关联关系）
+     * @param specialUnit
+     * @return
+     */
+    @RequestMapping(value = "/deleteSpecialUnit.do",method = RequestMethod.POST)
+    public XltcResult deleteSpecialUnit(@RequestBody TbSpecialUnit specialUnit){
+        if(!StringNotNull.check(specialUnit.getUnitId())){
+            return XltcResult.error("参数不全：[ 特色单元id (unitId) ] 必传!");
+        }
+        return specialManageService.deleteSpecialUnit(specialUnit);
+    }
+
+    /**
+     * 查询某一特色单元详情 （返回特色单元基本信息 ，以及关联他的特色主题）
+     * @param specialUnit
+     * @return
+     */
+    @RequestMapping(value = "/findSpecialUnitDetails.do",method = RequestMethod.POST)
+    public XltcResult findSpecialUnitDetails(@RequestBody TbSpecialUnit specialUnit){
+        if(!StringNotNull.check(specialUnit.getUnitId())){
+            return XltcResult.error("参数不全：[ 特色单元id (unitId) ] 必传!");
+        }
+        return specialManageService.findSpecialUnitDetails(specialUnit);
+    }
+
+    /**
+     * 查询某一特色单元详情 （返回特色单元基本信息 ，以及关联他的特色主题）
+     * @param specialUnit
+     * @return
+     */
+    @RequestMapping(value = "/findSpecialUnitDetailsForApp.do",method = RequestMethod.POST)
+    public XltcResult findSpecialUnitDetailsForApp(TbSpecialUnit specialUnit){
+        if(!StringNotNull.check(specialUnit.getUnitId())){
+            return XltcResult.error("参数不全：[ 特色单元id (unitId) ] 必传!");
+        }
+        return specialManageService.findSpecialUnitDetails(specialUnit);
+    }
+
+    /**
+     * 关联特色单元 (如果已存在关联，则解除当前关联关系，重新关联！)
+     * @param specialConcat
+     * @return
+     */
+    @RequestMapping(value = "/casecadeUnitToTopic.do",method = RequestMethod.POST)
+    public XltcResult casecadeUnitToTopic(@RequestBody TbSpecialConcat specialConcat){
+        if(!StringNotNull.check(specialConcat.getTopicId(),
+                specialConcat.getUnitId())){
+            return XltcResult.error("参数不全：[ 特色单元id , 特色主题id ] 必传!");
+        }
+        return specialManageService.casecadeUnitToTopic(specialConcat);
+    }
+
+
+    /**
+     * 查询所有的特色主题 (供添加完特色单元后---想要关联/修改关联) 使用
+     * @param specialTopic
+     * @return
+     */
+    @RequestMapping(value = "/findSimpleSpecialTopic.do",method = RequestMethod.POST)
+    public XltcResult findSimpleSpecialTopic(@RequestBody TbSpecialTopic specialTopic){
+        return specialManageService.findSimpleSpecialTopic(specialTopic);
+    }
+
+
+}

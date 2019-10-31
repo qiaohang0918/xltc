@@ -1,0 +1,306 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qigan.qiganshop.mapper.TbActivityMainMapper" >
+  <resultMap id="BaseResultMap" type="com.qigan.qiganshop.pojo.TbActivityMain" >
+    <id column="activity_id" property="activityId" jdbcType="VARCHAR" />
+    <result column="activity_name" property="activityName" jdbcType="VARCHAR" />
+    <result column="main_picture" property="mainPicture" jdbcType="VARCHAR" />
+    <result column="activity_status" property="activityStatus" jdbcType="VARCHAR" />
+    <result column="actactivity_sort" property="actactivitySort" jdbcType="VARCHAR" />
+    <result column="create_time" property="createTime" jdbcType="VARCHAR" />
+    <result column="activity_skip_url" property="activitySkipUrl" jdbcType="VARCHAR" />
+    <result column="top_picture" property="topPicture" jdbcType="VARCHAR" />
+    <result column="bottom_picture" property="bottomPicture" jdbcType="VARCHAR" />
+    <result column="small_picture" property="smallPicture" jdbcType="VARCHAR" />
+    <result column="background" property="background" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    activity_id, activity_name, main_picture, activity_status, actactivity_sort, create_time, 
+    activity_skip_url, top_picture, bottom_picture, small_picture, background
+  </sql>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.qigan.qiganshop.pojo.TbActivityMainExample" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from tb_activity_main
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from tb_activity_main
+    where activity_id = #{activityId,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from tb_activity_main
+    where activity_id = #{activityId,jdbcType=VARCHAR}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.qigan.qiganshop.pojo.TbActivityMainExample" >
+    delete from tb_activity_main
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.qigan.qiganshop.pojo.TbActivityMain" >
+    insert into tb_activity_main (activity_id, activity_name, main_picture, 
+      activity_status, actactivity_sort, create_time, 
+      activity_skip_url, top_picture, bottom_picture, 
+      small_picture, background)
+    values (#{activityId,jdbcType=VARCHAR}, #{activityName,jdbcType=VARCHAR}, #{mainPicture,jdbcType=VARCHAR}, 
+      #{activityStatus,jdbcType=VARCHAR}, #{actactivitySort,jdbcType=VARCHAR}, #{createTime,jdbcType=VARCHAR}, 
+      #{activitySkipUrl,jdbcType=VARCHAR}, #{topPicture,jdbcType=VARCHAR}, #{bottomPicture,jdbcType=VARCHAR}, 
+      #{smallPicture,jdbcType=VARCHAR}, #{background,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.qigan.qiganshop.pojo.TbActivityMain" >
+    insert into tb_activity_main
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="activityId != null" >
+        activity_id,
+      </if>
+      <if test="activityName != null" >
+        activity_name,
+      </if>
+      <if test="mainPicture != null" >
+        main_picture,
+      </if>
+      <if test="activityStatus != null" >
+        activity_status,
+      </if>
+      <if test="actactivitySort != null" >
+        actactivity_sort,
+      </if>
+      <if test="createTime != null" >
+        create_time,
+      </if>
+      <if test="activitySkipUrl != null" >
+        activity_skip_url,
+      </if>
+      <if test="topPicture != null" >
+        top_picture,
+      </if>
+      <if test="bottomPicture != null" >
+        bottom_picture,
+      </if>
+      <if test="smallPicture != null" >
+        small_picture,
+      </if>
+      <if test="background != null" >
+        background,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="activityId != null" >
+        #{activityId,jdbcType=VARCHAR},
+      </if>
+      <if test="activityName != null" >
+        #{activityName,jdbcType=VARCHAR},
+      </if>
+      <if test="mainPicture != null" >
+        #{mainPicture,jdbcType=VARCHAR},
+      </if>
+      <if test="activityStatus != null" >
+        #{activityStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="actactivitySort != null" >
+        #{actactivitySort,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null" >
+        #{createTime,jdbcType=VARCHAR},
+      </if>
+      <if test="activitySkipUrl != null" >
+        #{activitySkipUrl,jdbcType=VARCHAR},
+      </if>
+      <if test="topPicture != null" >
+        #{topPicture,jdbcType=VARCHAR},
+      </if>
+      <if test="bottomPicture != null" >
+        #{bottomPicture,jdbcType=VARCHAR},
+      </if>
+      <if test="smallPicture != null" >
+        #{smallPicture,jdbcType=VARCHAR},
+      </if>
+      <if test="background != null" >
+        #{background,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.qigan.qiganshop.pojo.TbActivityMainExample" resultType="java.lang.Integer" >
+    select count(*) from tb_activity_main
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update tb_activity_main
+    <set >
+      <if test="record.activityId != null" >
+        activity_id = #{record.activityId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.activityName != null" >
+        activity_name = #{record.activityName,jdbcType=VARCHAR},
+      </if>
+      <if test="record.mainPicture != null" >
+        main_picture = #{record.mainPicture,jdbcType=VARCHAR},
+      </if>
+      <if test="record.activityStatus != null" >
+        activity_status = #{record.activityStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="record.actactivitySort != null" >
+        actactivity_sort = #{record.actactivitySort,jdbcType=VARCHAR},
+      </if>
+      <if test="record.createTime != null" >
+        create_time = #{record.createTime,jdbcType=VARCHAR},
+      </if>
+      <if test="record.activitySkipUrl != null" >
+        activity_skip_url = #{record.activitySkipUrl,jdbcType=VARCHAR},
+      </if>
+      <if test="record.topPicture != null" >
+        top_picture = #{record.topPicture,jdbcType=VARCHAR},
+      </if>
+      <if test="record.bottomPicture != null" >
+        bottom_picture = #{record.bottomPicture,jdbcType=VARCHAR},
+      </if>
+      <if test="record.smallPicture != null" >
+        small_picture = #{record.smallPicture,jdbcType=VARCHAR},
+      </if>
+      <if test="record.background != null" >
+        background = #{record.background,jdbcType=VARCHAR},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update tb_activity_main
+    set activity_id = #{record.activityId,jdbcType=VARCHAR},
+      activity_name = #{record.activityName,jdbcType=VARCHAR},
+      main_picture = #{record.mainPicture,jdbcType=VARCHAR},
+      activity_status = #{record.activityStatus,jdbcType=VARCHAR},
+      actactivity_sort = #{record.actactivitySort,jdbcType=VARCHAR},
+      create_time = #{record.createTime,jdbcType=VARCHAR},
+      activity_skip_url = #{record.activitySkipUrl,jdbcType=VARCHAR},
+      top_picture = #{record.topPicture,jdbcType=VARCHAR},
+      bottom_picture = #{record.bottomPicture,jdbcType=VARCHAR},
+      small_picture = #{record.smallPicture,jdbcType=VARCHAR},
+      background = #{record.background,jdbcType=VARCHAR}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.qigan.qiganshop.pojo.TbActivityMain" >
+    update tb_activity_main
+    <set >
+      <if test="activityName != null" >
+        activity_name = #{activityName,jdbcType=VARCHAR},
+      </if>
+      <if test="mainPicture != null" >
+        main_picture = #{mainPicture,jdbcType=VARCHAR},
+      </if>
+      <if test="activityStatus != null" >
+        activity_status = #{activityStatus,jdbcType=VARCHAR},
+      </if>
+      <if test="actactivitySort != null" >
+        actactivity_sort = #{actactivitySort,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null" >
+        create_time = #{createTime,jdbcType=VARCHAR},
+      </if>
+      <if test="activitySkipUrl != null" >
+        activity_skip_url = #{activitySkipUrl,jdbcType=VARCHAR},
+      </if>
+      <if test="topPicture != null" >
+        top_picture = #{topPicture,jdbcType=VARCHAR},
+      </if>
+      <if test="bottomPicture != null" >
+        bottom_picture = #{bottomPicture,jdbcType=VARCHAR},
+      </if>
+      <if test="smallPicture != null" >
+        small_picture = #{smallPicture,jdbcType=VARCHAR},
+      </if>
+      <if test="background != null" >
+        background = #{background,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where activity_id = #{activityId,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.qigan.qiganshop.pojo.TbActivityMain" >
+    update tb_activity_main
+    set activity_name = #{activityName,jdbcType=VARCHAR},
+      main_picture = #{mainPicture,jdbcType=VARCHAR},
+      activity_status = #{activityStatus,jdbcType=VARCHAR},
+      actactivity_sort = #{actactivitySort,jdbcType=VARCHAR},
+      create_time = #{createTime,jdbcType=VARCHAR},
+      activity_skip_url = #{activitySkipUrl,jdbcType=VARCHAR},
+      top_picture = #{topPicture,jdbcType=VARCHAR},
+      bottom_picture = #{bottomPicture,jdbcType=VARCHAR},
+      small_picture = #{smallPicture,jdbcType=VARCHAR},
+      background = #{background,jdbcType=VARCHAR}
+    where activity_id = #{activityId,jdbcType=VARCHAR}
+  </update>
+</mapper>

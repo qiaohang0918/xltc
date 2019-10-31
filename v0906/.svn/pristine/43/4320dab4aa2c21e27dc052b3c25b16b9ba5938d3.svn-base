@@ -1,0 +1,21 @@
+package com.qigan.qiganshop.service;
+
+import com.qigan.qiganshop.pojo.TbPresellGoods;
+import com.qigan.qiganshop.util.result.XltcResult;
+
+/**
+ * @Aurher: QiaoHang
+ * @Description:
+ * @Data: 2019/10/5 14:53
+ * @Modified By:
+ */
+public interface XltcPreSellGoodsService {
+
+    XltcResult addPreSellGoods(TbPresellGoods codes);
+
+    XltcResult updatePreSellGoods(TbPresellGoods tbPresellGoods);
+
+    XltcResult searchPreSellGoods(String enabled, String level);
+
+    int addCurrentPreSelllGoodsSellNum(String code, String level, String count);
+}

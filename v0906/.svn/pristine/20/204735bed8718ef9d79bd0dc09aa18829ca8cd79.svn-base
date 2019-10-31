@@ -1,0 +1,65 @@
+package com.qigan.qiganshop.pojo;
+
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import java.io.Serializable;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+
+@ApiModel(value = "com.qigan.qiganshop.pojo.Info")
+@Getter
+@Setter
+@ToString
+@TableName(value = "tb_info")
+public class Info implements Serializable {
+    public static final String COL_INFOID = "infoId";
+    /**
+     * 订单信息Id
+     */
+    @TableId(value = "infoId", type = IdType.AUTO)
+    @ApiModelProperty(value = "订单信息Id")
+    private String infoId;
+
+    /**
+     * 订单信息
+     */
+    @TableField(value = "info")
+    @ApiModelProperty(value = "订单信息")
+    private String info;
+
+    /**
+     * 订单ID
+     */
+    @TableField(value = "orderId")
+    @ApiModelProperty(value = "订单ID")
+    private String orderId;
+
+    /**
+     * 创建时间
+     */
+    @TableField(value = "createTime")
+    @ApiModelProperty(value = "创建时间")
+    private String createTime;
+
+    /**
+     * 用户Id
+     */
+    @TableField(value = "userId")
+    @ApiModelProperty(value = "用户Id")
+    private String userId;
+
+    private static final long serialVersionUID = 1L;
+
+    public static final String COL_INFO = "info";
+
+    public static final String COL_ORDERID = "orderId";
+
+    public static final String COL_CREATETIME = "createTime";
+
+    public static final String COL_USERID = "userId";
+}

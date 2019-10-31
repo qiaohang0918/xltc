@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qigan.qiganshop.mapper.TbActivityUnionMapper" >
+  <resultMap id="BaseResultMap" type="com.qigan.qiganshop.pojo.TbActivityUnion" >
+    <id column="union_id" property="unionId" jdbcType="VARCHAR" />
+    <result column="activity_id" property="activityId" jdbcType="VARCHAR" />
+    <result column="union_sort" property="unionSort" jdbcType="VARCHAR" />
+    <result column="union_name" property="unionName" jdbcType="VARCHAR" />
+    <result column="union_picture" property="unionPicture" jdbcType="VARCHAR" />
+    <result column="union_skip_url" property="unionSkipUrl" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    union_id, activity_id, union_sort, union_name, union_picture, union_skip_url
+  </sql>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.qigan.qiganshop.pojo.TbActivityUnionExample" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from tb_activity_union
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from tb_activity_union
+    where union_id = #{unionId,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from tb_activity_union
+    where union_id = #{unionId,jdbcType=VARCHAR}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.qigan.qiganshop.pojo.TbActivityUnionExample" >
+    delete from tb_activity_union
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.qigan.qiganshop.pojo.TbActivityUnion" >
+    insert into tb_activity_union (union_id, activity_id, union_sort, 
+      union_name, union_picture, union_skip_url
+      )
+    values (#{unionId,jdbcType=VARCHAR}, #{activityId,jdbcType=VARCHAR}, #{unionSort,jdbcType=VARCHAR}, 
+      #{unionName,jdbcType=VARCHAR}, #{unionPicture,jdbcType=VARCHAR}, #{unionSkipUrl,jdbcType=VARCHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.qigan.qiganshop.pojo.TbActivityUnion" >
+    insert into tb_activity_union
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="unionId != null" >
+        union_id,
+      </if>
+      <if test="activityId != null" >
+        activity_id,
+      </if>
+      <if test="unionSort != null" >
+        union_sort,
+      </if>
+      <if test="unionName != null" >
+        union_name,
+      </if>
+      <if test="unionPicture != null" >
+        union_picture,
+      </if>
+      <if test="unionSkipUrl != null" >
+        union_skip_url,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="unionId != null" >
+        #{unionId,jdbcType=VARCHAR},
+      </if>
+      <if test="activityId != null" >
+        #{activityId,jdbcType=VARCHAR},
+      </if>
+      <if test="unionSort != null" >
+        #{unionSort,jdbcType=VARCHAR},
+      </if>
+      <if test="unionName != null" >
+        #{unionName,jdbcType=VARCHAR},
+      </if>
+      <if test="unionPicture != null" >
+        #{unionPicture,jdbcType=VARCHAR},
+      </if>
+      <if test="unionSkipUrl != null" >
+        #{unionSkipUrl,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.qigan.qiganshop.pojo.TbActivityUnionExample" resultType="java.lang.Integer" >
+    select count(*) from tb_activity_union
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update tb_activity_union
+    <set >
+      <if test="record.unionId != null" >
+        union_id = #{record.unionId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.activityId != null" >
+        activity_id = #{record.activityId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.unionSort != null" >
+        union_sort = #{record.unionSort,jdbcType=VARCHAR},
+      </if>
+      <if test="record.unionName != null" >
+        union_name = #{record.unionName,jdbcType=VARCHAR},
+      </if>
+      <if test="record.unionPicture != null" >
+        union_picture = #{record.unionPicture,jdbcType=VARCHAR},
+      </if>
+      <if test="record.unionSkipUrl != null" >
+        union_skip_url = #{record.unionSkipUrl,jdbcType=VARCHAR},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update tb_activity_union
+    set union_id = #{record.unionId,jdbcType=VARCHAR},
+      activity_id = #{record.activityId,jdbcType=VARCHAR},
+      union_sort = #{record.unionSort,jdbcType=VARCHAR},
+      union_name = #{record.unionName,jdbcType=VARCHAR},
+      union_picture = #{record.unionPicture,jdbcType=VARCHAR},
+      union_skip_url = #{record.unionSkipUrl,jdbcType=VARCHAR}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.qigan.qiganshop.pojo.TbActivityUnion" >
+    update tb_activity_union
+    <set >
+      <if test="activityId != null" >
+        activity_id = #{activityId,jdbcType=VARCHAR},
+      </if>
+      <if test="unionSort != null" >
+        union_sort = #{unionSort,jdbcType=VARCHAR},
+      </if>
+      <if test="unionName != null" >
+        union_name = #{unionName,jdbcType=VARCHAR},
+      </if>
+      <if test="unionPicture != null" >
+        union_picture = #{unionPicture,jdbcType=VARCHAR},
+      </if>
+      <if test="unionSkipUrl != null" >
+        union_skip_url = #{unionSkipUrl,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where union_id = #{unionId,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.qigan.qiganshop.pojo.TbActivityUnion" >
+    update tb_activity_union
+    set activity_id = #{activityId,jdbcType=VARCHAR},
+      union_sort = #{unionSort,jdbcType=VARCHAR},
+      union_name = #{unionName,jdbcType=VARCHAR},
+      union_picture = #{unionPicture,jdbcType=VARCHAR},
+      union_skip_url = #{unionSkipUrl,jdbcType=VARCHAR}
+    where union_id = #{unionId,jdbcType=VARCHAR}
+  </update>
+</mapper>

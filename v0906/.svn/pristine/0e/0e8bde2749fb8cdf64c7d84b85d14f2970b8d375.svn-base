@@ -1,0 +1,420 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qigan.qiganshop.mapper.AppUserMapper">
+    <resultMap id="BaseResultMap" type="com.qigan.qiganshop.pojo.AppUser">
+        <id column="userId" property="userId" jdbcType="VARCHAR"/>
+        <result column="phone" property="phone" jdbcType="VARCHAR"/>
+        <result column="password" property="password" jdbcType="VARCHAR"/>
+        <result column="paypassword" property="paypassword" jdbcType="VARCHAR"/>
+        <result column="qopenid" property="qopenid" jdbcType="VARCHAR"/>
+        <result column="wopenid" property="wopenid" jdbcType="VARCHAR"/>
+        <result column="balance" property="balance" jdbcType="DOUBLE"/>
+        <result column="idCard" property="idCard" jdbcType="VARCHAR"/>
+        <result column="realName" property="realName" jdbcType="VARCHAR"/>
+        <result column="member" property="member" jdbcType="VARCHAR"/>
+        <result column="mbeginTime" property="mbeginTime" jdbcType="VARCHAR"/>
+        <result column="mendTime" property="mendTime" jdbcType="VARCHAR"/>
+        <result column="nickName" property="nickName" jdbcType="VARCHAR"/>
+        <result column="sex" property="sex" jdbcType="VARCHAR"/>
+        <result column="birthday" property="birthday" jdbcType="VARCHAR"/>
+        <result column="areaId" property="areaId" jdbcType="INTEGER"/>
+        <result column="imageUrl" property="imageUrl" jdbcType="VARCHAR"/>
+        <result column="info" property="info" jdbcType="VARCHAR"/>
+        <result column="token" property="token" jdbcType="VARCHAR"/>
+        <result column="tokenTime" property="tokenTime" jdbcType="VARCHAR"/>
+        <result column="createTime" property="createTime" jdbcType="VARCHAR"/>
+        <result column="score" property="score" jdbcType="INTEGER"/>
+        <result column="orderNum" property="orderNum" jdbcType="INTEGER"/>
+        <result column="amount" property="amount" jdbcType="DOUBLE"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        userId, phone, password, paypassword, qopenid, wopenid, balance, idCard, realName,
+        member, mbeginTime, mendTime, nickName, sex, birthday, areaId, imageUrl, info, token,
+        tokenTime, createTime, score,orderNum,amount
+    </sql>
+    <select id="getAppUserByToken" resultType="com.qigan.qiganshop.pojo.AppUser"
+            parameterType="java.lang.String">
+        select 
+		 <include refid="Base_Column_List"/>
+        from tb_user
+        where token = #{token}
+    </select>
+    <select id="getAppUserById" resultType="com.qigan.qiganshop.pojo.AppUser"
+            parameterType="java.lang.String">
+        select *
+        from tb_user
+        where userId = #{id}
+    </select>
+    <select id="getAppUserByOpenid" resultType="com.qigan.qiganshop.pojo.AppUser"
+            parameterType="java.lang.String">
+        select *
+        from tb_user
+        where wopenid = #{openid}
+    </select>
+    <select id="getAppUserByQOpenid" resultType="com.qigan.qiganshop.pojo.AppUser"
+            parameterType="java.lang.String">
+        select *
+        from tb_user
+        where qopenid = #{openid}
+    </select>
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.String"
+            resultType="com.qigan.qiganshop.pojo.AppUser">
+        select *
+        from tb_user
+        where userId = #{userId}
+    </select>
+
+    <select id="findAppUserByPhone" resultType="com.qigan.qiganshop.pojo.AppUser"
+            parameterType="java.lang.String">
+        select *
+        from tb_user
+        where phone = #{phone}
+    </select>
+
+    <select id="daysUserRecords" resultType="java.util.Map">
+        select  date (createTime) as createTime, count(*) as count  from tb_user group by date (createTime)
+        <if test="startTime != null">
+            HAVING createTime <![CDATA[ >= ]]> #{startTime}
+        </if>
+        <if test=" startTime !=null and  endTime != null">
+            and createTime <![CDATA[ <= ]]> #{endTime}
+        </if>
+        <if test=" startTime ==null and  endTime != null">
+            HAVING createTime <![CDATA[ <= ]]> #{endTime}
+        </if>
+        order by createTime desc
+    </select>
+
+    <insert id="addAppUser" parameterType="com.qigan.qiganshop.pojo.AppUser">
+        insert into tb_user
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="user.token != null">
+                token ,
+            </if>
+            <if test="user.phone != null">
+                phone ,
+            </if>
+            <if test="user.password != null">
+                password ,
+            </if>
+            <if test="user.nickName != null">
+                nickName ,
+            </if>
+            <if test="user.sex != null">
+                sex ,
+            </if>
+            <if test="user.birthday != null">
+                birthday ,
+            </if>
+            <if test="user.areaId != null">
+                areaId ,
+            </if>
+            <if test="user.imageUrl != null">
+                imageUrl ,
+            </if>
+            <if test="user.info != null">
+                info ,
+            </if>
+            <if test="user.paypassword != null">
+                paypassword,
+            </if>
+            <if test="user.wopenid != null">
+                wopenid,
+            </if>
+            <if test="user.qopenid != null">
+                qopenid,
+            </if>
+            <if test="user.member != null">
+                member,
+            </if>
+            <if test="user.realName != null">
+                realName,
+            </if>
+            <if test="user.idCard != null">
+                idCard,
+            </if>
+            <if test="user.balance != null">
+                balance,
+            </if>
+            createTime,
+            userId
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="user.token != null">
+                #{user.token,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.phone != null">
+                #{user.phone,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.password != null">
+                #{user.password,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.nickName != null">
+                #{user.nickName,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.sex != null">
+                #{user.sex,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.birthday != null">
+                #{user.birthday,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.areaId != null">
+                #{user.areaId,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.imageUrl != null">
+                #{user.imageUrl,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.info != null">
+                #{user.info,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.paypassword != null">
+                #{user.paypassword,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.wopenid != null">
+                #{user.wopenid,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.qopenid != null">
+                #{user.qopenid,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.member != null">
+                #{user.member,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.realName != null">
+                #{user.realName,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.idCard != null">
+                #{user.idCard,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.balance != null">
+                #{user.balance,jdbcType=DOUBLE} ,
+            </if>
+            now(),
+            #{user.userId}
+        </trim>
+    </insert>
+
+
+    <update id="updateAppUser" parameterType="com.qigan.qiganshop.pojo.AppUser">
+        update tb_user
+        <set>
+            <if test="user.token != null">
+                token = #{user.token,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.phone != null">
+                phone = #{user.phone,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.password != null">
+                password = #{user.password,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.nickName != null">
+                nickName = #{user.nickName,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.sex != null">
+                sex = #{user.sex,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.birthday != null">
+                birthday = #{user.birthday,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.areaId != null">
+                areaId = #{user.areaId,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.imageUrl != null">
+                imageUrl = #{user.imageUrl,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.info != null">
+                info = #{user.info,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.paypassword != null">
+                paypassword = #{user.paypassword,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.wopenid != null">
+                wopenid = #{user.wopenid,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.qopenid != null">
+                qopenid = #{user.qopenid,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.member != null">
+                member = #{user.member,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.mbeginTime != null">
+                mbeginTime = #{user.mbeginTime,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.mendTime != null">
+                mendTime = #{user.mendTime,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.realName != null">
+                realName = #{user.realName,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.idCard != null">
+                idCard = #{user.idCard,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.balance != null">
+                balance = #{user.balance,jdbcType=VARCHAR} ,
+            </if>
+        </set>
+        where userId = #{user.userId}
+    </update>
+
+    <update id="updateAppUserToken" parameterType="com.qigan.qiganshop.pojo.AppUser">
+        update tb_user
+        <set>
+            <if test="user.phone != null">
+                phone = #{user.phone,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.password != null">
+                password = #{user.password,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.nickName != null">
+                nickName = #{user.nickName,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.sex != null">
+                sex = #{user.sex,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.birthday != null">
+                birthday = #{user.birthday,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.areaId != null">
+                areaId = #{user.areaId,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.imageUrl != null">
+                imageUrl = #{user.imageUrl,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.info != null">
+                info = #{user.info,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.paypassword != null">
+                paypassword = #{user.paypassword,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.wopenid != null">
+                wopenid = #{user.wopenid,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.qopenid != null">
+                qopenid = #{user.qopenid,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.member != null">
+                member = #{user.member,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.mbeginTime != null">
+                mbeginTime = #{user.mbeginTime,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.mendTime != null">
+                mendTime = #{user.mendTime,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.realName != null">
+                realName = #{user.realName,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.idCard != null">
+                idCard = #{user.idCard,jdbcType=VARCHAR} ,
+            </if>
+            <if test="user.balance != null">
+                balance = #{user.balance,jdbcType=VARCHAR} ,
+            </if>
+        </set>
+        where token = #{user.token}
+    </update>
+
+    <select id="findPage" parameterType="map" resultMap="BaseResultMap">
+        select
+        userId,phone,nickName,createTime,amount,orderNum
+        from tb_user
+        <if test="user != null">
+            where
+            <if test="user.phone != null">
+                phone = #{user.phone,jdbcType=VARCHAR} and
+            </if>
+            <if test="user.password != null">
+                password = #{user.password,jdbcType=VARCHAR} and
+            </if>
+            <if test="user.nickName != null">
+                nickName = #{user.nickName,jdbcType=VARCHAR} and
+            </if>
+            <if test="user.sex != null">
+                sex = #{user.sex,jdbcType=VARCHAR} and
+            </if>
+            <if test="user.birthday != null">
+                birthday = #{user.birthday,jdbcType=VARCHAR} and
+            </if>
+            <if test="user.areaId != null">
+                areaId = #{user.areaId,jdbcType=VARCHAR} and
+            </if>
+            <if test="user.imageUrl != null">
+                imageUrl = #{user.imageUrl,jdbcType=VARCHAR} and
+            </if>
+            <if test="user.info != null">
+                info = #{user.info,jdbcType=VARCHAR} and
+            </if>
+            <if test="user.paypassword != null">
+                paypassword = #{user.paypassword,jdbcType=VARCHAR} and
+            </if>
+            <if test="user.wopenid != null">
+                wopenid = #{user.wopenid,jdbcType=VARCHAR} and
+            </if>
+            <if test="user.qopenid != null">
+                qopenid = #{user.qopenid,jdbcType=VARCHAR} and
+            </if>
+            <if test="user.member != null">
+                member = #{user.member,jdbcType=VARCHAR} and
+            </if>
+            <if test="user.mbeginTime != null">
+                mbeginTime = #{user.mbeginTime,jdbcType=VARCHAR} and
+            </if>
+            <if test="user.mendTime != null">
+                mendTime = #{user.mendTime,jdbcType=VARCHAR} and
+            </if>
+            <if test="user.realName != null">
+                realName = #{user.realName,jdbcType=VARCHAR} and
+            </if>
+            <if test="user.idCard != null">
+                idCard = #{user.idCard,jdbcType=VARCHAR} and
+            </if>
+            <if test="user.balance != null">
+                balance = #{user.balance,jdbcType=VARCHAR} and
+            </if>
+            <if test="user.orderNum != null">
+                orderNum = #{user.orderNum,jdbcType=VARCHAR} and
+            </if>
+            <if test="user.amount != null">
+                amount = #{user.amount,jdbcType=VARCHAR} and
+            </if>
+            1 = 1
+        </if>
+        <if test="page!= null and size != null">
+            limit #{page-1}*#{size},#{size}
+        </if>
+    </select>
+
+    <update id="addDeal" parameterType="map">
+        update tb_user
+        set amount   = IF(amount IS NULL, 0, amount)+ #{payMoney},
+            orderNum = IF(orderNum IS NULL, 0, orderNum) + 1
+        where userId = #{userId}
+    </update>
+
+
+    <select id="findPageByCondition"  parameterType="map" resultType="java.util.Map">
+        select
+        userId,phone,nickName,createTime,amount,orderNum
+        from tb_user
+        <if test="map != null">
+            where
+            <if test="map.phone != null">
+                phone = #{map.phone,jdbcType=VARCHAR} and
+            </if>
+            <!-- 判断时间区间 -->
+            <if test="map.startTime !=null or map.endTime !=null ">
+                <if test="map.startTime !=null">
+                    createTime <![CDATA[ >= ]]> #{map.startTime} and
+                </if>
+                <if test="map.endTime !=null">
+                    createTime <![CDATA[ <= ]]> #{map.endTime} and
+                </if>
+            </if>
+            1 = 1
+        </if>
+        <if test="map.sortPartten != null">
+            order by createTime  ${map.sortPartten}
+        </if>
+    </select>
+
+</mapper>

@@ -1,0 +1,146 @@
+package com.qigan.qiganshop.controller.backstage;
+
+import com.qigan.qiganshop.controller.utils.RefundController;
+import com.qigan.qiganshop.myutils.SqlConstructUtils;
+import com.qigan.qiganshop.pojo.Goods;
+import com.qigan.qiganshop.pojo.Manager;
+import com.qigan.qiganshop.pojo.TbPresellGoods;
+import com.qigan.qiganshop.service.XltcPreSellGoodsService;
+import com.qigan.qiganshop.util.notnull.StringNotNull;
+import com.qigan.qiganshop.util.result.XltcResult;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+/**
+ * @Aurher: QiaoHang
+ * @Description:
+ * @Data: 2019/10/5 15:20
+ * @Modified By:
+ */
+@RestController
+@RequestMapping("/preSellGoods")
+public class XltcPreSellGoodsController {
+
+
+    @Autowired
+    private XltcPreSellGoodsService preSellGoodsService;
+
+
+    /**
+     * 添加 预售商品（未启用）
+     * @param tbPresellGoods
+     * @return
+     */
+    @RequestMapping(value = "/addPreSellGoods.do",method = RequestMethod.POST)
+    public XltcResult addPreSellGoods(@RequestBody TbPresellGoods tbPresellGoods){
+        //校验参数
+        if(!StringNotNull.check(tbPresellGoods.getNo(),
+                tbPresellGoods.getPresellgoodscode(),
+                tbPresellGoods.getDuringbefore(),
+                tbPresellGoods.getDuringafter(),
+                tbPresellGoods.getLevel(),
+                tbPresellGoods.getPresendtime())){
+            return  XltcResult.error("参数不全：[工号，商品code，起止日期，期号，预计发货时间必传！]");
+        }
+        if(StringNotNull.check(tbPresellGoods.getLevel())){
+            try {
+                Integer.parseInt(tbPresellGoods.getLevel());
+            }catch (Exception e){
+                return XltcResult.error("期号必须是int型数字！");
+            }
+        }
+        //校验权限
+        Manager currentManager = RefundController.managerMap.get(tbPresellGoods.getNo());
+        if(currentManager==null || !"1".equals(currentManager.getAuthRefund()) ){
+            return XltcResult.error("管理员不存在或没有权限");
+        }
+        //新增
+        return preSellGoodsService.addPreSellGoods(tbPresellGoods);
+    }
+
+
+    /**
+     * 修改 预售商品信息
+     * @param tbPresellGoods
+     * @return
+     */
+    @RequestMapping(value = "/updatePreSellGoods.do",method = RequestMethod.POST)
+    public XltcResult updatePreSellGoods(@RequestBody TbPresellGoods tbPresellGoods){
+        if(!StringNotNull.check(tbPresellGoods.getNo(),
+                tbPresellGoods.getPreSellId(),
+                tbPresellGoods.getDuringafter(),
+                tbPresellGoods.getDuringbefore(),
+                tbPresellGoods.getLevel(),
+                tbPresellGoods.getPresellgoodscode(),
+                tbPresellGoods.getEnabled()))
+            return  XltcResult.error("参数不全：[id , code ,工号，状态，期号，开始时间，结束时间 必传！]");
+        if(StringNotNull.check(tbPresellGoods.getLevel())){
+            try {
+                Integer.parseInt(tbPresellGoods.getLevel());
+            }catch (Exception e){
+                return XltcResult.error("期号必须是int型数字！");
+            }
+        }
+        //校验权限
+        Manager currentManager = RefundController.managerMap.get(tbPresellGoods.getNo());
+        if(currentManager==null || !"1".equals(currentManager.getAuthRefund()) ){
+            return XltcResult.error("管理员不存在或没有权限");
+        }
+        //修改
+        return preSellGoodsService.updatePreSellGoods(tbPresellGoods);
+    }
+
+
+    /**
+     * 查询商品名称
+     * @param presellgoodscode
+     * @return
+     */
+    @RequestMapping(value = "/findGoodsName.do",method = RequestMethod.GET)
+    public XltcResult findGoodsName(@RequestParam String presellgoodscode){
+        if(!StringNotNull.check(presellgoodscode))
+            return XltcResult.error("商品code不能为空！");
+        List<Goods> goods = preSellGoodsService.findGoodsByCodes("'"+presellgoodscode+"'");
+        if(SqlConstructUtils.nullList(goods))
+            return XltcResult.error("商品不存在！");
+        return XltcResult.ok(goods.get(0).getName());
+    }
+
+
+    /**
+     * 删除预售商品
+     * @param tbPresellGoods
+     * @return
+     */
+    @RequestMapping(value = "/deletePreSellGoods.do",method = RequestMethod.POST)
+    public XltcResult deletePreSellGoods(@RequestBody TbPresellGoods tbPresellGoods){
+        if(!StringNotNull.check(tbPresellGoods.getPreSellId(),
+                tbPresellGoods.getPresellgoodscode(),
+                tbPresellGoods.getDuringafter(),
+                tbPresellGoods.getDuringbefore(),
+                tbPresellGoods.getNo())){
+            return XltcResult.error("参数不全:[ id,工号, code，开始时间，结束时间 ]必传！");
+        }
+        //校验权限
+        Manager currentManager = RefundController.managerMap.get(tbPresellGoods.getNo());
+        if(currentManager==null || !"1".equals(currentManager.getAuthRefund()) ){
+            return XltcResult.error("管理员不存在或没有权限");
+        }
+        return  preSellGoodsService.deletePreSellGoods(tbPresellGoods);
+    }
+
+
+    /**
+     * 查询预售商品
+     * @return
+     */
+    @RequestMapping(value = "/searchPreSellGoods.do",method = RequestMethod.GET)
+    public XltcResult searchPreSellGoods(String enabled,String level,String code){
+        return preSellGoodsService.searchPreSellGoods(enabled,level,code);
+    }
+
+
+}
+

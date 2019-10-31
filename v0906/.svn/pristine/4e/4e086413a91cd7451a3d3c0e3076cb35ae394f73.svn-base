@@ -1,0 +1,567 @@
+package com.qigan.qiganshop.service.impl;
+
+import static com.qigan.qiganshop.util.quartz.OrderQuartzJob.DF;
+
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+
+import javax.servlet.http.HttpSession;
+
+import com.qigan.qiganshop.myutils.SqlConstructUtils;
+import com.qigan.qiganshop.pojo.*;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.github.pagehelper.PageInfo;
+import com.qigan.qiganshop.constant.RedisConstant;
+import com.qigan.qiganshop.enums.CouponType;
+import com.qigan.qiganshop.exception.XltcRuntimeException;
+import com.qigan.qiganshop.exception.XltcTokenRuntimeException;
+import com.qigan.qiganshop.mapper.CategoryMapper;
+import com.qigan.qiganshop.mapper.CouponMapper;
+import com.qigan.qiganshop.mapper.GoodsMapper;
+import com.qigan.qiganshop.mapper.TbCouponDetailsMapper;
+import com.qigan.qiganshop.mapper.UserCouponMapper;
+import com.qigan.qiganshop.service.AppUserService;
+import com.qigan.qiganshop.service.CouponService;
+import com.qigan.qiganshop.service.UserCouponService;
+import com.qigan.qiganshop.util.access.JedisUtil;
+import com.qigan.qiganshop.util.filter.LogIntercept;
+import com.qigan.qiganshop.util.notnull.NotNull;
+import com.qigan.qiganshop.util.notnull.StringNotNull;
+import com.qigan.qiganshop.util.result.PageResult;
+import com.qigan.qiganshop.util.upload.IDUtils;
+import com.qigan.qiganshop.utils.json.JsonUtils;
+
+/**
+ * 用户收货地址实现层
+ *
+ * @author wanghao
+ */
+@Service
+@Transactional(rollbackFor = Exception.class)
+public class UserCouponServiceImpl implements UserCouponService {
+	@Autowired
+	private UserCouponMapper mapper;
+
+	@Autowired
+	private CouponService couponService;
+
+	@Autowired
+	private CouponMapper couponMapper;
+	
+	@Autowired
+	private TbCouponDetailsMapper detailsMapper;
+	
+	@Autowired
+	private GoodsMapper goodsMapper;
+
+	private static final String IS_USER = "1";
+
+	private static final String IS_EXPIRE = "3";
+
+	private static final String USER_FREE = "4";
+
+	private static final String NEW_USER = "5";
+
+	private static final String MESSAGE = "抱歉,优惠券不存在或已不能领取";
+
+	@Autowired
+	JedisUtil jedis;
+
+	@Autowired
+	AppUserService userService;
+	
+	@Autowired
+	private CategoryMapper cateMapper;
+	
+	@Autowired
+	HttpSession session;
+
+	/**
+	 * 增加
+	 *
+	 * @param userCoupon
+	 */
+	@Override
+	public Integer add(UserCoupon userCoupon, boolean flag) {
+		if (userCoupon == null)
+			throw XltcRuntimeException.throwable("参数不全");
+		String userId = StringUtils.isBlank(userCoupon.getUserId()) ? this.checkToken(userCoupon.getToken())
+				: userCoupon.getUserId();
+		userCoupon.setUserId(userId);
+		if (flag) {
+			UserCoupon checkCoupon = this.findByUserIdAndCouponId(userId, userCoupon.getCouponId());
+			if (checkCoupon != null)
+				throw XltcRuntimeException.throwable("抱歉,已领取过该优惠券");
+		}
+		Coupon cou = couponService.findOne(userCoupon.getCouponId());
+		if (cou == null)
+			throw XltcRuntimeException.throwable(MESSAGE);
+		
+		String value = jedis.getFromHash(RedisConstant.NEW_USER_FIRST_ORDER, userId);
+		String mobile = StringUtils.isNotBlank(userCoupon.getMobileId()) ? jedis.getFromHash(RedisConstant.NEW_MOBILE, userCoupon.getMobileId()) : IDUtils.genItemId();
+		CouponType.checkNewUserCoupon(value, mobile, cou.getType());
+		
+		if ("0".equals(cou.getEnable()))
+			throw XltcRuntimeException.throwable(MESSAGE);
+		Long endDay = 0L;
+		if (StringUtils.isBlank(cou.getBegin())) {
+//		if (USER_FREE.equals(cou.getType()) || NEW_USER.equals(cou.getType())) {
+			String end = cou.getEnd();
+			if (StringUtils.isBlank(end) || end.indexOf(".") != -1 || "0".equals(end))
+				end = "1";
+//			userCoupon.setStartTime(DF.format(LocalDateTime.now()));
+//			LocalDateTime now = LocalDateTime.now();
+//			userCoupon.setDisableTime(DF.format(now.plusDays(Long.parseLong(end))));
+//			endDay = Long.parseLong(end) * 24 * 3600;
+			
+			LocalDate nowDate = LocalDate.now();
+			String disDateStr = nowDate.plusDays(Long.parseLong(end) - 1).toString() + " 23:59:59";
+			LocalDateTime endTime = LocalDateTime.parse(disDateStr, DF);
+			userCoupon.setStartTime(DF.format(LocalDateTime.now()));
+			userCoupon.setDisableTime(disDateStr);
+			endDay = Duration.between(LocalDateTime.now(), endTime).toMillis() / 1000;
+		} else {
+			try {
+				DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+				Date begin = format.parse(cou.getBegin());
+				Date end = format.parse(cou.getEnd());
+				Date date = new Date();
+				if (!begin.before(date) || !end.after(date))
+					throw XltcRuntimeException.throwable(MESSAGE);
+			} catch (Exception e) {
+				// TODO: handle exception
+				throw XltcRuntimeException.throwable(e.getMessage());
+			}
+			// LocalDateTime begin = LocalDateTime.parse(cou.getBegin(), DF);
+			LocalDateTime end = LocalDateTime.parse(cou.getEnd(), DF);
+			endDay = Duration.between(LocalDateTime.now(), end).toMillis() / 1000;
+			userCoupon.setStartTime(cou.getBegin());
+			userCoupon.setDisableTime(cou.getEnd());
+		}
+
+		if (!StringNotNull.check(userCoupon.getUserCouponId())) {
+			userCoupon.setUserCouponId(UUID.randomUUID().toString().replace("-", ""));
+		}
+		userCoupon.setIsUse("0");
+		Integer add = mapper.insert(userCoupon);
+		if (add > 0){
+			if(CouponType.NewUserFirstOrder.getValue().equals(cou.getType()))
+				if(StringUtils.isNotBlank(userCoupon.getMobileId())){
+					jedis.setToHash(RedisConstant.NEW_MOBILE, userCoupon.getMobileId(), userCoupon.getMobileId());
+				}
+			
+			jedis.set(RedisConstant.USER_COUPON + userCoupon.getUserCouponId(), "1", "NX", "EX", endDay);
+		}
+		return add;
+	}
+	
+	public static void main(String[] args) {
+		LocalDate nowDate = LocalDate.now();
+		String disDateStr = nowDate.plusDays(-1).toString() + " 23:59:59";
+		LocalDateTime endTime = LocalDateTime.parse(disDateStr, DF);
+//		userCoupon.setStartTime(nowDate + "00:00:00");
+//		userCoupon.setDisableTime(disDateStr);
+		Long endDay = Duration.between(LocalDateTime.now(), endTime).toMillis() / 1000;		
+		System.err.println(endDay);
+		System.err.println(DF.format(LocalDateTime.now()));
+		System.err.println(disDateStr);
+	}
+
+	/**
+	 * 修改
+	 *
+	 * @param userCoupon
+	 */
+	@Override
+	public Integer update(UserCoupon userCoupon) {
+		if (userCoupon == null)
+			throw XltcRuntimeException.throwable("参数不全");
+		return mapper.update(userCoupon);
+	}
+
+	/**
+	 * 根据ID获取实体
+	 *
+	 * @param userCouponId
+	 * @return
+	 */
+	@Override
+	public UserCoupon findOne(String userCouponId) {
+		if (StringUtils.isBlank(userCouponId))
+			throw XltcRuntimeException.throwable("id为空");
+		return mapper.findOne(userCouponId);
+	}
+
+	/**
+	 * 根据userId和优惠券ID获取实体
+	 *
+	 * @param userid
+	 * @param couponId
+	 * @return
+	 */
+	@Override
+	public UserCoupon findByUserIdAndCouponId(String userId, String couponId) {
+		List<UserCoupon> list = mapper.findByUserIdAndCouponId(userId, couponId);
+		if (list.size() > 0) {
+			return (UserCoupon) NotNull.checkNull(list.get(0));
+		}
+		return null;
+	}
+
+	/**
+	 * 分页
+	 *
+	 * @param userId
+	 * @param pageNum
+	 *            当前页 码
+	 * @param pageSize
+	 *            每页记录数
+	 * @return
+	 */
+	@Override
+	public List<UserCoupon> findPage(String userId, Integer pageNum, Integer pageSize) {
+		List<UserCoupon> list = new ArrayList<>();
+		if (pageNum != null && pageSize != null) {
+
+			list = mapper.findPage(userId, (pageNum - 1) * pageSize, pageSize);
+		} else {
+			list = mapper.findPage(userId, null, null);
+
+		}
+		return (List<UserCoupon>) NotNull.checkListNull(list);
+	}
+
+	/**
+	 * 查询可用优惠券
+	 *
+	 * @param userId
+	 * @param total
+	 * @return
+	 */
+	@Override
+	public List<Coupon> findCanUse(String userId, double total) {
+		return (List<Coupon>) NotNull.checkListNull(mapper.findCanUse(userId, total));
+	}
+
+	/**
+	 * 下单时修改优惠券状态
+	 *
+	 * @param userCoupon
+	 */
+	@Override
+	public Integer updateByOrder(UserCoupon userCoupon) {
+		return mapper.updateByOrder(userCoupon);
+	}
+
+	@Override
+	public void delete(String... userCouponIds) {
+		// TODO Auto-generated method stub
+		if (userCouponIds.length == 0)
+			throw XltcRuntimeException.throwable("参数不全");
+		for (String id : userCouponIds) {
+			mapper.delete(id);
+		}
+	}
+
+	@Override
+	public List<?> findAll(String token, CommonPage page) {
+		// TODO Auto-generated method stub
+		String userId = checkToken(token);
+		page.startPageHelper();
+		List<?> result = mapper.findAll(userId);
+		return result;
+	}
+
+	@Override
+	public List<?> findByConditions(CommonPage page, String token, String type) {
+		// TODO Auto-generated method stub
+		if (StringUtils.isBlank(type))
+			throw XltcRuntimeException.throwable("参数不全");
+		String userId = checkToken(token);
+		page.startPageHelper();
+		switch (type) {
+		case IS_EXPIRE:
+			return mapper.findExpire(userId);
+		default:
+			return mapper.findAllByType(userId, type);
+		}
+	}
+
+	@Override
+	public void recoverUserCoupon(String orderId) {
+		mapper.recoverCoupon(orderId);
+	}
+
+	@Override
+	public void expireUserCoupon(String userCouponId) {
+		UserCoupon coupon = this.findOne(userCouponId);
+		if (coupon == null)
+			return;
+		if(IS_USER.equals(coupon.getTimeOut()))
+			return;
+		if (IS_USER.equals(coupon.getIsUse()))
+			return;
+		mapper.expireUserCoupon(userCouponId);
+	}
+
+	@Override
+	public boolean isShowReceive(String token) {
+		// TODO Auto-generated method stub
+		String userId = checkToken(token);
+		List<String> showList = CouponType.showCouponList(true);
+		List<XltcUserCouponModel> list = mapper.findCouponByUserId(userId, showList);
+//		System.err.println(JsonUtils.writeValueAsString(list));
+		for (XltcUserCouponModel model : list) {
+			if(model != null && (NEW_USER.equals(model.getType()) || CouponType.NewUserFirstOrder.getValue().equals(model.getType())))
+				continue;
+			
+			if (!model.isShow())
+				return false;
+		}
+		return true;
+	}
+
+	@Override
+	public List<?> findCanReceiveAndCanUse(String token, String mobileId) {
+		// TODO Auto-generated method stub
+		String userId = checkToken(token);
+		List<String> list = CouponType.showCouponList(true);
+		String value = jedis.getFromHash(RedisConstant.NEW_USER_FIRST_ORDER, userId);//不为空则为新人首单
+		String mobile = StringUtils.isNotBlank(mobileId) ? jedis.getFromHash(RedisConstant.NEW_MOBILE, mobileId) : IDUtils.genItemId();//为空时为新设备
+		//新人首单券同时满足  1 用户首单可领取， 2 新设备可领取
+		List<XltcUserCouponModel> coupons = mapper.findCouponByUserId(userId, list);
+		for (int i = 0; i < coupons.size(); i++) {
+			XltcUserCouponModel coupon = coupons.get(i);
+			if(coupon == null)
+				continue;
+			if(!coupon.isShow()){
+				if(CouponType.checkNewUserCouponCanUse(value, mobile, coupon.getType())){
+					coupons.remove(i);
+					i--;
+				}
+			}
+			
+		}
+		return coupons;
+	}
+
+	public String checkToken(String token) {
+		if (StringUtils.isBlank(token)) {
+			throw XltcRuntimeException.throwable("token为空");
+		}
+		AppUser user = userService.getAppUserByToken(token);
+		if (user == null)
+			throw XltcRuntimeException.throwable("登录失效");
+		return user.getUserId();
+	}
+
+	@Override
+	public PageResult findReport(UserCoupon coupon) {
+		// TODO Auto-generated method stub
+		coupon.startPageHelper();
+		PageInfo<XltcCouponModel> list = new PageInfo<>(mapper.findReport(coupon));
+		return new PageResult(list.getTotal(), list.getList());
+	}
+
+	@Override
+	public List<?> findUserCanUse(String token, Double total) {
+		// TODO Auto-generated method stub
+		if (total == null) {
+			throw XltcRuntimeException.throwable("满金额为空");
+		}
+		String userId = this.checkToken(token);
+		return mapper.findUserCanUse(userId, total);
+	}
+
+	@Override
+	public List<?> findCouponPieData(String start, String end) {
+		// TODO Auto-generated method stub
+		StringBuffer buffer = new StringBuffer(" ");
+		if(StringNotNull.check(start)){
+			buffer.append(" and a.useTime >= '"+start+"' ");
+		}
+		if(StringNotNull.check(end)){
+			buffer.append(" and a.useTime <= '"+end+"' ");
+		}
+		List<XltcCouponPieModel> allPie = mapper.findAllPie(start, end);
+		if(!SqlConstructUtils.nullList(allPie)){
+			for (XltcCouponPieModel model : allPie) {
+				String couponId = model.getCouponId();
+				Map<String,Double> map = mapper.sumCurrentConponEffact(couponId,buffer.toString());
+				model.setSumTotalMoney(String.valueOf(map.get("sumTotalMoney")));
+				model.setSumPayMoney(String.valueOf(map.get("sumPayMoney")));
+			}
+		}
+		return allPie;
+	}
+
+	@Override
+	public List<?> findAllCoupon(String token, Double fullMoney, String mobileId, String... codes) {
+		// TODO Auto-generated method stub
+		String userId = this.checkToken(token);
+		List<String> buyCodes = new ArrayList<>(Arrays.asList(codes));
+		Set<String> buyTypeCodes = goodsMapper.findCategoryCode(buyCodes);
+		
+		List<XltcUserCouponModel> result = new ArrayList<>();
+		List<XltcUserCouponModel> allCoupons = mapper.findAllCouponByUserId(userId, fullMoney);
+		
+		String value = jedis.getFromHash(RedisConstant.NEW_USER_FIRST_ORDER, userId);//不为空则为新人首单
+//		String mobile = jedis.getFromHash(RedisConstant.NEW_MOBILE, mobileId);//为空时为新设备
+		
+		for (int i =0; i < allCoupons.size(); i++) {
+			XltcUserCouponModel xltcUserCouponModel = allCoupons.get(i);
+			if(xltcUserCouponModel != null){
+				if(xltcUserCouponModel.isFullMoneyIsUse()){// 满足金额
+					Coupon coupon = new Coupon(xltcUserCouponModel.getType(), xltcUserCouponModel.getCouponId());
+					if(!checkCoupon(coupon, buyCodes, buyTypeCodes)){
+						//如果不满足首单券逻辑 则放入不可用列表
+						if(CouponType.checkNewUserCouponCanUse(value, xltcUserCouponModel.getType())){
+							xltcUserCouponModel.setFullMoneyIsUse(false);
+							continue;
+						}
+						
+						result.add(xltcUserCouponModel);
+						allCoupons.remove(i);
+						i--;
+						continue;
+					}
+					xltcUserCouponModel.setFullMoneyIsUse(false);
+				}
+			}
+		}
+		result.addAll(allCoupons);
+		return result;
+	}
+	
+	private boolean checkCoupon(Coupon coupon, List<String> buyCodes, Set<String> buyTypeCodes){
+    	List<String> goodsCodes = detailsMapper.selectGoodsCodes(coupon.getCouponId());
+    	goodsCodes.retainAll(buyCodes);
+    	String type = coupon.getType();
+    	boolean flag = false;
+    	if(CouponType.couponCheck(type, CouponType.ELIMINATE)){
+    		flag = goodsCodes.size() > 0 ? true : false;
+    		
+    	}else if(CouponType.couponCheck(type, CouponType.CONTAIN_SIMPLE_GOODS)){
+    		flag = goodsCodes.size() != buyCodes.size() ? true : false;
+    		
+    	}else if(CouponType.couponCheck(type, CouponType.CONTAIN_TYPE)){
+    		List<String> typeCodes = detailsMapper.selectTypeCodes(coupon.getCouponId());
+    		typeCodes.retainAll(buyTypeCodes);
+    		flag = typeCodes.size() != buyTypeCodes.size() ? true : false;
+    	}
+    	return flag;
+    }
+
+	@Override
+	public Map<?, ?> findAllData(Goods goods, String couponId, String type) {
+		// TODO Auto-generated method stub
+		if(StringUtils.isAllBlank(couponId, type))
+			throw XltcRuntimeException.throwable("参数不完整");
+		
+		Collection<CouponVueModel> leftData = null;
+		List<?> rgtData = null;
+		if("type".equals(type)){
+			leftData = cateMapper.findCateId4Vue();
+			rgtData = detailsMapper.selectTypeCodes(couponId);
+		}else{
+			leftData = goodsMapper.findGoodsByCateId4Vue(goods);
+			rgtData = detailsMapper.selectGoodsCodes(couponId);
+		}
+		Map<String, Object> result = new HashMap<>();
+		result.put("left", leftData);
+		result.put("right", rgtData);
+		return result;
+	}
+
+	@Override
+	public List<?> findAllCoupon4App(String token, String goodsId, String mobileId) {
+		// TODO Auto-generated method stub
+		Goods goods = goodsMapper.findOne(goodsId);
+		if(goods == null)
+			return new ArrayList<>();
+		String userId = checkToken(token);
+		List<String> list = CouponType.showCouponList4App(true);
+		String value = jedis.getFromHash(RedisConstant.NEW_USER_FIRST_ORDER, userId);//不为空则为新人首单
+		String mobile = StringUtils.isNotBlank(mobileId) ? jedis.getFromHash(RedisConstant.NEW_MOBILE, mobileId) : IDUtils.genItemId();//为空时为新设备
+		//新人首单券同时满足  1 用户首单可领取， 2 新设备可领取
+		List<XltcUserCouponModel> coupons = mapper.findCouponByUserId(userId, list);
+		List<String> buyCodes = new ArrayList<>();
+		buyCodes.add(goods.getCode());
+		Set<String> buyTypeCodes = new HashSet<>();
+		buyTypeCodes.add(goods.getCategoryCode());
+		
+		for (int i = 0; i < coupons.size(); i++) {
+			XltcUserCouponModel coupon = coupons.get(i);
+			Coupon c = new Coupon(coupon.getType(), coupon.getCouponId());
+        	boolean flag = this.checkCoupon(c, buyCodes, buyTypeCodes) || CouponType.checkNewUserCouponCanUse(value, mobile, coupon.getType());
+        	if(flag){
+        		coupons.remove(i);
+    			i--;
+        	}
+		}
+//		for (int i = 0; i < coupons.size(); i++) {
+//			XltcUserCouponModel coupon = coupons.get(i);
+//			if(coupon == null)
+//				continue;
+//			if(!coupon.isShow()){
+//				if(CouponType.checkNewUserCouponCanUse(value, mobile, coupon.getType())){
+//					coupons.remove(i);
+//					i--;
+//				}
+//			}
+//			
+//		}
+		return coupons;
+	}
+
+	@Override
+	public void sendCoupon2User(String no, String[] userIds, String... couponIds) {
+		// TODO Auto-generated method stub
+		if(StringUtils.isAllBlank(userIds) || StringUtils.isAllBlank(couponIds))
+			throw XltcRuntimeException.throwable("参数不完整，请检查参数");
+		for (String userId : userIds) {
+			for (String couponId : couponIds) {
+				UserCoupon userCoupon = new UserCoupon(userId, couponId, "1", no);
+				this.add(userCoupon, false);
+			}
+		}
+	}
+
+	@Override
+	public AppUser chenUserCanSend(String userPhone) {
+		// TODO Auto-generated method stub
+		if(StringUtils.isBlank(userPhone))
+			throw XltcRuntimeException.throwable("手机号为空");
+		AppUser user = userService.findAppUserByPhone(userPhone);
+		if(user == null)
+			throw XltcRuntimeException.throwable("用户不存在");
+		return user;
+	}
+
+	@Override
+	public PageResult findSendCouponAll(UserCoupon coupon) {
+		// TODO Auto-generated method stub
+		coupon.startPageHelper();
+		PageInfo<XltcCouponModel> list = new PageInfo<>(mapper.findSendReport(coupon));
+		return new PageResult(list.getTotal(), list.getList());
+	}
+    
+
+}

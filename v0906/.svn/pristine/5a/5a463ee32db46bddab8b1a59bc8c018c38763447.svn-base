@@ -1,0 +1,80 @@
+package com.qigan.qiganshop.mapper;
+
+import com.qigan.qiganshop.pojo.Coupon;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
+
+import java.util.List;
+
+public interface CouponMapper {
+
+    /**
+     * 删除
+     *
+     * @param couponId
+     * @return
+     */
+    int delete(@Param("couponId") String couponId);
+
+    /**
+     * 新增
+     *
+     * @param record
+     * @return
+     */
+    int insert(Coupon record);
+
+    /**
+     * 条件查询
+     *
+     * @param coupon
+     * @param page
+     * @param size
+     * @return
+     */
+    List<Coupon> findPage(
+            @Param("record") Coupon coupon,
+            @Param("page") Integer page,
+            @Param("size") Integer size);
+
+    /**
+     * 查询单个
+     *
+     * @param couponId
+     * @return
+     */
+    Coupon findOne(String couponId);
+
+    /**
+     * 更新
+     *
+     * @param record
+     * @return
+     */
+    int update(Coupon record);
+
+
+    @Select("select * from tb_coupon where couponId in ( ${couponIds} )")
+    List<Coupon> findSome(@Param("couponIds") String couponIds);
+    
+    @Select({
+    	"select couponId, couponName, type, fullMoney, reduceMoney, enable ",
+    	"from tb_coupon",
+    	"where enable = #{status}"
+    })
+    List<Coupon> findCouponByStatus(String status);
+    
+    @Select({
+    	"select couponId, couponName, type, fullMoney, reduceMoney, enable ",
+    	"from tb_coupon",
+    	"where type = #{type} and enable = '1'"
+    })
+    List<Coupon> findCouponByType(String type);
+    
+    @Select({
+    	"select count(0) from tb_coupon t ",
+    	"right join tb_user_coupon y on y.couponId = t.couponId"
+    })
+    Integer countUserCoupon();
+    
+}

@@ -1,0 +1,30 @@
+package com.qigan.qiganshop.mapper;
+
+import com.qigan.qiganshop.pojo.TbActivityUnion;
+import com.qigan.qiganshop.pojo.TbActivityUnionExample;
+import java.util.List;
+import org.apache.ibatis.annotations.Param;
+
+public interface TbActivityUnionMapper {
+    int countByExample(TbActivityUnionExample example);
+
+    int deleteByExample(TbActivityUnionExample example);
+
+    int deleteByPrimaryKey(String unionId);
+
+    int insert(TbActivityUnion record);
+
+    int insertSelective(TbActivityUnion record);
+
+    List<TbActivityUnion> selectByExample(TbActivityUnionExample example);
+
+    TbActivityUnion selectByPrimaryKey(String unionId);
+
+    int updateByExampleSelective(@Param("record") TbActivityUnion record, @Param("example") TbActivityUnionExample example);
+
+    int updateByExample(@Param("record") TbActivityUnion record, @Param("example") TbActivityUnionExample example);
+
+    int updateByPrimaryKeySelective(TbActivityUnion record);
+
+    int updateByPrimaryKey(TbActivityUnion record);
+}

@@ -1,0 +1,153 @@
+package com.qigan.qiganshop.mapper;
+
+import com.qigan.qiganshop.pojo.CountMap;
+import com.qigan.qiganshop.pojo.Order;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Update;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * 订单 DAO
+ *
+ * @author wanghao
+ */
+public interface OrderMapper {
+
+
+    /**
+     * 新增
+     *
+     * @param record
+     * @return
+     */
+    int add(Order record);
+
+    /**
+     * 查询单条订单
+     *
+     * @param orderId
+     * @return
+     */
+    Order findOne(String orderId);
+
+    /**
+     * 三合一
+     *
+     * @param order
+     * @param page
+     * @param rows
+     * @return
+     */
+    List<Order> findPage(@Param("record") Order order,
+                         @Param("page") Integer page,
+                         @Param("size") Integer rows,
+                         @Param("rule") String rule);
+
+    /**
+     * 更新(限制更新字段)
+     *
+     * @param record
+     * @return
+     */
+    int update(Order record);
+
+    String findLastId();
+
+    List<Order> findExpired(String late);
+
+    /**
+     * 修改订单状态
+     *
+     * @param orderId
+     * @param status
+     * @return
+     */
+    int updateStatus(@Param("orderId") String orderId,
+                     @Param("status") String status);
+
+    /**
+     * web 分页查询订单信息
+     *
+     * @param order
+     * @param beginTime
+     * @param endTime
+     * @param page
+     * @param rows
+     * @return
+     */
+    ArrayList<Order> findByOrder(@Param("record") Order order,
+                                 @Param("beginTime") String beginTime,
+                                 @Param("endTime") String endTime,
+                                 @Param("page") Integer page,
+                                 @Param("rows") Integer rows,
+                                 @Param("rule") String rule);
+
+    /**
+     * 已完成订单
+     *
+     * @param beginTime
+     * @param endTime
+     * @return
+     */
+    Integer findEnd(@Param("beginTime") String beginTime, @Param("endTime") String endTime);
+
+    /**
+     * 配送中订单
+     *
+     * @param beginTime
+     * @param endTime
+     * @return
+     */
+    Integer findHalfway(@Param("beginTime") String beginTime, @Param("endTime") String endTime);
+
+    /**
+     * 问题订单
+     *
+     * @param beginTime
+     * @param endTime
+     * @return
+     */
+    Integer findQuestion(@Param("beginTime") String beginTime, @Param("endTime") String endTime);
+
+    /**
+     * Count various orders and quantities
+     *
+     * @return
+     */
+    List<CountMap> findByUserId(String userId);
+
+    /**
+     * Update comment
+     * This method is used to update the comments and also to modify the order status.
+     *
+     * @param orderId
+     * @param comment
+     * @return
+     */
+    Integer updateComment(@Param("orderId") String orderId, @Param("comment") Integer comment);
+
+    /**
+     * 锁订单，待支付
+     * @param orderId
+     * @return
+     */
+    @Update({
+            "update  tb_order ",
+            "set waitingPay='1' ",
+            "where orderId= #{orderId}",
+    })
+    int lockOrderWaitingPay(@Param("orderId") String orderId);
+
+    /**
+     * 根据支付方式查询支付信息
+     * @param conditionalMap  条件
+     * @return
+     */
+    List<Map> findPayInfoByType(@Param("map") Map<String, String> conditionalMap);
+
+    @Update("update tb_order set status='1', waitingPay='2',payTime=NOW()  where orderId= #{orderId} ")
+    int updatePayedByOrderId(@Param("orderId") String orderId);
+}

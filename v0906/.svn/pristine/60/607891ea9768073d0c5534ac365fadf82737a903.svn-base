@@ -1,0 +1,92 @@
+package com.qigan.qiganshop.service;
+
+import com.qigan.qiganshop.pojo.OrderItem;
+import com.qigan.qiganshop.pojo.Stock;
+
+import java.util.List;
+
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
+
+@SuppressWarnings("all")
+/**
+ * 商品库存信息服务层
+ *
+ * @author wanghao
+ * @time 2019-04-17 14:48
+ */
+public interface StockService {
+    /**
+     * 根据商品 ID 和仓库 ID 检测是否在某仓库存在某商品的库存
+     *
+     * @param stock
+     * @return
+     */
+    Stock checkExits(Stock stock);
+
+    /**
+     * 更新库存
+     *
+     * @param checkExits
+     * @return
+     */
+    Integer update(Stock checkExits);
+
+    /**
+     * 添加库存
+     *
+     * @param stock
+     * @return
+     */
+    Integer add(Stock stock);
+
+    /**
+     * 删除库存
+     *
+     * @param ids
+     * @return
+     */
+    Integer delete(String[] ids);
+
+    /**
+     * 查询单个商品的库存
+     *
+     * @param stockId
+     * @return
+     */
+    Stock findOne(String stockId);
+
+    /**
+     * 分页查询, 条件查询,查询全部
+     *
+     * @param stock
+     * @param page
+     * @param size
+     * @return
+     */
+    List<Stock> findPage(Stock stock, Integer page, Integer size);
+
+    /**
+     * 查询某仓库中所有库存数大于 0 的商品
+     *
+     * @param wareHouseId
+     * @return
+     */
+    List<Stock> findStockNum(String wareHouseId, Integer page, Integer size);
+
+
+    List<Stock> findStock(String wareHouseId, Integer page, Integer size);
+
+    Stock findByItemIdAndWareHouseId(String s, String wareHouseId);
+
+    /**
+     * 还原锁定库存
+     *
+     * @param orderItem
+     * @return
+     */
+    int cancelLock(OrderItem orderItem, String warehouseId, Integer saleNum);
+    
+    void updates(List<Stock> list);
+    
+}

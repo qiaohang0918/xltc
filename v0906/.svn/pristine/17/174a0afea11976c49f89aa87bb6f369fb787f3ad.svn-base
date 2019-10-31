@@ -1,0 +1,232 @@
+package com.qigan.qiganshop.service.impl;
+
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
+import com.qigan.qiganshop.constant.RedisConstant;
+import com.qigan.qiganshop.exception.XltcRuntimeException;
+import com.qigan.qiganshop.mapper.HomepageCateGoodsMapper;
+import com.qigan.qiganshop.pojo.CommonPage;
+import com.qigan.qiganshop.pojo.Goods;
+import com.qigan.qiganshop.pojo.HomepageCateGoods;
+import com.qigan.qiganshop.service.GoodsService;
+import com.qigan.qiganshop.service.HomePageCateGoodService;
+import com.qigan.qiganshop.util.access.JedisUtil;
+import com.qigan.qiganshop.util.notnull.NotNull;
+import com.qigan.qiganshop.util.notnull.StringNotNull;
+import com.qigan.qiganshop.util.result.format.JsonResult;
+import com.qigan.qiganshop.utils.json.JsonUtils;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
+
+/**
+ * 首页分类商品中间表
+ *
+ * @author wanghao
+ * @time 2019-05-24 15:31
+ */
+@Service
+@Transactional(rollbackFor = Exception.class)
+public class HomePageCateGoodServiceImpl implements HomePageCateGoodService {
+    @Autowired
+    private HomepageCateGoodsMapper mapper;
+    @Autowired
+    private GoodsService goodsService;
+    
+    @Autowired
+    JedisUtil jedis;
+    
+    public static final String HOME_PAGE_CATE = "homePageCate:";
+    
+    private static final int PAGE = 1;
+    
+    private static final int SIZE = 10;
+
+    /**
+     * 增加
+     *
+     * @param cateId
+     * @param goodsIds
+     * @return
+     */
+    @Override
+    public Integer add(String cateId, String[] goodsIds) {
+        Integer count = 0;
+        if (StringNotNull.check(cateId) && goodsIds.length > 0) {
+
+            for (String goodsId : goodsIds) {
+                Goods goods = goodsService.findOne(goodsId);
+                if ("0".equals(goods.getDel()) && "2".equals(goods.getStatus())) {
+                	HomepageCateGoods one = this.findOne(cateId, goodsId);
+                    if (one != null) {
+                        continue;
+                    }
+                    String uuid = UUID.randomUUID().toString().replace("-", "");
+                    HomepageCateGoods homepageCateGoods = new HomepageCateGoods();
+                    homepageCateGoods.setPageId(uuid);
+                    homepageCateGoods.setHomepageCateId(cateId);
+                    homepageCateGoods.setGoodsId(goodsId);
+                    count += mapper.add(homepageCateGoods);
+                }
+                
+            }
+        }
+        return count;
+    }
+
+    /**
+     * 根据ID获取实体
+     *
+     * @param cateId
+     * @return
+     */
+    @Override
+    public List<HomepageCateGoods> findByCateId(String cateId) {
+        if (StringNotNull.check(cateId)) {
+            return mapper.findByCateId(cateId);
+        }
+        return null;
+    }
+
+    /**
+     * 批量删除
+     *
+     * @param cateId
+     * @param goodsIds
+     * @return
+     */
+    @Override
+    public Integer delete(String cateId, String[] goodsIds) {
+        Integer count = 0;
+        if (StringNotNull.check(cateId) && goodsIds.length > 0) {
+            for (String goodsId : goodsIds) {
+                count += mapper.delete(cateId, goodsId);
+            }
+        }
+        return count;
+    }
+
+    @Override
+    public Integer updateSort(String cateId, String goodsId1, String goodsId2) {
+
+        int count = 0;
+        HomepageCateGoods one = this.findOne(cateId, goodsId1);
+        HomepageCateGoods two = this.findOne(cateId, goodsId2);
+
+        if (one == null || two == null) {
+            return -1;
+        }
+        Integer sort1 = one.getSort();
+        Integer sort2 = two.getSort();
+        two.setSort(sort1);
+        one.setSort(sort2);
+        count += this.update(one);
+        count += this.update(two);
+
+        return count;
+    }
+
+    /**
+     * 查询单个
+     *
+     * @param cateId
+     * @param goodsId
+     * @return
+     */
+    @Override
+    public HomepageCateGoods findOne(String cateId, String goodsId) {
+        if (StringNotNull.check(cateId) && StringNotNull.check(goodsId)) {
+            return mapper.findOne(cateId, goodsId);
+        }
+        return null;
+    }
+
+    /**
+     * 修改
+     *
+     * @param one
+     * @return
+     */
+    @Override
+    public int update(HomepageCateGoods one) {
+        return mapper.update(one);
+    }
+
+    /**
+     * 根据首页分类查询商品
+     *
+     * @param cateId
+     * @return
+     */
+    @Override
+    public List<Goods> findGoodsByCateId(String cateId, String coni, CommonPage page) {
+//        String list = jedis.get(HOME_PAGE_CATE + cateId);
+//    	if(StringUtils.isNotBlank(list))
+//    		return JsonUtils.readToList(list, Goods.class);
+    	if(StringUtils.isBlank(cateId))
+    		throw XltcRuntimeException.throwable("分类id不能为空");
+    	
+    	page.startPageHelper();
+    	List<HomepageCateGoods> cateGoodsList = mapper.findByCateId(cateId);
+        List<Goods> goodsList = new ArrayList<>();
+        String wareId = "";
+    	if (org.apache.commons.lang3.StringUtils.isNotBlank(coni)){
+    		String jConi = null;
+    		if(StringUtils.isNotBlank(jConi)){
+    			wareId = jConi;
+    		}else{
+    			JsonResult wareIdJson = goodsService.getWarehouseId(coni);
+    			if ("200".equals(wareIdJson.getRes_code())) {
+    				wareId = wareIdJson.getMessage();
+    			} else {
+    				throw XltcRuntimeException.throwable(XltcHomeServiceImpl.MES_NOT_SEND);
+    			}
+    		}
+    	}
+        
+        if (cateGoodsList != null) {
+            for (HomepageCateGoods homepageCateGoods : cateGoodsList) {
+            	Goods one = null;
+            	if(StringUtils.isBlank(coni)){
+            		one = goodsService.findOne(homepageCateGoods.getGoodsId());
+            	}else{
+            		one = goodsService.findOnes(homepageCateGoods.getGoodsId(), wareId);
+            	}
+            	if(one != null){
+            		one.setSort(homepageCateGoods.getSort());
+            		if (NotNull.checkString(one.getGoodsId())) {
+            			goodsList.add(one);
+            		}
+            	}
+            }
+        }
+        List<Goods> result = goodsList.stream().distinct().collect(Collectors.toList()).stream().sorted(Comparator.comparing(Goods :: getSort)).collect(Collectors.toList());
+//        jedis.set(HOME_PAGE_CATE + cateId, JsonUtils.writeValueAsString(result));
+        return result;
+    }
+
+	@Override
+	public Integer updateGoodsSort(String homepageCateId, String goodsId, Integer sort) {
+		// TODO Auto-generated method stub
+		if(StringUtils.isBlank(homepageCateId) || StringUtils.isBlank(goodsId) || sort == null)
+			throw XltcRuntimeException.throwable("更新排序参数不能为空");
+		return mapper.updateGoodsSort(homepageCateId, goodsId, sort);
+	}
+
+    @Override
+    public boolean releaseUnionGoods(String categoryId, String statusStrList) {
+        int i = mapper.releaseUnionGoods(categoryId, statusStrList);
+        return i>0?true:false;
+    }
+}

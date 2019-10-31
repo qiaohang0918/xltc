@@ -1,0 +1,312 @@
+package com.qigan.qiganshop.controller.backstage;
+
+import com.qigan.qiganshop.constant.RedisConstant;
+import com.qigan.qiganshop.pojo.Banner;
+import com.qigan.qiganshop.service.BannerService;
+import com.qigan.qiganshop.service.UserCouponService;
+import com.qigan.qiganshop.util.access.JedisUtil;
+import com.qigan.qiganshop.util.result.XltcResult;
+import com.qigan.qiganshop.util.result.format.JsonResult;
+import com.qigan.qiganshop.util.result.format.ResultCode;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+
+@SuppressWarnings("all")
+
+@RestController
+@RequestMapping("/app/banner")
+@Api(value = "WEB、APP 轮播图管理接口")
+public class BannerController {
+
+    @Autowired
+    private JsonResult jr;
+    @Autowired
+    private BannerService bannerService;
+    
+    @Autowired
+    UserCouponService service;
+    
+    @Autowired
+    JedisUtil jedis;
+
+
+    @RequestMapping("/selectBanner.do")
+    @ApiOperation(value = "查询轮播图",
+            notes = "",
+            httpMethod = "POST"
+    )
+    public JsonResult selectBanner(HttpServletRequest request, HttpServletResponse response) {
+        return Select("1", request, response);
+    }
+
+    @RequestMapping("/selectAdvertise.do")
+    @ApiOperation(
+            value = "查询广告",
+            notes = "",
+            httpMethod = "POST")
+    public JsonResult selectAdvertise(HttpServletRequest request, HttpServletResponse response) {
+        return Select("2", request, response);
+    }
+    
+    @RequestMapping("/selectCoupon.do")
+    @ApiOperation(
+    		value = "查询首页优惠券图",
+    		notes = "",
+    		httpMethod = "POST")
+    public JsonResult selectCoupon(String userId, HttpServletRequest request, HttpServletResponse response) {
+    	List<Banner> list = bannerService.selectBanner("4");
+    	if(StringUtils.isNotBlank(userId)){
+    		boolean isShow = service.isShowReceive(userId);
+    		for (Banner banner : list) {
+    			banner.setReceive(isShow);
+			}
+    	}
+    	return jr.jsonResultData(ResultCode.SUCCESS.res_code(), "操作成功", list);
+    }
+
+    @RequestMapping("/selectActivity.do")
+    @ApiOperation(
+            value = "查询活动",
+            notes = "",
+            httpMethod = "POST")
+    public JsonResult selectActivity(HttpServletRequest request, HttpServletResponse response) {
+        return Select("3", request, response);
+    }
+
+    private JsonResult Select(String type, HttpServletRequest request, HttpServletResponse response) {
+        try {
+            List<Banner> list = bannerService.selectBanner(type);
+            return jr.jsonResultData(ResultCode.SUCCESS.res_code(), "操作成功", list);
+        } catch (Exception e) {
+            return jr.jsonResultData(ResultCode.ERROR.res_code());
+        }
+    }
+
+
+    @RequestMapping("/insertBanner.do")
+    @ApiOperation(
+            value = "插入轮播图",
+            notes = "type类型，typeId 该类型对应的id，itemId该类型对应的商品编号 ;image 图片地址; url跳转地址",
+            httpMethod = "POST")
+    public JsonResult insertBanner(String type, String typeId, String itemId, String image, String url, HttpServletRequest request, HttpServletResponse response) {
+        return insert("1", type, typeId, itemId, image, url, request, response);
+    }
+    
+    @RequestMapping("/insertCoupon.do")
+    @ApiOperation(
+    		value = "插入优惠券图",
+    		notes = "type类型，typeId 该类型对应的id，itemId该类型对应的商品编号 ;image 图片地址; url跳转地址",
+    		httpMethod = "POST")
+    public JsonResult insertCoupon(String type, String typeId, String itemId, String image, String url, HttpServletRequest request, HttpServletResponse response) {
+    	return insert("4", type, typeId, itemId, image, url, request, response);
+    }
+
+    @RequestMapping("/insertAdvertise.do")
+    @ApiOperation(
+            value = "插入广告",
+            notes = "type类型，typeId 该类型对应的id，itemId该类型对应的商品编号 ;image 图片地址; url跳转地址",
+            httpMethod = "POST")
+    public JsonResult insertAdvertise(String type, String typeId, String itemId, String image, String url, HttpServletRequest request, HttpServletResponse response) {
+        return insert("2", type, typeId, itemId, image, url, request, response);
+    }
+
+    @RequestMapping("/insertActivity.do")
+    @ApiOperation(
+            value = "插入活动",
+            notes = "type类型，typeId 该类型对应的id，itemId该类型对应的商品编号 ;image 图片地址; url跳转地址",
+            httpMethod = "POST")
+    public JsonResult insertActivity(String type, String typeId, String itemId, String image, String url, HttpServletRequest request, HttpServletResponse response) {
+        return insert("3", type, typeId, itemId, image, url, request, response);
+    }
+
+    private JsonResult insert(String moduleType, String type, String typeId, String itemId, String image, String url, HttpServletRequest request, HttpServletResponse response) {
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+            Banner banner = new Banner();
+            banner.setModuleType(moduleType);
+            banner.setType(type);
+            banner.setTypeId(typeId);
+            banner.setItemId(itemId);
+            banner.setImage(image);
+            banner.setUrl(url);
+            banner.setSort(sdf.format(new Date()));
+            int suc = bannerService.insertBanner(banner);
+            if (suc == 1) {
+            	jedis.del(RedisConstant.HOME_BANANER.getBytes());
+                return jr.jsonResultData(ResultCode.SUCCESS.res_code(), "操作成功");
+            }
+            return jr.jsonResultData(ResultCode.FAIL.res_code());
+        } catch (Exception e) {
+            return jr.jsonResultData(ResultCode.ERROR.res_code());
+        }
+    }
+
+    @RequestMapping("/updateBanner.do")
+    @ApiOperation(
+            value = "修改轮播图信息",
+            notes = "bannerId 轮播图唯一标识; type类型，typeId 该类型对应的id，itemId该类型对应的商品编号 ;image 图片地址; url跳转地址",
+            httpMethod = "POST")
+    public JsonResult updateBanner(int bannerId, String type, String typeId, String itemId, String image, String url, HttpServletRequest request, HttpServletResponse response) {
+    	return update(bannerId, "1", type, typeId, itemId, image, url, request, response);
+    }
+
+
+    @RequestMapping("/updateAdvertise.do")
+    @ApiOperation(
+            value = "修改广告信息",
+            notes = "bannerId 轮播图唯一标识; type类型，typeId 该类型对应的id，itemId该类型对应的商品编号 ;image 图片地址; url跳转地址",
+            httpMethod = "POST")
+    public JsonResult updateAdvertise(int bannerId, String type, String typeId, String itemId, String image, String url, HttpServletRequest request, HttpServletResponse response) {
+    	return update(bannerId, "2", type, typeId, itemId, image, url, request, response);
+    }
+    
+    @RequestMapping("/updateCoupon.do")
+    @ApiOperation(
+    		value = "修改广告信息",
+    		notes = "bannerId 轮播图唯一标识; type类型，typeId 该类型对应的id，itemId该类型对应的商品编号 ;image 图片地址; url跳转地址",
+    		httpMethod = "POST")
+    public JsonResult updateCoupon(int bannerId, String type, String typeId, String itemId, String image, String url, HttpServletRequest request, HttpServletResponse response) {
+    	return update(bannerId, "4", type, typeId, itemId, image, url, request, response);
+    }
+
+    @RequestMapping("/updateActivity.do")
+    @ApiOperation(
+            value = "修改活动信息",
+            notes = "bannerId 轮播图唯一标识; type类型，typeId 该类型对应的id，itemId该类型对应的商品编号 ;image 图片地址; url跳转地址",
+            httpMethod = "POST")
+    public JsonResult updateActivity(int bannerId, String type, String typeId, String itemId, String image, String url, HttpServletRequest request, HttpServletResponse response) {
+    	return update(bannerId, "3", type, typeId, itemId, image, url, request, response);
+    }
+
+    JsonResult update(int bannerId, String moduleType, String type, String typeId, String itemId, String image, String url, HttpServletRequest request, HttpServletResponse response) {
+
+        try {
+            Banner banner = new Banner();
+            banner.setBannerId(bannerId);
+            banner.setModuleType(moduleType);
+            banner.setItemId(itemId);
+            banner.setType(type);
+            banner.setTypeId(typeId);
+            banner.setImage(image);
+            banner.setUrl(url);
+            int suc = bannerService.updateBanner(banner);
+            if (suc == 1) {
+            	jedis.del(RedisConstant.HOME_BANANER.getBytes());
+                return jr.jsonResultData(ResultCode.SUCCESS.res_code(), "操作成功");
+            }
+            return jr.jsonResultData(ResultCode.FAIL.res_code());
+        } catch (Exception e) {
+            return jr.jsonResultData(ResultCode.ERROR.res_code());
+        }
+    }
+
+    @RequestMapping("/deleteBanner.do")
+    @ApiOperation(
+            value = "删除轮播图信息",
+            notes = "bannerId 轮播图id",
+            httpMethod = "POST")
+    public JsonResult deleteBanner(Integer bannerId, HttpServletRequest request, HttpServletResponse response) {
+    	return delete(bannerId, request, response);
+    }
+    
+    @RequestMapping("/deleteCoupon.do")
+    @ApiOperation(
+    		value = "删除轮播图信息",
+    		notes = "bannerId 轮播图id",
+    		httpMethod = "POST")
+    public JsonResult deleteCoupon(Integer bannerId, HttpServletRequest request, HttpServletResponse response) {
+    	return delete(bannerId, request, response);
+    }
+
+    @RequestMapping("/deleteAdvertise.do")
+    @ApiOperation(
+            value = "删除广告信息",
+            notes = "bannerId 轮播图id",
+            httpMethod = "POST")
+    public JsonResult deleteAdvertise(Integer bannerId, HttpServletRequest request, HttpServletResponse response) {
+       
+    	return delete(bannerId, request, response);
+    }
+
+    @RequestMapping("/deleteActivity.do")
+    @ApiOperation(
+            value = "删除活动信息",
+            notes = "bannerId 轮播图id",
+            httpMethod = "POST")
+    public JsonResult deleteActivity(Integer bannerId, HttpServletRequest request, HttpServletResponse response) {
+        return delete(bannerId, request, response);
+    }
+
+    JsonResult delete(Integer bannerId, HttpServletRequest request, HttpServletResponse response) {
+
+        try {
+            int suc = bannerService.deleteBanner(bannerId);
+            if (suc == 1) {
+            	jedis.del(RedisConstant.HOME_BANANER.getBytes());
+                return jr.jsonResultData(ResultCode.SUCCESS.res_code(), "操作成功");
+            }
+            return jr.jsonResultData(ResultCode.FAIL.res_code());
+        } catch (Exception e) {
+            return jr.jsonResultData(ResultCode.ERROR.res_code());
+        }
+    }
+
+    @RequestMapping("/sortBanner.do")
+    @ApiOperation(
+            value = "排序轮播图信息",
+            notes = "bannerId 轮播图id",
+            httpMethod = "POST")
+    public JsonResult sortBanner(Integer bannerId1, Integer bannerId2, HttpServletRequest request, HttpServletResponse response) {
+        return sort(bannerId1, bannerId2, request, response);
+    }
+
+    @RequestMapping("/sortAdvertise.do")
+    @ApiOperation(
+            value = "排序广告信息",
+            notes = "bannerId 轮播图id",
+            httpMethod = "POST")
+    public JsonResult sortAdvertise(Integer bannerId1, Integer bannerId2, HttpServletRequest request, HttpServletResponse response) {
+        return sort(bannerId1, bannerId2, request, response);
+    }
+
+    @RequestMapping("/sortActivity.do")
+    @ApiOperation(
+            value = "排序活动信息",
+            notes = "bannerId 轮播图id",
+            httpMethod = "POST")
+    public JsonResult sortActivity(Integer bannerId1, Integer bannerId2, HttpServletRequest request, HttpServletResponse response) {
+        return sort(bannerId1, bannerId2, request, response);
+    }
+
+    JsonResult sort(Integer bannerId1, Integer bannerId2, HttpServletRequest request, HttpServletResponse response) {
+
+        try {
+            int suc = bannerService.sortBanner(bannerId1, bannerId2);
+            if (suc == 1) {
+            	jedis.del(RedisConstant.HOME_BANANER.getBytes());
+                return jr.jsonResultData(ResultCode.SUCCESS.res_code(), "操作成功");
+            }
+            return jr.jsonResultData(ResultCode.FAIL.res_code());
+        } catch (Exception e) {
+            return jr.jsonResultData(ResultCode.ERROR.res_code());
+        }
+    }
+    
+    @RequestMapping("/updateEnabel.do")
+    public XltcResult updateEnabel(String status, Integer... bannerIds){
+    	return XltcResult.ok();
+    }
+    
+
+}

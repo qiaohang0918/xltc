@@ -1,0 +1,560 @@
+package com.qigan.qiganshop.controller.frontend;
+
+import cn.afterturn.easypoi.excel.ExcelExportUtil;
+import cn.afterturn.easypoi.excel.entity.ExportParams;
+import com.qigan.qiganshop.controller.utils.PublicControl;
+import com.qigan.qiganshop.enums.OrderStatus;
+import com.qigan.qiganshop.pojo.AppUser;
+import com.qigan.qiganshop.pojo.Order;
+import com.qigan.qiganshop.pojo.OrderItem;
+import com.qigan.qiganshop.pojo.Pay;
+import com.qigan.qiganshop.pojo.group.GroupOrder;
+import com.qigan.qiganshop.service.AppUserService;
+import com.qigan.qiganshop.service.PayService;
+import com.qigan.qiganshop.service.XltcOrderService;
+import com.qigan.qiganshop.service.XltcOrderServiceConcat;
+import com.qigan.qiganshop.util.notnull.StringNotNull;
+import com.qigan.qiganshop.util.result.PageResult;
+import com.qigan.qiganshop.util.result.XltcResult;
+import com.qigan.qiganshop.util.result.format.JsonResult;
+import com.qigan.qiganshop.util.result.format.ResultCode;
+import com.qigan.qiganshop.utils.json.JsonUtils;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.*;
+
+/**
+ * 标签 controller
+ *
+ * @author wanghao
+ * @time 2019-04-15 10:30
+ */
+@SuppressWarnings("all")
+@RestController
+@Api(value = "订单 controller", tags = {"订单操作接口"})
+public class AppOrderController {
+    @Autowired
+    private XltcOrderService service;
+    @Autowired
+    private PayService payService;
+    @Autowired
+    private JsonResult jr;
+    @Autowired
+    private PublicControl pc;
+    @Autowired
+    private AppUserService userService;
+    @Autowired
+    private XltcOrderServiceConcat orderServiceConcat;
+
+    /**
+     * 查询库存
+     *
+     * @param order
+     * @return
+     */
+    @RequestMapping("/app/Order/submit.do")
+    @ApiOperation(
+            value = "购物车页面 ,提交订单,锁定库存",
+            notes = "锁定库存   \r\n" +
+                    "锁定库存",
+            httpMethod = "POST")
+    public JsonResult submit(@RequestBody GroupOrder order) {
+        if (order != null) {
+            // 用实体进行接收订单信息
+            return orderServiceConcat.submit(order);
+        }
+        return jr.jsonResultData(ResultCode.FAIL.res_code(), "itemIds 不能为空", null);
+    }
+
+    /**
+     * 支付成功
+     * @param order
+     * @return
+     */
+
+
+    /**
+     * 模拟添加支付信息
+     *
+     * @param order
+     * @return
+     */
+    @RequestMapping("/app/Order/simulationPay.do")
+    @ApiOperation(
+            value = "模拟添加支付信息",
+            notes = "模拟添加支付信息   \r\n" +
+                    "模拟添加支付信息",
+            httpMethod = "POST")
+    public JsonResult simulationPay(String orderId, double payment) {
+        if (StringNotNull.check(orderId)) {
+            Pay pay = new Pay();
+            pay.setOrderId(orderId);
+            pay.setPayment(payment + "");
+            pay.setOutPayCode(System.currentTimeMillis() + "");
+            pay.setPayTypeCode("zhifubao");
+            pay.setPaytime(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+            pay.setPayCode(new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()) + System.currentTimeMillis());
+
+            // 用实体进行接收订单信息
+            int i = payService.insertPay(pay);
+            if (i > 0) {
+
+                return jr.jsonResultData(ResultCode.SUCCESS.res_code(), "添加成功");
+            }
+            return jr.jsonResultData(ResultCode.FAIL.res_code(), "添加失败");
+        }
+        return jr.jsonResultData(ResultCode.FAIL.res_code(), "orderId 不能为空");
+    }
+
+    /**
+     * 查询订单商品信息
+     *
+     * @param token
+     * @param status
+     * @param page
+     * @param rows
+     * @return
+     */
+    @RequestMapping("/app/Order/findOrderItems.do")
+    @ApiOperation(
+            value = "根据订单ID 查询商品列表",
+            notes = "根据订单ID 查询商品列表  \r\n",
+            httpMethod = "POST")
+    public JsonResult findOrderItems(String orderId) {
+        if (StringNotNull.check(orderId)) {
+            List<OrderItem> orderItems = service.findorderItems(orderId);
+            if (orderItems != null && orderItems.size() > 0) {
+
+                return jr.jsonResultData(ResultCode.SUCCESS.res_code(), ResultCode.SUCCESS.message(), orderItems);
+            }
+            return jr.jsonResultData(ResultCode.FAIL.res_code(), ResultCode.FAIL.message(), new ArrayList<>());
+        }
+        return jr.jsonResultData(ResultCode.FAIL.res_code(), "参数不全", new ArrayList<>());
+    }
+
+    /**
+     * 查询订单
+     *
+     * @param token
+     * @param status
+     * @param page
+     * @param rows
+     * @return
+     */
+    @RequestMapping("/app/Order/findByStatus.do")
+    @ApiOperation(
+            value = "根据订单状态和 token 查询用户的订单信息 ",
+            notes = "查询订单信息,启用分页  status 不传,查询所有 \r\n" +
+                    "未支付(等待支付) 0  \n" +
+                    "支付成功 1  \n" +
+                    "已取消(超时未支付订单或手动取消) 2  \n" +
+                    "配送中 3  \n" +
+                    "已签收(已完成) 4  \n",
+            httpMethod = "POST")
+    public JsonResult findByStatus(String token, String status, Integer page, Integer rows) {
+        if (StringNotNull.check(token)) {
+            AppUser appUser = userService.getAppUserByToken(token);
+            if (appUser != null) {
+                return service.findByStatus(appUser.getUserId(), status, page, rows);
+            }
+            return jr.jsonResultData(ResultCode.FAIL.res_code(), "token 已经过期");
+        }
+        return jr.jsonResultData(ResultCode.FAIL.res_code(), "参数不全");
+    }
+
+    /**
+     * 已送达
+     *
+     * @param token
+     * @param status
+     * @param page
+     * @param rows
+     * @return
+     */
+    @RequestMapping("/app/Order/outWareHouse.do")
+    @ApiOperation(
+            value = "配送中",
+            notes = "配送中  \r\n",
+            httpMethod = "POST")
+    public JsonResult outWareHouse(String orderId) {
+        if (StringNotNull.check(orderId)) {
+            return pc.updateUtils(service.updateStatus(orderId, "3"));
+        }
+        return jr.jsonResultData(ResultCode.FAIL.res_code(), "参数不全", new ArrayList<>());
+    }
+
+    /**
+     * 手动取消订单
+     *
+     * @param token
+     * @param status
+     * @param page
+     * @param rows
+     * @return
+     */
+    @RequestMapping("/app/Order/cancel.do")
+    @ApiOperation(
+            value = "取消订单",
+            notes = "取消订单  \r\n",
+            httpMethod = "POST")
+    public JsonResult cancel(String orderId) {
+        if (StringNotNull.check(orderId)) {
+            return pc.updateUtils(service.updateStatus(orderId, "2"));
+        }
+        return jr.jsonResultData(ResultCode.FAIL.res_code(), "参数不全", new ArrayList<>());
+    }
+
+    /**
+     * 已送达
+     *
+     * @param token
+     * @param status
+     * @param page
+     * @param rows
+     * @return
+     */
+    @RequestMapping("/app/Order/arrivals.do")
+    @ApiOperation(
+            value = "已送达",
+            notes = "已送达 \r\n",
+            httpMethod = "POST")
+    public JsonResult arrivals(String orderId) {
+        if (StringNotNull.check(orderId)) {
+            return pc.updateUtils(service.updateStatus(orderId, "4"));
+        }
+        return jr.jsonResultData(ResultCode.FAIL.res_code(), "参数不全", new ArrayList<>());
+    }
+
+    /**
+     * 查询订单商品信息
+     *
+     * @param token
+     * @param status
+     * @param page
+     * @param rows
+     * @return
+     */
+    @RequestMapping(value = "/Order/findOne.do", method = RequestMethod.POST)
+    @ApiOperation(
+            value = "WEB WEB WEB WEB WEB 根据订单ID 查询订单完整信息",
+            notes = "WEB WEB WEB WEB WEB 根据订单ID 查询订单完整信息  \r\n",
+            httpMethod = "POST")
+    public JsonResult findOne(@RequestParam List<String> orderIds) {
+        	List<Map<?, ?>> list = new ArrayList<>();
+        	List<String> ids = new ArrayList<>();
+        	for (String orderId : orderIds) {
+        		if(StringUtils.isBlank(orderId)) 
+        			return jr.jsonResultData(ResultCode.FAIL.res_code(), "参数不全", new ArrayList<>());
+        		
+        		Map oneFull = service.findOneFull(orderId);
+        		if(oneFull == null){
+        			ids.add(orderId);
+        			continue;
+        		}
+        		list.add(oneFull);
+			}
+            String message = String.join(",", ids);
+            if(StringUtils.isNotBlank(message)){
+            	message += "订单信息不存在";
+            }
+        	if (list != null) {
+                return jr.jsonResultData(ResultCode.SUCCESS.res_code(), message, list);
+            }
+            return jr.jsonResultData(ResultCode.FAIL.res_code(), "订单信息不存在", null);
+    }
+    
+    @RequestMapping(value = "/Order/findOne.do", method = RequestMethod.GET)
+    @ApiOperation(
+    		value = "WEB WEB WEB WEB WEB 根据订单ID 查询订单完整信息",
+    		notes = "WEB WEB WEB WEB WEB 根据订单ID 查询订单完整信息  \r\n",
+    		httpMethod = "POST")
+    public JsonResult findOneGet(@RequestParam String orderIds) {
+    	List<Map<?, ?>> list = new ArrayList<>();
+    	List<?> orderIdsLi = JsonUtils.readValue(orderIds, List.class);
+    	for (Object orderId : orderIdsLi) {
+    		if(StringUtils.isBlank(orderId + "")) 
+    			return jr.jsonResultData(ResultCode.FAIL.res_code(), "参数不全", new ArrayList<>());
+    		
+    		Map oneFull = service.findOneFull(orderId + "");
+    		list.add(oneFull);
+    	}
+    	if (list != null) {
+    		return jr.jsonResultData(ResultCode.SUCCESS.res_code(), ResultCode.SUCCESS.message(), list);
+    	}
+    	return jr.jsonResultData(ResultCode.FAIL.res_code(), "订单信息不存在", null);
+    }
+    
+    /**
+     * 查询订单
+     * @param token
+     * @param status
+     * @param page
+     * @param rows
+     * @return
+     */
+    @RequestMapping("/Order/findPage.do")
+    @ApiOperation(
+            value = "WEB WEB WEB WEB WEB 根据订单状态和 token 查询用户的订单信息",
+            notes = "WEB WEB WEB WEB WEB 查询订单信息,启用分页   \r\n" +
+                    "########################################################## \r\n" +
+                    "状态: " +
+                    "未支付(等待支付) 0  \n" +
+                    "支付成功 1  \n" +
+                    "已取消(超时未支付订单或手动取消) 2  \n" +
+                    "配送中 3  \n" +
+                    "已签收(已完成) 4  \n" +
+                    "########################################################## \r\n" +
+                    "beginTime 开始时间 endTime 结束时间  \r\n" +
+                    "########################################################## \r\n" +
+                    "orderId 订单 ID  userId 用户 Id \r\n" +
+                    "########################################################## \r\n" +
+                    "page 页码  rows 每页分页数 \r\n",
+            httpMethod = "POST")
+    public JsonResult findPage1(String status, String receiverMobile , String beginTime, String endTime, String orderId, String userId, Integer page, Integer rows, String rule) {
+        Order order = new Order();
+        if (StringNotNull.check(status)) {
+            order.setStatus(status);
+        }
+        if (StringNotNull.check(receiverMobile)) {
+            order.setReceiverMobile(receiverMobile);
+        }
+        if (StringNotNull.check(orderId)) {
+            order.setOrderId(orderId);
+        }
+        if (StringNotNull.check(userId)) {
+            order.setUserId(userId);
+        }
+        if (!"ASC".equals(rule) && !"DESC".equals(rule)) {
+            rule = "DESC";
+        }
+        return service.findByOrder(order, beginTime, endTime, page, rows, rule);
+    }
+
+    @RequestMapping(value = "/Order/exportExcel.do",method = RequestMethod.GET)
+    public XltcResult exportExcel(String status, String receiverMobile , String beginTime, String endTime, String orderId, String userId, Integer page, Integer rows, String rule,
+                                  HttpServletRequest request, HttpServletResponse response) throws IOException {
+        Order order = new Order();
+        if (StringNotNull.check(status)) {
+            order.setStatus(status);
+        }
+        if (StringNotNull.check(receiverMobile)) {
+            order.setReceiverMobile(receiverMobile);
+        }
+        if (StringNotNull.check(orderId)) {
+            order.setOrderId(orderId);
+        }
+        if (StringNotNull.check(userId)) {
+            order.setUserId(userId);
+        }
+        if (!"ASC".equals(rule) && !"DESC".equals(rule)) {
+            rule = "DESC";
+        }
+        List<Order> list = service.findByOrderForExport(order, beginTime, endTime, page, rows, rule);
+        if(beginTime==null)
+            beginTime="null";
+        if(endTime==null){
+            endTime="null";
+        }
+        response.setHeader("content-Type", "application/vnd.ms-excel;charset=UTF-8");
+        response.setHeader("Content-Disposition", "attachment;filename=Order__"+beginTime.split(" ")[0]+"__"+endTime.split(" ")[0]+".xls");
+        if(list!=null && list.size()>0){
+            for (Order order1 : list) {
+            	order1.setStatus(OrderStatus.getStatusName(order1.getStatus()));
+            }
+        }
+        Workbook workbook = ExcelExportUtil.exportExcel(new ExportParams("下单时间："+beginTime+"-------"+endTime,"newSheet"), Order.class, list);
+        OutputStream out = response.getOutputStream();
+        workbook.write(out);
+        out.close();
+        return XltcResult.ok();
+    }
+
+
+
+    //状态码映射
+    public void statusMapping(Order order){
+        String statusCode = order.getStatus() == null? "" : order.getStatus() ;
+        if("0".equals(statusCode.trim())){
+             order.setStatus("待支付");
+        }else if("1".equals(statusCode.trim())){
+             order.setStatus("支付成功");
+        }else if("2".equals(statusCode.trim())){
+             order.setStatus("已取消");
+        }else if("3".equals(statusCode.trim())){
+             order.setStatus("配送中");
+        }else if("4".equals(statusCode.trim())){
+             order.setStatus("已签收");
+        }else if("5".equals(statusCode.trim())){
+             order.setStatus("异常订单(地址错误)");
+        }else if("6".equals(statusCode.trim())){
+             order.setStatus("异常订单(拒收)");
+        }else if("7".equals(statusCode.trim())){
+             order.setStatus("异常订单(其他问题)");
+        }else if("8".equals(statusCode.trim())){
+             order.setStatus("已评价");
+        }else if("9".equals(statusCode.trim())){
+             order.setStatus("已退款");
+        }else if("10".equals(statusCode.trim())){
+             order.setStatus("支付异常");
+        }else {
+             order.setStatus("");
+        }
+    }
+
+    @RequestMapping("/Page.do")
+    @ApiOperation(
+            value = "WEB WEB WEB WEB WEB 根据订单状态和 token 查询用户的订单信息",
+            notes = "WEB WEB WEB WEB WEB 查询订单信息,启用分页   \r\n" +
+                    "########################################################## \r\n" +
+                    "状态: " +
+                    "未支付(等待支付) 0  \n" +
+                    "支付成功 1  \n" +
+                    "已取消(超时未支付订单或手动取消) 2  \n" +
+                    "配送中 3  \n" +
+                    "已签收(已完成) 4  \n" +
+                    "########################################################## \r\n" +
+                    "beginTime 开始时间 endTime 结束时间  \r\n" +
+                    "########################################################## \r\n" +
+                    "orderId 订单 ID  userId 用户 Id \r\n" +
+                    "########################################################## \r\n" +
+                    "page 页码  rows 每页分页数 \r\n",
+            httpMethod = "POST")
+    public JsonResult findPage(String status, String beginTime, String endTime, String orderId, String userId, Integer page, Integer rows, String rule) {
+        Order order = new Order();
+        if(status!=null && status.length()>0){
+            StringBuffer buffer = new StringBuffer();
+            String[] split = status.split(",");
+            for (String s : split) {
+                buffer.append("'"+s+"',");
+            }
+            String statusStrList = buffer.replace(buffer.length(), buffer.length() - 1, "").toString();
+            order.setStatus(statusStrList);
+        }
+        if (StringNotNull.check(orderId)) {
+            order.setOrderId(orderId);
+        }
+        if (StringNotNull.check(userId)) {
+            order.setUserId(userId);
+        }
+        if (!"ASC".equals(rule) && !"DESC".equals(rule)) {
+            rule = "DESC";
+        }
+        return service.findByOrder(order, beginTime, endTime, page, rows, rule);
+    }
+
+    /**
+     * 拆线呢支付信息，可传入条件
+     * @return
+     */
+    @RequestMapping(value = "/getAllPayRecordByCondition.do",method = RequestMethod.POST)
+    public JsonResult getAllPayRecordByCondition( Map<String,String> conditionalMap){
+        return service.findSuccessPay(conditionalMap);
+    }
+
+    @RequestMapping(value = "/getAllPayRecordByCondition1.do",method = RequestMethod.POST)
+    public JsonResult getAllPayRecordByCondition( String payTypeCode,
+                                                  String payCode,
+                                                  String orderId,
+                                                  String outPayCode,
+                                                  String minMoney,
+                                                  String maxMoney,
+                                                  String startTime,
+                                                  String endTime){
+        HashMap<String, String> map = new HashMap<>();
+        map.put("payTypeCode",payTypeCode==null || "".equals(payTypeCode) ? null :payTypeCode);
+        map.put("payCode",payCode==null || "".equals(payCode) ? null :payCode);
+        map.put("orderId",orderId==null || "".equals(orderId) ? null :orderId);
+        map.put("outPayCode",outPayCode==null || "".equals(outPayCode) ? null :outPayCode);
+        map.put("minMoney",minMoney==null || "".equals(minMoney) ? null :minMoney);
+        map.put("maxMoney",maxMoney==null || "".equals(maxMoney) ? null :maxMoney);
+        map.put("startTime",startTime==null || "".equals(startTime) ? null :startTime);
+        map.put("endTime",endTime==null || "".equals(endTime) ? null :endTime);
+        return service.findSuccessPay(map);
+    }
+
+
+
+    /**
+     * 查询订单
+     *
+     * @param token
+     * @param status
+     * @param page
+     * @param rows
+     * @return
+     */
+    @RequestMapping("/Order/Statistics.do")
+    @ApiOperation(
+            value = "WEB WEB WEB WEB WEB 数据统计",
+            notes = "WEB WEB WEB WEB WEB 数据统计   \r\n" +
+                    "########################################################## \r\n" +
+                    "beginTime 开始时间 endTime 结束时间  \r\n" +
+                    "########################################################## \r\n" +
+                    "{question=1, complete=1, halfway=1} \r\n" +
+                    "question: 问题订单" +
+                    "complete: 已完成订单" +
+                    "halfway: 配送中订单" +
+                    "########################################################## \r\n",
+            httpMethod = "POST")
+    public JsonResult Statistics(String beginTime, String endTime) {
+        Map statistics = service.Statistics(beginTime, endTime);
+        return jr.jsonResultData(ResultCode.SUCCESS.res_code(), "查询成功!", statistics);
+    }
+
+    /**
+     * 查询订单数量
+     *
+     * @param token
+     * @param status
+     * @param page
+     * @param rows
+     * @return
+     */
+    @RequestMapping("/app/Order/getCount.do")
+    @ApiOperation(
+            value = "app 数据统计",
+            notes = "app 统计数据",
+            httpMethod = "POST")
+    public JsonResult getCount(@RequestParam String token) {
+        AppUser user = userService.getAppUserByToken(token);
+
+        Map statistics = service.getCount(user.getUserId());
+        return jr.jsonResultData(ResultCode.SUCCESS.res_code(), "查询成功!", statistics);
+    }
+
+    @RequestMapping("/app/Order/comment.do")
+    @ApiOperation(
+            value = "app 订单评论",
+            notes = "app 订单评论",
+            httpMethod = "POST")
+    public JsonResult comment(@RequestParam String token,
+                              @RequestParam(defaultValue = "") String orderId,
+                              @RequestParam Integer comment) {
+        AppUser user = userService.getAppUserByToken(token);
+
+        Order one = service.findOne(orderId);
+        if (one == null) {
+            return new JsonResult("400", "orderId 查询不到订单");
+        }
+        if (!user.getUserId().equals(one.getUserId())) {
+            return new JsonResult("40X", "该订单不属于该用户");
+        }
+        return pc.updateUtils(service.updateComment(orderId, comment));
+    }
+}

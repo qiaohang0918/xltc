@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qigan.qiganshop.mapper.TbActivityUnionGoodsMapper" >
+  <resultMap id="BaseResultMap" type="com.qigan.qiganshop.pojo.TbActivityUnionGoods" >
+    <id column="union_goods_id" property="unionGoodsId" jdbcType="VARCHAR" />
+    <result column="union_id" property="unionId" jdbcType="VARCHAR" />
+    <result column="goods_id" property="goodsId" jdbcType="VARCHAR" />
+    <result column="goods_code" property="goodsCode" jdbcType="VARCHAR" />
+    <result column="sort" property="sort" jdbcType="VARCHAR" />
+  </resultMap>
+
+  <select id="findUnionGoods" resultType="com.qigan.qiganshop.pojo.XltcGoodsModel">
+    select
+      case when  q.duringBefore<![CDATA[ > ]]> NOW() then '0'
+      when  q.duringBefore <![CDATA[ <= ]]> NOW() and NOW()  <![CDATA[ <= ]]> q.duringAfter then '1'
+      when  NOW() <![CDATA[ > ]]> q.duringAfter then '2'
+      else null end as isSelling ,
+      SUBSTRING_INDEX(UNIX_TIMESTAMP(q.duringBefore), '.', 1)  as beforeTimeStamp ,
+      SUBSTRING_INDEX(UNIX_TIMESTAMP(q.duringAfter), '.', 1)  as afterTimeStamp ,
+      SUBSTRING_INDEX(UNIX_TIMESTAMP(NOW()), '.', 1)  as currentTimeStamp ,
+      q.sellNum,
+      q.preSendTime,
+      q.preSellGoodsCode  as preSell ,
+      c.goodsId,
+      c.name as goodsName,
+      c.simpleName,
+      c.categoryCode,
+      c.salesPrice,
+      c.costPrice,
+      c.VIPrice,
+      if(left(c.picUrls,4) = 'http', c.picUrls, concat(#{picHeader},  SUBSTRING_INDEX(c.picUrls, ',', 1))) as imageUrl,
+      c.labelId,
+      c.categoryName,
+      c.code as goodsCode,
+      x.salableNum as saleableNum
+    from tb_activity_union a
+    left join tb_activity_union_goods b on a.union_id = b.union_id
+    left join tb_goods c on  b.goods_id = c.goodsId
+    left join tb_presell_goods q on c.code = q.preSellGoodsCode and q.enabled = '1'
+    left join tb_stock x on x.goodsId = c.goodsId
+    where a.union_id = #{unionId}
+    and x.salableNum > 0  and x.warehouseId = #{wareId}
+    order by b.sort asc
+  </select>
+
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    union_goods_id, union_id, goods_id, goods_code, sort
+  </sql>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.qigan.qiganshop.pojo.TbActivityUnionGoodsExample" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from tb_activity_union_goods
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from tb_activity_union_goods
+    where union_goods_id = #{unionGoodsId,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from tb_activity_union_goods
+    where union_goods_id = #{unionGoodsId,jdbcType=VARCHAR}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.qigan.qiganshop.pojo.TbActivityUnionGoodsExample" >
+    delete from tb_activity_union_goods
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert  id="insert" parameterType="com.qigan.qiganshop.pojo.TbActivityUnionGoods" >
+    insert into tb_activity_union_goods (union_goods_id, union_id, goods_id,
+      goods_code, sort)
+    values (#{unionGoodsId,jdbcType=VARCHAR}, #{unionId,jdbcType=VARCHAR}, #{goodsId,jdbcType=VARCHAR}, 
+      #{goodsCode,jdbcType=VARCHAR}, #{sort,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.qigan.qiganshop.pojo.TbActivityUnionGoods" >
+    insert into tb_activity_union_goods
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="unionGoodsId != null" >
+        union_goods_id,
+      </if>
+      <if test="unionId != null" >
+        union_id,
+      </if>
+      <if test="goodsId != null" >
+        goods_id,
+      </if>
+      <if test="goodsCode != null" >
+        goods_code,
+      </if>
+      <if test="sort != null" >
+        sort,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="unionGoodsId != null" >
+        #{unionGoodsId,jdbcType=VARCHAR},
+      </if>
+      <if test="unionId != null" >
+        #{unionId,jdbcType=VARCHAR},
+      </if>
+      <if test="goodsId != null" >
+        #{goodsId,jdbcType=VARCHAR},
+      </if>
+      <if test="goodsCode != null" >
+        #{goodsCode,jdbcType=VARCHAR},
+      </if>
+      <if test="sort != null" >
+        #{sort,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.qigan.qiganshop.pojo.TbActivityUnionGoodsExample" resultType="java.lang.Integer" >
+    select count(*) from tb_activity_union_goods
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update tb_activity_union_goods
+    <set >
+      <if test="record.unionGoodsId != null" >
+        union_goods_id = #{record.unionGoodsId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.unionId != null" >
+        union_id = #{record.unionId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.goodsId != null" >
+        goods_id = #{record.goodsId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.goodsCode != null" >
+        goods_code = #{record.goodsCode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.sort != null" >
+        sort = #{record.sort,jdbcType=VARCHAR},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update tb_activity_union_goods
+    set union_goods_id = #{record.unionGoodsId,jdbcType=VARCHAR},
+      union_id = #{record.unionId,jdbcType=VARCHAR},
+      goods_id = #{record.goodsId,jdbcType=VARCHAR},
+      goods_code = #{record.goodsCode,jdbcType=VARCHAR},
+      sort = #{record.sort,jdbcType=VARCHAR}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.qigan.qiganshop.pojo.TbActivityUnionGoods" >
+    update tb_activity_union_goods
+    <set >
+      <if test="unionId != null" >
+        union_id = #{unionId,jdbcType=VARCHAR},
+      </if>
+      <if test="goodsId != null" >
+        goods_id = #{goodsId,jdbcType=VARCHAR},
+      </if>
+      <if test="goodsCode != null" >
+        goods_code = #{goodsCode,jdbcType=VARCHAR},
+      </if>
+      <if test="sort != null" >
+        sort = #{sort,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where union_goods_id = #{unionGoodsId,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.qigan.qiganshop.pojo.TbActivityUnionGoods" >
+    update tb_activity_union_goods
+    set union_id = #{unionId,jdbcType=VARCHAR},
+      goods_id = #{goodsId,jdbcType=VARCHAR},
+      goods_code = #{goodsCode,jdbcType=VARCHAR},
+      sort = #{sort,jdbcType=VARCHAR}
+    where union_goods_id = #{unionGoodsId,jdbcType=VARCHAR}
+  </update>
+</mapper>

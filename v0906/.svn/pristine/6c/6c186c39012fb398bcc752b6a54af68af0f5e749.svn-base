@@ -1,0 +1,22 @@
+package com.qigan.qiganshop.util.notnull;
+
+/**
+ * TODO
+ *
+ * @author wanghao
+ * @time 2019-04-26 18:53
+ */
+public class StringNotNull {
+    public static Boolean check(String... strings) {
+        boolean b = true;
+        for (String s : strings) {
+            if (s != null && !"".equals(s)) {
+                b &= true;
+            } else {
+                return false;
+            }
+        }
+
+        return b;
+    }
+}

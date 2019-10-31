@@ -1,0 +1,118 @@
+package com.qigan.qiganshop.service.impl;
+
+import com.qigan.qiganshop.constant.RedisConstant;
+import com.qigan.qiganshop.mapper.GoodsMapper;
+import com.qigan.qiganshop.mapper.TbPresellGoodsMapper;
+import com.qigan.qiganshop.myutils.SqlConstructUtils;
+import com.qigan.qiganshop.pojo.Goods;
+import com.qigan.qiganshop.pojo.TbPresellGoods;
+import com.qigan.qiganshop.pojo.TbPresellGoodsExample;
+import com.qigan.qiganshop.service.XltcPreSellGoodsService;
+import com.qigan.qiganshop.util.access.JedisUtil;
+import com.qigan.qiganshop.util.notnull.StringNotNull;
+import com.qigan.qiganshop.util.result.XltcResult;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.*;
+
+/**
+ * @Aurher: QiaoHang
+ * @Description:
+ * @Data: 2019/10/5 14:55
+ * @Modified By:
+ */
+@Service
+@Transactional(rollbackFor = Exception.class)
+public class XltcPreSellGoodsServiceImpl implements XltcPreSellGoodsService {
+
+    @Autowired
+    TbPresellGoodsMapper mapper;
+    @Autowired
+    JedisUtil jedisUtil;
+    @Autowired
+    GoodsMapper goodsMapper;
+
+
+    /**
+     * 添加预售商品
+     * @param presellGoods
+     * @return
+     */
+    @Override
+    public XltcResult addPreSellGoods(TbPresellGoods presellGoods) {
+        //插入数据库
+        //未启用
+        presellGoods.setEnabled("0");
+        int i = mapper.addPreSellGoods(presellGoods);
+        return XltcResult.ok();
+    }
+
+    /**
+     * 修改
+     * @param tbPresellGoods
+     * @return
+     */
+    @Override
+    public XltcResult updatePreSellGoods(TbPresellGoods tbPresellGoods) {
+        int i = mapper.updateByPrimaryKeySelective(tbPresellGoods);
+        if(i>0){
+            //查询更新后的记录
+            TbPresellGoods goods = mapper.selectByPrimaryKey(tbPresellGoods.getPresellgoodscode());
+            if("0".equals(goods.getEnabled())){
+                //移除受限商品
+                jedisUtil.removeElementFromHash(RedisConstant.PRESELL_GOODS_COODE,goods.getPresellgoodscode());
+            }
+            if("1".equals(tbPresellGoods.getEnabled())){
+                //添加/更新 受限商品
+                jedisUtil.setToHash(RedisConstant.PRESELL_GOODS_COODE,goods.getPresellgoodscode(),goods.getDuringafter());
+            }
+        }
+        return XltcResult.ok();
+    }
+
+
+    /**
+     *
+     * @param enabled
+     * @return
+     */
+    @Override
+    public XltcResult searchPreSellGoods(String enabled) {
+        //查询预售商品 返回售价
+        TbPresellGoodsExample example = null;
+        if(StringNotNull.check(enabled)){
+            example = new TbPresellGoodsExample();
+            TbPresellGoodsExample.Criteria criteria = example.createCriteria();
+            criteria.andEnabledEqualTo(enabled);
+        }
+        //返回预售商品baseMessage  预售message
+        ArrayList<Map<String, Object>> mapList = new ArrayList<>();
+        List<TbPresellGoods> presellGoods = mapper.selectByExample(example);
+        if(!SqlConstructUtils.nullList(presellGoods)){
+            for (TbPresellGoods presellGood : presellGoods) {
+                Goods goods = goodsMapper.findByCode(presellGood.getPresellgoodscode());
+                if(goods!=null){
+                    HashMap<String, Object> map = new HashMap<>();
+                    map.put("goodsDetails",goods);
+                    map.put("preSellDetails",presellGood);
+                    mapList.add(map);
+                }
+            }
+        }
+        return XltcResult.ok(mapList);
+    }
+
+
+    /**
+     * 查询缓存中的预售商品信息
+     */
+    public Set<String> findPreSellGoods(){
+        Set<String> preSellGoodsCodes = jedisUtil.getElementsFromHash(RedisConstant.PRESELL_GOODS_COODE);
+        return preSellGoodsCodes;
+    }
+
+
+
+}

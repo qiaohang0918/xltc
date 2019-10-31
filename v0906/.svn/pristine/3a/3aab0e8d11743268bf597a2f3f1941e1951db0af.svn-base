@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qigan.qiganshop.mapper.PayMapper">
+
+    <insert id="insertPay" parameterType="com.qigan.qiganshop.pojo.Pay">
+         insert into tb_pay (payCode,outPayCode,orderId, payTypeCode, payment, paytime)
+    values (#{payCode,jdbcType=VARCHAR}, #{outPayCode,jdbcType=VARCHAR}, #{orderId,jdbcType=VARCHAR}, #{payTypeCode,jdbcType=VARCHAR}, #{payment,jdbcType=VARCHAR},
+      #{paytime,jdbcType=VARCHAR})
+    </insert>
+
+    <select id="selectByOutpaycode" parameterType="java.lang.String" resultType="com.qigan.qiganshop.pojo.Pay">
+        select * from tb_pay where outPayCode=#{out_trade_no}
+    </select>
+
+    <select id="selectByOrderId" parameterType="java.lang.String" resultType="com.qigan.qiganshop.pojo.Pay">
+        select * from tb_pay where orderId=#{orderId} limit 0,1
+    </select>
+
+</mapper>

@@ -1,0 +1,29 @@
+package com.qigan.qiganshop.service;
+
+import com.qigan.qiganshop.pojo.CommonPage;
+import com.qigan.qiganshop.pojo.Message;
+
+import java.util.List;
+import java.util.Map;
+
+public interface MessageService {
+
+    int markRead(String messageid);
+
+    List<Message> unread(String userId);
+
+    Map<String,Object> getunread(String userId);
+    
+    void insert(Message message);
+    
+    List<?> findAllByUser(String token);
+    
+    List<?> findList(String token, CommonPage page);
+    
+    List<?> findMessageByUserAndType(String token, String type, CommonPage page);
+    
+    boolean isShowMessage(String token);
+    
+    void delete(String... ids);
+    
+}

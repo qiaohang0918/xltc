@@ -1,0 +1,325 @@
+package com.qigan.qiganshop.service.impl;
+
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
+import com.qigan.qiganshop.constant.TimeFormat;
+import com.qigan.qiganshop.mapper.TbPresellOrderMapper;
+import com.qigan.qiganshop.myutils.SqlConstructUtils;
+import com.qigan.qiganshop.pojo.TbPresellOrder;
+import com.qigan.qiganshop.pojo.group.LevelPreSellReporter;
+import com.qigan.qiganshop.pojo.group.SingtonLevel;
+import com.qigan.qiganshop.service.XltcPreSellOrderService;
+import com.qigan.qiganshop.util.notnull.StringNotNull;
+import com.qigan.qiganshop.util.result.XltcResult;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.*;
+import java.util.stream.Collectors;
+
+/**
+ * @Aurher: QiaoHang
+ * @Description:
+ * @Data: 2019/10/5 16:21
+ * @Modified By:
+ */
+@Service
+@Transactional(rollbackFor = Exception.class)
+public class XltcPreSellOrderServiceImpl implements XltcPreSellOrderService {
+
+    @Autowired
+    private TbPresellOrderMapper mapper;
+
+    @Override
+    public XltcResult reportEveryLevelData() {
+        ArrayList<LevelPreSellReporter> list = new ArrayList<>();
+        List<Map<String,Object>> rows = mapper.reportEveryLevelData();
+        //封装list
+        if(!SqlConstructUtils.nullList(rows)){
+            for (Map<String, Object> row : rows) {
+                //状态标识
+                String tepStatus = String.valueOf(row.get("tepStatus"));
+                //批次号
+                String level = String.valueOf(row.get("level"));
+                //订单数量
+                String orderNums = String.valueOf(row.get("orderNums"));
+                //商品购买量合计
+                String sumCount = String.valueOf(row.get("sumCount"));
+                //支付金额
+                String sumPayMoney = String.valueOf(row.get("sumPayMoney"));
+                //获取一个可用的report Bean
+                LevelPreSellReporter reporter = findOneReporterBean(level, list);
+                if("sellOut".equals(tepStatus)){
+                    //正常售出
+                    //统计真实销售额总和---
+                    reporter.setRealSellMoney(String.valueOf(Double.parseDouble(reporter.getRealSellMoney()) + Double.parseDouble(sumPayMoney)));
+                    //统计实际售卖量总和
+                    reporter.setRealSellOut(String.valueOf( Integer.parseInt(reporter.getRealSellOut())+ Integer.parseInt(sumCount.split("\\.")[0]) ));
+                }else {
+                    //问题(退款) tepStatus --> goBack
+                    //统计退款商品量（问题商品量）总和
+                    reporter.setQuestionGoodsCount(String.valueOf( Integer.parseInt(reporter.getQuestionGoodsCount()) + Integer.parseInt(sumCount.split("\\.")[0]) ));
+                }
+                //统计订单总和
+                reporter.setSumOrder(String.valueOf( Integer.parseInt(reporter.getSumOrder()) + Integer.parseInt(orderNums) ));
+            }
+        }
+        return XltcResult.ok(list);
+    }
+
+    /**
+     * 查询所有批次及其下商品预售结果报表
+     * @return
+     * @param page
+     * @param size
+     */
+    @Override
+    public XltcResult reportEveryLevelsGoodsData(int page, int size) {
+        ArrayList<SingtonLevel> singtonLevels = new ArrayList<>();
+        //查询所有分页批次号
+        List<String> levels =  mapper.findAllLevels();
+        //插入其下商品集
+        if(SqlConstructUtils.nullList(levels)){
+            //返回空分页对象
+            PageHelper.startPage(page,size);
+            PageInfo<SingtonLevel> info = new PageInfo<>(singtonLevels);
+            return XltcResult.ok(info);
+        }else {
+            for (String level : levels) {
+                //获取一个针对当前level 可封装的 SingtonLevel 对象
+                SingtonLevel singtonLevel = getOneUserAbledSingtonLevelFromList(level, singtonLevels);
+                if(SqlConstructUtils.nullList(singtonLevel.getReporterList())){
+                    //查询当前level 锁对应的预售商品code ， 构建LevelPreSellReport 对象 ，载入reportList
+                    List<LevelPreSellReporter> findReportList =  mapper.findCurrentLevelPreSellGoods(level);
+                    singtonLevel.setReporterList(findReportList);
+                }
+                //查询当前level 其下商品预售情况
+                List<Map<String,Object>> mapList =  mapper.selectCurrentLevelsCodesEffect(level);
+                if(!SqlConstructUtils.nullList(mapList)){
+                    for (Map<String, Object> map : mapList) {
+                        //获取
+                        String cade = String.valueOf(map.get("code"));
+                        String tepStatus = String.valueOf(map.get("tepStatus"));
+                        String sumPayMoney = String.valueOf(map.get("sumPayMoney"));
+                        String orderCount = String.valueOf(map.get("orderCount"));
+                        String buyCount = String.valueOf(map.get("buyCount"));
+                        //根据code 获取一个针对该预售商品的report bean
+                        LevelPreSellReporter reporter = getOneReportBeanByCode(cade, singtonLevel.getReporterList());
+                        //计入总订单数
+                        reporter.setSumOrder(String.valueOf( Integer.parseInt(reporter.getSumOrder()) + Integer.parseInt(orderCount) ));
+                        if("sellOut".equals(tepStatus)){
+                            //售出 计入销量
+                            reporter.setRealSellOut(String.valueOf( Integer.parseInt(reporter.getRealSellOut()) + Integer.parseInt(buyCount.split("\\.")[0]) ));
+                            //销售额度
+                            reporter.setRealSellMoney(String.valueOf( Double.parseDouble(reporter.getRealSellMoney()) + Double.parseDouble(sumPayMoney) ));
+                        }else {
+                            //temStatus = goBack (除了正常完成 ('1','3','4','8','902') 外的所有该商品的预售订单订单)
+                            reporter.setQuestionGoodsCount(String.valueOf( Integer.parseInt(reporter.getQuestionGoodsCount()) + Integer.parseInt(buyCount.split("\\.")[0]) ));
+                        }
+                    }
+                }
+            }
+        }
+        List<SingtonLevel> collect = singtonLevels;
+        //排序
+        if(!SqlConstructUtils.nullList(singtonLevels)){
+            //倒序level
+            collect = singtonLevels.stream().sorted(new Comparator<SingtonLevel>() {
+                @Override
+                public int compare(SingtonLevel o1, SingtonLevel o2) {
+                    return Integer.parseInt(o2.getLevel()) - Integer.parseInt(o1.getLevel());
+                }
+            }).collect(Collectors.toList());
+        }
+        return XltcResult.ok(collect);
+    }
+
+    /**
+     * 根据code 获取一个针对该预售商品的report bean
+     * @param code
+     * @param reporterList
+     * @return
+     */
+    public LevelPreSellReporter getOneReportBeanByCode(String code,List<LevelPreSellReporter> reporterList){
+        if(SqlConstructUtils.nullList(reporterList)){
+            LevelPreSellReporter reporter = new LevelPreSellReporter();
+            reporter.setPreSellGoodsCode(code);
+            reporterList.add(reporter);
+            return reporter;
+        }else {
+            List<LevelPreSellReporter> collect = reporterList.stream().filter(x -> {
+                return code.equals(x.getPreSellGoodsCode());
+            }).collect(Collectors.toList());
+            if(SqlConstructUtils.nullList(collect)){
+                LevelPreSellReporter reporter = new LevelPreSellReporter();
+                reporter.setPreSellGoodsCode(code);
+                reporterList.add(reporter);
+                return reporter;
+            }else {
+                return collect.get(0);
+            }
+        }
+    }
+
+
+
+    /**
+     * 从容器中  获取一个针对当前level 可封装的 SingtonLevel 对象
+     * @param level
+     * @param singtonLevels
+     * @return
+     */
+    public SingtonLevel getOneUserAbledSingtonLevelFromList(String level,ArrayList<SingtonLevel> singtonLevels){
+        if(SqlConstructUtils.nullList(singtonLevels)){
+            SingtonLevel singtonLevel = new SingtonLevel();
+            singtonLevel.setLevel(level);
+            singtonLevels.add(singtonLevel);
+            return singtonLevel;
+        }else {
+            //过滤获取，有责返回，没有创建！
+            List<SingtonLevel> collect = singtonLevels.stream().filter(x -> {
+                return level.equals(x.getLevel());
+            }).collect(Collectors.toList());
+            if(SqlConstructUtils.nullList(collect)){
+                SingtonLevel singtonLevel = new SingtonLevel();
+                singtonLevel.setLevel(level);
+                singtonLevels.add(singtonLevel);
+                return singtonLevel;
+            }else {
+                return collect.get(0);
+            }
+        }
+    }
+
+    /**
+     * 获取一个可用的reportBean
+     * @param level
+     * @param list
+     * @return
+     */
+    public LevelPreSellReporter findOneReporterBean(String level,ArrayList<LevelPreSellReporter> list){
+        if(list.size()<=0){
+            //没有则新建一个report 加入集合并返回
+            LevelPreSellReporter reporter = new LevelPreSellReporter();
+            reporter.setLevel(level);
+            list.add(reporter);
+            return reporter;
+        }else {
+            //过滤，尝试寻找一个可用的report
+            List<LevelPreSellReporter> collect = list.stream().filter(x -> {
+                return level.equals(x.getLevel());
+            }).collect(Collectors.toList());
+            if(SqlConstructUtils.nullList(collect)){
+                //不存在一个可用的report  新建
+                LevelPreSellReporter reporter = new LevelPreSellReporter();
+                reporter.setLevel(level);
+                list.add(reporter);
+                return reporter;
+            }else {
+                //存在 直接获取并返回
+                return collect.get(0);
+            }
+        }
+    }
+
+    /**
+     * 添加预售订单 记录
+     * @param
+     * @return
+     */
+    @Override
+    public int insert(TbPresellOrder presellOrder) {
+        return mapper.insert(presellOrder);
+    }
+
+    @Override
+    public TbPresellOrder findByOrderId(String orderId) {
+        return mapper.selectByPrimaryKey(orderId);
+    }
+
+    /**
+     * 按条件查询 预售订单
+     * @param parms
+     * @return
+     */
+    @Override
+    public XltcResult findPreSellOrder(Map<String, String> parms) {
+        String status = parms.get("status");
+        String preSellTime = parms.get("preSellTime");
+        String isPushed = parms.get("isPushed");
+        String phone = parms.get("phone");
+        String page = parms.get("page");
+        String size = parms.get("size");
+        String level = parms.get("level");
+        String code = parms.get("code");
+        String dealDateTimeStart = parms.get("dealDateTimeStart");
+        String dealDateTimeEnd = parms.get("dealDateTimeEnd");
+        StringBuffer buffer = new StringBuffer("  ");
+        if(StringNotNull.check(preSellTime)){
+            buffer.append(" and a.preSellTime = '"+preSellTime+"' ");
+        }
+        if(StringNotNull.check(level)){
+            buffer.append(" and a.level = '"+level+"' ");
+        }
+        if(StringNotNull.check(status)){
+            String patternStatus = SqlConstructUtils.constructStringToStringsOnIn(status, ",");
+            buffer.append(" and b.status in ( "+patternStatus+" ) ");
+        }
+        if(StringNotNull.check(isPushed)){
+            buffer.append(" and a.isPushed = '"+isPushed+"' ");
+        }
+        if(StringNotNull.check(phone)){
+            buffer.append(" and c.phone ='"+phone+"' ");
+        }
+        if(StringNotNull.check(code)){
+            buffer.append(" and a.code ='"+code+"' ");
+        }
+        if(StringNotNull.check(dealDateTimeStart)){
+            buffer.append(" and b.dealDateTime >= '"+dealDateTimeStart+"' ");
+        }
+        if(StringNotNull.check(dealDateTimeEnd)){
+            buffer.append(" and b.dealDateTime <= '"+dealDateTimeEnd+"' ");
+        }
+        PageHelper.startPage(page==null?1:Integer.parseInt(page),size==null?10:Integer.parseInt(size));
+        List<Map<String,Object>> mapList = mapper.findPreSellOrder(buffer.toString());
+        PageInfo<Map<String, Object>> info = new PageInfo<>(mapList);
+        return XltcResult.ok(info);
+    }
+
+    @Override
+    public void update(TbPresellOrder preSellOrder) {
+        mapper.updateByPrimaryKeySelective(preSellOrder);
+    }
+
+
+    /**
+     * 查询适合推送的订单
+     * @return
+     */
+    @Override
+    public List<TbPresellOrder> findCurrentSuitPushOrders() {
+        String preSellTime = TimeFormat.nomalFormat.format(new Date());
+        String isPushed = "0";
+        String status = "1";
+        List<TbPresellOrder> orders = mapper.findCurrentSuitPushOrders(preSellTime,isPushed,status);
+        return orders;
+    }
+
+    @Override
+    public int updateCurrentOrderStatusIsPushed(String orderId, String level) {
+        TbPresellOrder presellOrder = new TbPresellOrder();
+        presellOrder.setPresellorderid(orderId);
+        presellOrder.setIspushed("1");
+        int i = mapper.updateByPrimaryKeySelective(presellOrder);
+        return i;
+    }
+
+    @Override
+    public XltcResult findPreSellOrderDetails(String orderId) {
+        List<Map<String, Object>> mapList = mapper.findPreSellOrderDetails(orderId);
+        return XltcResult.ok(mapList);
+    }
+
+
+}

@@ -1,0 +1,30 @@
+package com.qigan.qiganshop.mapper;
+
+import com.qigan.qiganshop.pojo.TbDeposit;
+import com.qigan.qiganshop.pojo.TbDepositExample;
+import java.util.List;
+import org.apache.ibatis.annotations.Param;
+
+public interface TbDepositMapper {
+    int countByExample(TbDepositExample example);
+
+    int deleteByExample(TbDepositExample example);
+
+    int deleteByPrimaryKey(String orderId);
+
+    int insert(TbDeposit record);
+
+    int insertSelective(TbDeposit record);
+
+    List<TbDeposit> selectByExample(TbDepositExample example);
+
+    TbDeposit selectByPrimaryKey(String orderId);
+
+    int updateByExampleSelective(@Param("record") TbDeposit record, @Param("example") TbDepositExample example);
+
+    int updateByExample(@Param("record") TbDeposit record, @Param("example") TbDepositExample example);
+
+    int updateByPrimaryKeySelective(TbDeposit record);
+
+    int updateByPrimaryKey(TbDeposit record);
+}

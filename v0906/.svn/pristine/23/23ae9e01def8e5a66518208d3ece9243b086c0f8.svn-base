@@ -1,0 +1,307 @@
+package com.qigan.qiganshop.service.impl;
+
+import static com.qigan.qiganshop.util.quartz.OrderQuartzJob.DF;
+
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.github.pagehelper.PageInfo;
+import com.qigan.qiganshop.constant.RedisConstant;
+import com.qigan.qiganshop.exception.XltcRuntimeException;
+import com.qigan.qiganshop.mapper.UserCouponMapper;
+import com.qigan.qiganshop.pojo.AppUser;
+import com.qigan.qiganshop.pojo.CommonPage;
+import com.qigan.qiganshop.pojo.Coupon;
+import com.qigan.qiganshop.pojo.UserCoupon;
+import com.qigan.qiganshop.pojo.XltcCouponModel;
+import com.qigan.qiganshop.pojo.XltcUserCouponModel;
+import com.qigan.qiganshop.service.AppUserService;
+import com.qigan.qiganshop.service.CouponService;
+import com.qigan.qiganshop.service.UserCouponService;
+import com.qigan.qiganshop.util.access.JedisUtil;
+import com.qigan.qiganshop.util.notnull.NotNull;
+import com.qigan.qiganshop.util.notnull.StringNotNull;
+import com.qigan.qiganshop.util.result.PageResult;
+
+/**
+ * 用户收货地址实现层
+ *
+ * @author wanghao
+ */
+@Service
+@Transactional(rollbackFor = Exception.class)
+public class UserCouponServiceImpl implements UserCouponService {
+	@Autowired
+	private UserCouponMapper mapper;
+
+	@Autowired
+	private CouponService couponService;
+	
+	private static final String IS_USER = "1";
+	
+	private static final String IS_EXPIRE = "3";
+
+	private static final String USER_FREE = "4";
+	
+	private static final String MESSAGE = "抱歉,优惠券不存在或已不能领取";
+
+	@Autowired
+	JedisUtil jedis;
+	
+	@Autowired
+	AppUserService userService;
+
+	/**
+	 * 增加
+	 *
+	 * @param userCoupon
+	 */
+	@Override
+	public Integer add(UserCoupon userCoupon) {
+		if (userCoupon == null)
+			throw XltcRuntimeException.throwable("参数不全");
+		String userId = StringUtils.isBlank(userCoupon.getUserId()) ? 
+		this.checkToken(userCoupon.getToken()) : userCoupon.getUserId();
+		userCoupon.setUserId(userId);
+		UserCoupon checkCoupon = this.findByUserIdAndCouponId(userId, userCoupon.getCouponId());
+		if (checkCoupon != null)
+			throw XltcRuntimeException.throwable("抱歉,已领取过该优惠券");
+
+		Coupon cou = couponService.findOne(userCoupon.getCouponId());
+		if (cou == null)
+			throw XltcRuntimeException.throwable(MESSAGE);
+		
+		if("0".equals(cou.getEnable()))
+			throw XltcRuntimeException.throwable(MESSAGE);
+		Long endDay = 0L;
+		if (USER_FREE.equals(cou.getType())) {
+			String end = cou.getEnd();
+			if(StringUtils.isBlank(end) || end.indexOf(".") != -1)
+				end = "1";
+			userCoupon.setStartTime(DF.format(LocalDateTime.now()));
+			LocalDateTime now = LocalDateTime.now();
+			userCoupon.setDisableTime(DF.format(now.plusDays(Long.parseLong(end))));
+			endDay = Long.parseLong(end) * 24 * 3600;
+		} else {
+			try {
+				DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+				Date begin = format.parse(cou.getBegin());
+				Date end = format.parse(cou.getEnd());
+				Date date = new Date();
+				if (!begin.before(date) || !end.after(date)) 
+					throw XltcRuntimeException.throwable(MESSAGE);
+			} catch (Exception e) {
+				// TODO: handle exception
+				throw XltcRuntimeException.throwable(e.getMessage());
+			}
+//			LocalDateTime begin = LocalDateTime.parse(cou.getBegin(), DF);
+			LocalDateTime end = LocalDateTime.parse(cou.getEnd(), DF);
+			endDay = Duration.between(LocalDateTime.now(), end).toMillis() / 1000;
+			userCoupon.setStartTime(cou.getBegin());
+			userCoupon.setDisableTime(cou.getEnd());
+		}
+
+		if (!StringNotNull.check(userCoupon.getUserCouponId())) {
+			userCoupon.setUserCouponId(UUID.randomUUID().toString().replace("-", ""));
+		}
+		userCoupon.setIsUse("0");
+		Integer add = mapper.insert(userCoupon);
+		if (add > 0)
+			jedis.set(RedisConstant.USER_COUPON + userCoupon.getUserCouponId(), "1", "NX", "EX", endDay);
+		return add;
+	}
+
+	/**
+	 * 修改
+	 *
+	 * @param userCoupon
+	 */
+	@Override
+	public Integer update(UserCoupon userCoupon) {
+		if (userCoupon == null)
+			throw XltcRuntimeException.throwable("参数不全");
+		return mapper.update(userCoupon);
+	}
+
+	/**
+	 * 根据ID获取实体
+	 *
+	 * @param userCouponId
+	 * @return
+	 */
+	@Override
+	public UserCoupon findOne(String userCouponId) {
+		if (StringUtils.isBlank(userCouponId))
+			throw XltcRuntimeException.throwable("id为空");
+		return mapper.findOne(userCouponId);
+	}
+
+	/**
+	 * 根据userId和优惠券ID获取实体
+	 *
+	 * @param userid
+	 * @param couponId
+	 * @return
+	 */
+	@Override
+	public UserCoupon findByUserIdAndCouponId(String userId, String couponId) {
+		List<UserCoupon> list = mapper.findByUserIdAndCouponId(userId, couponId);
+		if (list.size() > 0) {
+			return (UserCoupon) NotNull.checkNull(list.get(0));
+		}
+		return null;
+	}
+
+	/**
+	 * 分页
+	 *
+	 * @param userId
+	 * @param pageNum
+	 *            当前页 码
+	 * @param pageSize
+	 *            每页记录数
+	 * @return
+	 */
+	@Override
+	public List<UserCoupon> findPage(String userId, Integer pageNum, Integer pageSize) {
+		List<UserCoupon> list = new ArrayList<>();
+		if (pageNum != null && pageSize != null) {
+
+			list = mapper.findPage(userId, (pageNum - 1) * pageSize, pageSize);
+		} else {
+			list = mapper.findPage(userId, null, null);
+
+		}
+		return (List<UserCoupon>) NotNull.checkListNull(list);
+	}
+
+	/**
+	 * 查询可用优惠券
+	 *
+	 * @param userId
+	 * @param total
+	 * @return
+	 */
+	@Override
+	public List<Coupon> findCanUse(String userId, double total) {
+		return (List<Coupon>) NotNull.checkListNull(mapper.findCanUse(userId, total));
+	}
+
+	/**
+	 * 下单时修改优惠券状态
+	 *
+	 * @param userCoupon
+	 */
+	@Override
+	public Integer updateByOrder(UserCoupon userCoupon) {
+		return mapper.updateByOrder(userCoupon);
+	}
+
+	@Override
+	public void delete(String... userCouponIds) {
+		// TODO Auto-generated method stub
+		if (userCouponIds.length == 0)
+			throw XltcRuntimeException.throwable("参数不全");
+		for (String id : userCouponIds) {
+			mapper.delete(id);
+		}
+	}
+
+	@Override
+	public List<?> findAll(String token, CommonPage page) {
+		// TODO Auto-generated method stub
+		String userId = checkToken(token);
+		page.startPageHelper();
+		List<?> result = mapper.findAll(userId);
+		return result;
+	}
+
+	@Override
+	public List<?> findByConditions(CommonPage page, String token, String type) {
+		// TODO Auto-generated method stub
+		if (StringUtils.isBlank(type))
+			throw XltcRuntimeException.throwable("参数不全");
+		String userId = checkToken(token);
+		page.startPageHelper();
+		switch (type) {
+		case IS_EXPIRE:
+			return mapper.findExpire(userId);
+		default:
+			return mapper.findAllByType(userId, type);
+		}
+	}
+
+	@Override
+	public void recoverUserCoupon(String orderId) {
+		mapper.recoverCoupon(orderId);
+	}
+
+	@Override
+	public void expireUserCoupon(String userCouponId) {
+		UserCoupon coupon = this.findOne(userCouponId);
+		if(coupon == null)
+			return;
+		if(IS_USER.equals(coupon.getIsUse()))
+			return;
+		mapper.expireUserCoupon(userCouponId);
+	}
+
+	@Override
+	public boolean isShowReceive(String token) {
+		// TODO Auto-generated method stub
+		String userId = checkToken(token);
+		List<XltcUserCouponModel> list = mapper.findCouponByUserId(userId);
+		for (XltcUserCouponModel model : list) {
+			if (!model.isShow())
+				return false;
+		}
+		return true;
+	}
+
+	@Override
+	public List<?> findCanReceiveAndCanUse(String token) {
+		// TODO Auto-generated method stub
+		String userId = checkToken(token);
+		return mapper.findCouponByUserId(userId);
+	}
+	
+	public String checkToken(String token){
+		if (StringUtils.isBlank(token)) {
+			throw XltcRuntimeException.throwable("token为空");
+		}
+		AppUser user = userService.getAppUserByToken(token);
+		if(user == null)
+			throw XltcRuntimeException.throwable("登录失效");
+		return user.getUserId();
+	}
+
+	@Override
+	public PageResult findReport(UserCoupon coupon) {
+		// TODO Auto-generated method stub
+		coupon.startPageHelper();
+		PageInfo<XltcCouponModel> list = new PageInfo<>(mapper.findReport(coupon));
+		return new PageResult(list.getTotal(), list.getList());
+	}
+	
+	@Override
+	public List<?> findUserCanUse(String token, Double total) {
+		// TODO Auto-generated method stub
+		if(total == null){
+			throw XltcRuntimeException.throwable("满金额为空");
+		}
+		String userId = this.checkToken(token);
+		return mapper.findUserCanUse(userId, total);
+	}
+
+}

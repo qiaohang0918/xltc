@@ -1,0 +1,19 @@
+package com.qigan.qiganshop.service;
+
+import com.qigan.qiganshop.pojo.TbDeposit;
+
+import java.util.List;
+
+/**
+ * @Aurher: QiaoHang
+ * @Description:
+ * @Data: 2019/10/8 11:23
+ * @Modified By:
+ */
+public interface XltcDepositService {
+    int insert(TbDeposit tbDeposit);
+
+    List<TbDeposit> findByOutTradeNum(String out_trade_no);
+
+    int updateByPrimaryKeySelective(TbDeposit deposit);
+}

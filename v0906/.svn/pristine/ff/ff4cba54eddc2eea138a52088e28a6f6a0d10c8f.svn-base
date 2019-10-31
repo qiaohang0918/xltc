@@ -1,0 +1,170 @@
+package test;
+
+import com.alibaba.fastjson.JSON;
+import com.qigan.qiganshop.annocation.StepRecordWatchAble;
+import com.qigan.qiganshop.controller.utils.AlipayController;
+import com.qigan.qiganshop.mapper.AppUserMapper;
+import com.qigan.qiganshop.myutils.ExplainSql;
+import com.qigan.qiganshop.myutils.SupperDoc;
+import com.qigan.qiganshop.pojo.AppUser;
+import com.qigan.qiganshop.pojo.group.GroupOrder;
+import com.qigan.qiganshop.pojo.synchronization.ResultGoods;
+import com.qigan.qiganshop.pojo.synchronization.ResultStock;
+import com.qigan.qiganshop.pojo.synchronization.ResultWarehouse;
+import com.qigan.qiganshop.service.*;
+import com.qigan.qiganshop.service.synchronization.impl.SynchStockServiceImpl;
+import com.qigan.qiganshop.util.access.JedisUtil;
+import com.qigan.qiganshop.util.jiguang.JiGuangSend;
+import com.qigan.qiganshop.util.result.format.JsonResult;
+import com.qigan.qiganshop.utils.guanyi.GuanYiDataSource;
+import com.qigan.qiganshop.utils.json.JsonUtils;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.web.WebAppConfiguration;
+import org.springframework.test.web.servlet.MockMvc;
+
+import javax.annotation.Resource;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
+
+/**
+ * create by qh
+ */
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(locations = {"classpath:spring/*.xml"})
+@WebAppConfiguration
+@ComponentScan("test.annotation")
+public class TestQ {
+
+   @Autowired
+   AppUserMapper userMapper;
+
+
+   @Test
+    public  void createOrder(){
+       SupperDoc<AppUser> supperDoc = new SupperDoc<>();
+       Map<String, Object> able = supperDoc.getPageAble();
+      System.out.println(able);
+       Object page = able.get("page");
+       Object size = able.get("size");
+       System.out.println(page+"----------"+size);
+       System.out.println(new Date().toLocaleString());
+
+   }
+
+
+
+   @Test
+   public void printResult(){
+      SupperDoc<AppUser> supperDoc = new SupperDoc<AppUser>();
+      Class<AppUser> appUserClass = supperDoc.getaClass();
+     // supperDoc.setaClass(AppUser.class);
+      supperDoc.setTable_name("tb_user");
+      supperDoc.setConditions(initConditions());
+      supperDoc.setGroupFilters(initGroupFields());
+      supperDoc.setWantedFields(initFields());
+      supperDoc.setGroupDeplay("userId,balance");
+      supperDoc.setPageAble(initPageAble());
+      supperDoc.setSortedField("createTime");
+      String sql = ExplainSql.findDataByConditions(supperDoc);
+//      if(sql.indexOf(ExplainSql.ERROR)>0){
+//         System.out.println(ExplainSql.ERROR);
+//      }else {
+//         List<Map> result= userMapper.selectMultiFun(sql);
+//         if(result!=null && result.size()>0){
+//            System.out.println("总条数："+result.size());
+//            for (Map map : result) {
+//               System.out.println(map);
+//            }
+//         }
+//      }
+      //查询总条数，不计分组
+      supperDoc.getPageAble().put("wantTotal",true);
+      String countSql = ExplainSql.countTotalByCase(supperDoc);
+//      if(countSql.indexOf(ExplainSql.ERROR)>0){
+//         System.out.println(ExplainSql.ERROR);
+//      }else {
+//       //  List<Map> result= userMapper.selectMultiFun(sql);
+//         Long total = userMapper.countTotalByCase(countSql);
+//         System.out.println(total);
+//      }
+   }
+
+   private Map<String, Object> initGroupFields() {
+      LinkedHashMap<String, Object> hashMap = new LinkedHashMap<>();
+      hashMap.put("phone~neq","17611660918");
+      hashMap.put("createTime$gt","2019-08-25");
+      hashMap.put("createTime$lte","2019-08-26");
+      return hashMap;
+   }
+
+   private Map<String, Object> initPageAble() {
+      LinkedHashMap<String, Object> hashMap = new LinkedHashMap<>();
+      hashMap.put("wantPage",true);
+      hashMap.put("page",1);
+      hashMap.put("size",5);
+      //hashMap.put("wantTotal",true);
+      return hashMap;
+   }
+
+
+   public Map<String,Object> initConditions(){
+      LinkedHashMap<String, Object> hashMap = new LinkedHashMap<>();
+      hashMap.put("phone~neq","17611660918");
+      hashMap.put("createTime$gt","2019-08-05");
+      hashMap.put("createTime$lte",new Date().toLocaleString());
+      return hashMap;
+   }
+
+   public ArrayList<String> initFields(){
+      ArrayList<String> list = new ArrayList<>();
+      list.add("userId");
+      list.add("phone as PHONE2");
+      list.add("password as PASSWORD2");
+      list.add("createTime as CREATETIME2");
+      return list;
+   }
+
+   @Test
+   public void testField(){
+      ArrayList<Class> list = new ArrayList<>();
+      list.add(String.class);
+      list.add(Double.class);
+      list.add(float.class);
+      list.add(Integer.class);
+      list.add(int.class);
+      list.add(boolean.class);
+      Field[] declaredFields = AppUser.class.getDeclaredFields();
+      for (Field field : declaredFields) {
+         Class<?> type = field.getType();
+         if(list.contains(type)){
+            System.out.println(field.getName()+"----------"+type);
+         }
+         System.out.println(type);
+      }
+   }
+
+
+   @StepRecordWatchAble
+   public void aaa(String no,String name,String inter,String func){
+      System.out.println("fun ---- finish!");
+   }
+
+   @Test
+   public void testAAA(){
+      System.out.println(new Date().toLocaleString());
+   }
+
+
+}

@@ -1,0 +1,106 @@
+package com.qigan.qiganshop.pojo;
+
+import com.alibaba.fastjson.annotation.JSONField;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import lombok.Getter;
+import lombok.Setter;
+
+/**
+ * 用户实体类
+ */
+public class AppUser{
+	@Getter
+    @Setter
+    private String userId;
+    @Getter
+    @Setter
+    private String phone;
+    @Getter
+    @Setter
+    @JSONField(serialize = false)
+    private String password;
+    @Getter
+    @Setter
+    private String nickName;
+    @Getter
+    @Setter
+    private String sex;
+    @Getter
+    @Setter
+    private String birthday;
+    @Getter
+    @Setter
+    private int areaId;
+    @Getter
+    @Setter
+    private String imageUrl;
+    @Getter
+    @Setter
+    private String info;
+//    @JsonIgnore
+    @Getter
+    @Setter
+    private String token;
+    @Getter
+    @Setter
+    @JSONField(serialize = false)
+    private String tokenTime;
+    @Getter
+    @Setter
+    private String createTime;
+    @Getter
+    @Setter
+    @JSONField(serialize = false)
+    private String paypassword;
+    @Getter
+    @Setter
+    private String paypasswordExist;
+    @Getter
+    @Setter
+    private String wopenid;
+    @Getter
+    @Setter
+    private String qopenid;
+    @Getter
+    @Setter
+    //会员
+    private String member;
+    @Getter
+    @Setter
+    private String mbeginTime;
+    @Getter
+    @Setter
+    private String mendTime;
+    @Getter
+    @Setter
+    private String realName;
+    @Getter
+    @Setter
+    private String idCard;
+    @Getter
+    @Setter
+    //余额
+    private Double balance;
+    @Getter
+    @Setter
+    private Integer score;
+    // 订单个数
+    @Getter
+    @Setter
+    private Integer orderNum;
+    // 消费金额
+    @Getter
+    @Setter
+    private Double amount;
+    //源用户
+    @Getter
+    @Setter
+    private String orginUserId;
+    //扩展用户数量
+    @Getter
+    @Setter
+    private String explandRegisters;
+
+}
+

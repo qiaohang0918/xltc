@@ -1,0 +1,55 @@
+package com.qigan.qiganshop.service.impl;
+
+import com.qigan.qiganshop.mapper.MessageMapper;
+import com.qigan.qiganshop.pojo.Message;
+import com.qigan.qiganshop.service.MessageService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@Service
+@Transactional(rollbackFor = Exception.class)
+public class MessageServiceImpl implements MessageService {
+
+    @Autowired
+    private MessageMapper mapper;
+
+    @Override
+    public List<Message> unread(String userId) {
+        List<Message> list = mapper.unread(userId);
+        return list;
+    }
+
+    @Override
+    public int markRead(String messageid) {
+        return mapper.markRead(messageid);
+    }
+
+    @Override
+    public Map<String, Object> getunread(String userId) {
+        Map<String,Object> map = new HashMap<>();
+        List<Message> xtlist = new ArrayList<>();
+        List<Message> txlist = new ArrayList<>();
+        List<Message> list = mapper.unread(userId);
+        if(list != null && list.size() > 0){
+            for(Message message : list){
+                String type = message.getType();
+                if("1".equals(type)){
+                    xtlist.add(message);
+                }else{
+                    txlist.add(message);
+                }
+            }
+            map.put("xt",xtlist);
+            map.put("tx",txlist);
+        }
+        return map;
+    }
+
+
+}

@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qigan.qiganshop.mapper.TbPresellGoodsMapper" >
+  <resultMap id="BaseResultMap" type="com.qigan.qiganshop.pojo.TbPresellGoods" >
+    <id column="pre_sell_id" property="preSellId" jdbcType="VARCHAR" />
+    <result column="preSellGoodsCode" property="presellgoodscode" jdbcType="VARCHAR" />
+    <result column="duringBefore" property="duringbefore" jdbcType="VARCHAR" />
+    <result column="duringAfter" property="duringafter" jdbcType="VARCHAR" />
+    <result column="enabled" property="enabled" jdbcType="VARCHAR" />
+    <result column="level" property="level" jdbcType="VARCHAR" />
+    <result column="no" property="no" jdbcType="VARCHAR" />
+    <result column="pictureUrl" property="pictureurl" jdbcType="VARCHAR" />
+    <result column="sellNum" property="sellnum" jdbcType="VARCHAR" />
+    <result column="preSendTime" property="presendtime" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    pre_sell_id, preSellGoodsCode, duringBefore, duringAfter, enabled, level, no, pictureUrl, 
+    sellNum, preSendTime
+  </sql>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.qigan.qiganshop.pojo.TbPresellGoodsExample" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from tb_presell_goods
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from tb_presell_goods
+    where pre_sell_id = #{preSellId,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from tb_presell_goods
+    where pre_sell_id = #{preSellId,jdbcType=VARCHAR}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.qigan.qiganshop.pojo.TbPresellGoodsExample" >
+    delete from tb_presell_goods
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.qigan.qiganshop.pojo.TbPresellGoods" >
+    insert into tb_presell_goods (pre_sell_id, preSellGoodsCode, duringBefore, 
+      duringAfter, enabled, level, 
+      no, pictureUrl, sellNum, 
+      preSendTime)
+    values (#{preSellId,jdbcType=VARCHAR}, #{presellgoodscode,jdbcType=VARCHAR}, #{duringbefore,jdbcType=VARCHAR}, 
+      #{duringafter,jdbcType=VARCHAR}, #{enabled,jdbcType=VARCHAR}, #{level,jdbcType=VARCHAR}, 
+      #{no,jdbcType=VARCHAR}, #{pictureurl,jdbcType=VARCHAR}, #{sellnum,jdbcType=VARCHAR}, 
+      #{presendtime,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.qigan.qiganshop.pojo.TbPresellGoods" >
+    insert into tb_presell_goods
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="preSellId != null" >
+        pre_sell_id,
+      </if>
+      <if test="presellgoodscode != null" >
+        preSellGoodsCode,
+      </if>
+      <if test="duringbefore != null" >
+        duringBefore,
+      </if>
+      <if test="duringafter != null" >
+        duringAfter,
+      </if>
+      <if test="enabled != null" >
+        enabled,
+      </if>
+      <if test="level != null" >
+        level,
+      </if>
+      <if test="no != null" >
+        no,
+      </if>
+      <if test="pictureurl != null" >
+        pictureUrl,
+      </if>
+      <if test="sellnum != null" >
+        sellNum,
+      </if>
+      <if test="presendtime != null" >
+        preSendTime,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="preSellId != null" >
+        #{preSellId,jdbcType=VARCHAR},
+      </if>
+      <if test="presellgoodscode != null" >
+        #{presellgoodscode,jdbcType=VARCHAR},
+      </if>
+      <if test="duringbefore != null" >
+        #{duringbefore,jdbcType=VARCHAR},
+      </if>
+      <if test="duringafter != null" >
+        #{duringafter,jdbcType=VARCHAR},
+      </if>
+      <if test="enabled != null" >
+        #{enabled,jdbcType=VARCHAR},
+      </if>
+      <if test="level != null" >
+        #{level,jdbcType=VARCHAR},
+      </if>
+      <if test="no != null" >
+        #{no,jdbcType=VARCHAR},
+      </if>
+      <if test="pictureurl != null" >
+        #{pictureurl,jdbcType=VARCHAR},
+      </if>
+      <if test="sellnum != null" >
+        #{sellnum,jdbcType=VARCHAR},
+      </if>
+      <if test="presendtime != null" >
+        #{presendtime,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.qigan.qiganshop.pojo.TbPresellGoodsExample" resultType="java.lang.Integer" >
+    select count(*) from tb_presell_goods
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update tb_presell_goods
+    <set >
+      <if test="record.preSellId != null" >
+        pre_sell_id = #{record.preSellId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.presellgoodscode != null" >
+        preSellGoodsCode = #{record.presellgoodscode,jdbcType=VARCHAR},
+      </if>
+      <if test="record.duringbefore != null" >
+        duringBefore = #{record.duringbefore,jdbcType=VARCHAR},
+      </if>
+      <if test="record.duringafter != null" >
+        duringAfter = #{record.duringafter,jdbcType=VARCHAR},
+      </if>
+      <if test="record.enabled != null" >
+        enabled = #{record.enabled,jdbcType=VARCHAR},
+      </if>
+      <if test="record.level != null" >
+        level = #{record.level,jdbcType=VARCHAR},
+      </if>
+      <if test="record.no != null" >
+        no = #{record.no,jdbcType=VARCHAR},
+      </if>
+      <if test="record.pictureurl != null" >
+        pictureUrl = #{record.pictureurl,jdbcType=VARCHAR},
+      </if>
+      <if test="record.sellnum != null" >
+        sellNum = #{record.sellnum,jdbcType=VARCHAR},
+      </if>
+      <if test="record.presendtime != null" >
+        preSendTime = #{record.presendtime,jdbcType=VARCHAR},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update tb_presell_goods
+    set pre_sell_id = #{record.preSellId,jdbcType=VARCHAR},
+      preSellGoodsCode = #{record.presellgoodscode,jdbcType=VARCHAR},
+      duringBefore = #{record.duringbefore,jdbcType=VARCHAR},
+      duringAfter = #{record.duringafter,jdbcType=VARCHAR},
+      enabled = #{record.enabled,jdbcType=VARCHAR},
+      level = #{record.level,jdbcType=VARCHAR},
+      no = #{record.no,jdbcType=VARCHAR},
+      pictureUrl = #{record.pictureurl,jdbcType=VARCHAR},
+      sellNum = #{record.sellnum,jdbcType=VARCHAR},
+      preSendTime = #{record.presendtime,jdbcType=VARCHAR}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.qigan.qiganshop.pojo.TbPresellGoods" >
+    update tb_presell_goods
+    <set >
+      <if test="presellgoodscode != null" >
+        preSellGoodsCode = #{presellgoodscode,jdbcType=VARCHAR},
+      </if>
+      <if test="duringbefore != null" >
+        duringBefore = #{duringbefore,jdbcType=VARCHAR},
+      </if>
+      <if test="duringafter != null" >
+        duringAfter = #{duringafter,jdbcType=VARCHAR},
+      </if>
+      <if test="enabled != null" >
+        enabled = #{enabled,jdbcType=VARCHAR},
+      </if>
+      <if test="level != null" >
+        level = #{level,jdbcType=VARCHAR},
+      </if>
+      <if test="no != null" >
+        no = #{no,jdbcType=VARCHAR},
+      </if>
+      <if test="pictureurl != null" >
+        pictureUrl = #{pictureurl,jdbcType=VARCHAR},
+      </if>
+      <if test="sellnum != null" >
+        sellNum = #{sellnum,jdbcType=VARCHAR},
+      </if>
+      <if test="presendtime != null" >
+        preSendTime = #{presendtime,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where pre_sell_id = #{preSellId,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.qigan.qiganshop.pojo.TbPresellGoods" >
+    update tb_presell_goods
+    set preSellGoodsCode = #{presellgoodscode,jdbcType=VARCHAR},
+      duringBefore = #{duringbefore,jdbcType=VARCHAR},
+      duringAfter = #{duringafter,jdbcType=VARCHAR},
+      enabled = #{enabled,jdbcType=VARCHAR},
+      level = #{level,jdbcType=VARCHAR},
+      no = #{no,jdbcType=VARCHAR},
+      pictureUrl = #{pictureurl,jdbcType=VARCHAR},
+      sellNum = #{sellnum,jdbcType=VARCHAR},
+      preSendTime = #{presendtime,jdbcType=VARCHAR}
+    where pre_sell_id = #{preSellId,jdbcType=VARCHAR}
+  </update>
+</mapper>

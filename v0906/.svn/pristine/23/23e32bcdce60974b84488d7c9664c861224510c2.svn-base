@@ -1,0 +1,78 @@
+package com.qigan.qiganshop.controller.frontend;
+
+import com.qigan.qiganshop.pojo.CommonPage;
+import com.qigan.qiganshop.pojo.Label;
+import com.qigan.qiganshop.service.LabelService;
+import com.qigan.qiganshop.util.result.PageResult;
+import com.qigan.qiganshop.util.result.format.JsonResult;
+import com.qigan.qiganshop.util.result.format.ResultCode;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import springfox.documentation.spring.web.json.Json;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * 标签 controller
+ *
+ * @author wanghao
+ * @time 2019-04-15 10:30
+ */
+@SuppressWarnings("all")
+@RestController
+@RequestMapping("/app/Label")
+@Api(value = "标签 controller", tags = {"APP 商品标签操作接口"})
+public class AppLabelController {
+    @Autowired
+    private LabelService service;
+    @Autowired
+    private JsonResult jr;
+
+    /**
+     * 查询所有规格信息或者分页查询或者条件查询,三者随意组合
+     *
+     * @param cateId
+     * @return
+     */
+    @RequestMapping("/findByCateId.do")
+    @ApiOperation(
+            value = "根据 cateId 获取所有的标签列表",
+            notes = "获取标签信息,cateId为分类ID   \r\n",
+            httpMethod = "POST")
+    public JsonResult findPage(@RequestParam String cateId) {
+        if (cateId != null && !"".equals(cateId)) {
+            Label label = new Label();
+            label.setCateId(cateId);
+            PageResult result = service.findByLabel(label);
+            return jr.jsonResultData(ResultCode.SUCCESS.res_code(), ResultCode.SUCCESS.message(), result);
+        }
+        return jr.jsonResultData(ResultCode.FAIL.res_code(), "cateId 不能为空", null);
+
+    }
+    
+    @RequestMapping("/findAll.do")
+    public JsonResult findAllByCateId(String cateId){
+    	if(StringUtils.isBlank(cateId))
+    		  return jr.jsonResultData(ResultCode.FAIL.res_code(), "cateId 不能为空", null);
+    	 return jr.jsonResultData(ResultCode.SUCCESS.res_code(), ResultCode.SUCCESS.message(), service.findCatesByCate(cateId));
+    }
+    
+    @RequestMapping("/findPage.do")
+    public JsonResult findPageByLabelId(String labelId, String coni, CommonPage page){
+    	if(StringUtils.isBlank(labelId))
+    		return jr.jsonResultData(ResultCode.FAIL.res_code(), "labelId 不能为空", null);
+    	return jr.jsonResultData(ResultCode.SUCCESS.res_code(), ResultCode.SUCCESS.message(), service.findPageByLabel(labelId, coni, page));
+    }
+    
+    @RequestMapping("/findPageAll.do")
+    public JsonResult findPageAllByLabelId(String labelId, String coni, CommonPage page){
+    	if(StringUtils.isBlank(labelId))
+    		return jr.jsonResultData(ResultCode.FAIL.res_code(), "labelId 不能为空", null);
+    	return jr.jsonResultData(ResultCode.SUCCESS.res_code(), ResultCode.SUCCESS.message(), service.findPageAllByLabelId(labelId, coni, page));
+    }
+
+}

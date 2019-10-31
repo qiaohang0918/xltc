@@ -1,0 +1,29 @@
+/**
+ * 
+ */
+package com.qigan.qiganshop.controller.backstage;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.qigan.qiganshop.service.XltcMessageService;
+import com.qigan.qiganshop.util.result.XltcResult;
+
+/**
+ * @author wyy
+ *
+ */
+@RestController
+@RequestMapping("/xltc/send")
+public class XltcMessageController {
+	
+	@Autowired
+	XltcMessageService service;
+	
+	@RequestMapping("/jiguang")
+	public XltcResult send2JiGuang(){
+		return XltcResult.ok();
+	}
+
+}

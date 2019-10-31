@@ -1,0 +1,358 @@
+package com.qigan.qiganshop.controller.backstage;
+
+import com.qigan.qiganshop.constant.RedisConstant;
+import com.qigan.qiganshop.controller.utils.PublicControl;
+import com.qigan.qiganshop.enums.CouponType;
+import com.qigan.qiganshop.myutils.SqlConstructUtils;
+import com.qigan.qiganshop.pojo.CommonPage;
+import com.qigan.qiganshop.pojo.Coupon;
+import com.qigan.qiganshop.pojo.CouponDetailsModel;
+import com.qigan.qiganshop.service.CouponService;
+import com.qigan.qiganshop.util.access.JedisUtil;
+import com.qigan.qiganshop.util.notnull.StringNotNull;
+import com.qigan.qiganshop.util.result.PageResult;
+import com.qigan.qiganshop.util.result.XltcResult;
+import com.qigan.qiganshop.util.result.format.JsonResult;
+import com.qigan.qiganshop.util.result.format.ResultCode;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+/**
+ * 优惠券 controller
+ *
+ * @author wanghao
+ * @time 2019-05-05 17:51
+ */
+//@SuppressWarnings("all")
+
+@RestController
+@RequestMapping("/Coupon")
+@Api(value = "优惠券 controller", tags = {"WEB 优惠券操作接口"})
+public class CouponController {
+    @Autowired
+    private CouponService service;
+    @Autowired
+    private JsonResult jr;
+    @Autowired
+    private PublicControl pc;
+    @Autowired
+    private JedisUtil jedisUtil;
+
+
+    /**
+     * 添加线索用户福利优惠卷
+     * @param data
+     * @return
+     */
+    @RequestMapping(value = "/addClueUserCoupons.do",method = RequestMethod.POST)
+    public XltcResult addClueUserCoupons(@RequestBody List<Map<String,String>> data){
+        if(SqlConstructUtils.nullList(data))
+            return XltcResult.error("请传入至少一个优惠卷id！");
+        for (Map<String, String> couponDateMap : data) {
+            String couponId = couponDateMap.get("couponId");
+            String useAbleDay = couponDateMap.get("end");
+            if(StringNotNull.check(couponId,useAbleDay)){
+                jedisUtil.setToHash(RedisConstant.CLUE_USER_COUPONS,couponId,useAbleDay);
+            }
+        }
+        return XltcResult.ok();
+    }
+
+//    /**
+//     * 添加线索用户福利优惠卷
+//     * @param couponIds
+//     * @return
+//     */
+//    @RequestMapping(value = "/addOrginUserCoupons.do",method = RequestMethod.POST)
+//    public XltcResult addOrginUserCoupons(@RequestBody List<Map<String,String>> data){
+//        if(SqlConstructUtils.nullList(data))
+//            return XltcResult.error("请传入至少一个优惠卷id！");
+//        for (Map<String, String> couponDateMap : data) {
+//            String couponId = couponDateMap.get("couponId");
+//            String useAbleDay = couponDateMap.get("end");
+//            if(StringNotNull.check(couponId,useAbleDay)){
+//                jedisUtil.setToHash(RedisConstant.ORGIN_USER_COUPONS,couponId,useAbleDay);
+//            }
+//        }
+//        return XltcResult.ok();
+//    }
+
+//    /**
+//     * 添加充值福利优惠卷
+//     * @param data
+//     * @return
+//     */
+//    @RequestMapping(value = "/addDepositCoupons.do",method = RequestMethod.POST)
+//    public XltcResult addDepositCoupons(@RequestBody List<Map<String,String>> data){
+//        if(SqlConstructUtils.nullList(data))
+//            return XltcResult.error("请传入至少一个优惠卷id！");
+//        for (Map<String, String> couponDateMap : data) {
+//            String couponId = couponDateMap.get("couponId");
+//            String useAbleDay = couponDateMap.get("end");
+//            if(StringNotNull.check(couponId,useAbleDay)){
+//                jedisUtil.setToHash(RedisConstant.DEPOSIT_COUPONS,couponId,useAbleDay);
+//            }
+//        }
+//        return XltcResult.ok();
+//    }
+
+
+    /**
+     * 获取当前线索用户福利优惠卷
+     * @return
+     */
+    @RequestMapping(value = "/findClueUserCoupons.do",method = RequestMethod.GET)
+    public XltcResult findClueUserCoupons(){
+        Set<String> elements = jedisUtil.getElementsFromHash(RedisConstant.CLUE_USER_COUPONS);
+        String couponIds = SqlConstructUtils.constructListToStringsOnIn(null, elements);
+        if(couponIds==null)
+            return XltcResult.ok();
+        List<Coupon> list = service.findCouponByIds(couponIds);
+        return XltcResult.ok(list);
+    }
+
+//
+//    /**
+//     * 获取当前源用户福利优惠卷
+//     * @return
+//     */
+//    @RequestMapping(value = "/findOrginUserCoupons.do",method = RequestMethod.GET)
+//    public XltcResult findOrginUserCoupons(){
+//        Set<String> elements = jedisUtil.getElementsFromHash(RedisConstant.ORGIN_USER_COUPONS);
+//        String couponIds = SqlConstructUtils.constructListToStringsOnIn(null, elements);
+//        if(couponIds==null)
+//            return XltcResult.ok();
+//        List<Coupon> list = service.findCouponByIds(couponIds);
+//        return XltcResult.ok(list);
+//    }
+
+//    /**
+//     * 获取充值福利优惠卷
+//     * @return
+//     */
+//    @RequestMapping(value = "/findDepositUserCoupons.do",method = RequestMethod.GET)
+//    public XltcResult findDepositUserCoupons(){
+//        Set<String> elements = jedisUtil.getElementsFromHash(RedisConstant.DEPOSIT_COUPONS);
+//        String couponIds = SqlConstructUtils.constructListToStringsOnIn(null, elements);
+//        if(couponIds==null)
+//            return XltcResult.ok();
+//        List<Coupon> list = service.findCouponByIds(couponIds);
+//        return XltcResult.ok(list);
+//    }
+
+    /**
+     * 移除当前线索用户福利优惠卷
+     * @param couponIds
+     * @return
+     */
+    @RequestMapping(value = "/removeClueUserCoupons.do",method = RequestMethod.POST)
+    public XltcResult removeClueUserCoupons(@RequestBody List<String> couponIds){
+        if(SqlConstructUtils.nullList(couponIds))
+            return XltcResult.ok();
+        for (String couponId : couponIds) {
+            jedisUtil.removeElementFromHash(RedisConstant.CLUE_USER_COUPONS,couponId);
+        }
+        return XltcResult.ok();
+    }
+
+//    /**
+//     * 移除当前源用户福利优惠卷
+//     * @param couponIds
+//     * @return
+//     */
+//    @RequestMapping(value = "/removeOrginUserCoupons.do",method = RequestMethod.POST)
+//    public XltcResult removeOrginUserCoupons(@RequestBody List<String> couponIds){
+//        if(SqlConstructUtils.nullList(couponIds))
+//            return XltcResult.ok();
+//        for (String couponId : couponIds) {
+//            jedisUtil.removeElementFromHash(RedisConstant.ORGIN_USER_COUPONS,couponId);
+//        }
+//        return XltcResult.ok();
+//    }
+
+//    /**
+//     * 移除当前充值福利优惠卷
+//     * @param couponIds
+//     * @return
+//     */
+//    @RequestMapping(value = "/removeDepositCoupons.do",method = RequestMethod.POST)
+//    public XltcResult removeDepositCoupons(@RequestBody List<String> couponIds){
+//        if(SqlConstructUtils.nullList(couponIds))
+//            return XltcResult.ok();
+//        for (String couponId : couponIds) {
+//            jedisUtil.removeElementFromHash(RedisConstant.DEPOSIT_COUPONS,couponId);
+//        }
+//        return XltcResult.ok();
+//    }
+
+
+    /**
+     * 优惠券查询三合一
+     *
+     * @param coupon
+     * @param page
+     * @param size
+     * @return
+     */
+    @RequestMapping("findPage.do")
+    @ApiOperation(
+            value = "分页获取所有的优惠券列表  优惠券类型 1,满减 2,免运费,3 鸡蛋券",
+            notes = "分页获取优惠券列表信息,coupon 为优惠券实体,用于动态拼接查询条件,page 为页码,rows 为每页记录数 \r\n" +
+                    "若要查询所有,不传递 实体 coupon 即可,page 传1,rows 传 10(默认) \r\n",
+            httpMethod = "POST")
+    public JsonResult findPage(@RequestBody Coupon coupon, Integer page, Integer size) {
+        PageResult result = service.findPage(coupon, page, size);
+
+        return jr.jsonResultData(ResultCode.SUCCESS.res_code(), ResultCode.SUCCESS.message(), result);
+
+    }
+
+    /**
+     * 新增优惠券
+     *
+     * @param coupon
+     * @return
+     */
+    @RequestMapping("add.do")
+    @ApiOperation(
+            value = "新增优惠券",
+            notes = "couponId 可以不传,但是 type,begin,end,必传 \r\n" +
+                    "新增满减优惠券,couponName,type,fullMoney,reduceMoney,begin,end 必传 \r\n" +
+                    "新增免运费优惠券,couponName,type,begin,end 必传 \r\n" +
+                    "新增鸡蛋🥚🥚🥚🥚🥚🥚优惠券,couponName,type,begin,end,eggNumber 必传 \n",
+            httpMethod = "POST")
+    public JsonResult add(@RequestBody Coupon coupon) {
+        if (StringNotNull.check(coupon.getType())) {
+
+            return pc.addUtils(service.add(coupon));
+        }
+        return jr.jsonResultData(ResultCode.FAIL.res_code(), "添加失败! type 为空");
+
+    }
+
+    /**
+     * 修改优惠券
+     *
+     * @param coupon
+     * @return
+     */
+    @RequestMapping("update.do")
+    @ApiOperation(
+            value = "修改优惠券",
+            notes = "couponId 可以不传,但是 type,begin,end,必传 \r\n" +
+                    "修改满减优惠券,couponId,couponName,type,fullMoney,reduceMoney,begin,end 必传 \r\n" +
+                    "修改免运费优惠券,couponId,couponName,type,begin,end 必传 \r\n" +
+                    "修改鸡蛋🥚🥚🥚🥚🥚🥚优惠券,couponId,couponName,type,begin,end,eggNumber 必传 \n",
+            httpMethod = "POST")
+    public JsonResult update(@RequestBody Coupon coupon) {
+        if (StringNotNull.check(coupon.getCouponId()) && StringNotNull.check(coupon.getType())) {
+            return pc.updateUtils(service.update(coupon));
+        }
+        return jr.jsonResultData(ResultCode.FAIL.res_code(), "更新失败! type或 Id 为空");
+
+
+    }
+
+    /**
+     * 修改优惠券
+     *
+     * @param coupon
+     * @return
+     */
+    @RequestMapping("updateEnable.do")
+    @ApiOperation(
+            value = "修改优惠券",
+            notes = "couponIds 必须传 flag 必须传 启用 1; 禁用 0",
+            httpMethod = "POST")
+    public JsonResult updateEnable(String[] couponIds, String flag) {
+        if (StringNotNull.check(flag) && couponIds.length > 0) {
+            return pc.updateUtils(service.updateEnable(couponIds, flag));
+        }
+        return jr.jsonResultData(ResultCode.FAIL.res_code(), "更新失败! couponIds 或 flag 为空");
+
+
+
+
+    }
+
+    /**
+     * 删除优惠券
+     *
+     * @param ids
+     * @return
+     */
+    @RequestMapping("delete.do")
+    @ApiOperation(
+            value = "删除优惠券 ",
+            notes = "优惠券 Id 必传",
+            httpMethod = "POST")
+    public JsonResult delete(String[] ids) {
+        if (ids.length > 0) {
+            return pc.deleteUtils(ids, service.delete(ids));
+        }
+        return jr.jsonResultData(ResultCode.FAIL.res_code(), "删除失败!! Id 为空");
+
+
+    }
+
+    /**
+     * 查询单个优惠券详情
+     *
+     * @param couponId
+     * @return
+     */
+    @RequestMapping("findOne.do")
+    @ApiOperation(
+            value = "查询单个优惠券",
+            notes = "优惠券 Id 必传",
+            httpMethod = "POST")
+    public JsonResult findOne(String couponId) {
+        if (StringNotNull.check(couponId)) {
+            return jr.jsonResultData(ResultCode.SUCCESS.res_code(), ResultCode.SUCCESS.message(), service.findOne(couponId));
+        }
+        return jr.jsonResultData(ResultCode.FAIL.res_code(), "删除失败!! Id 为空", new Coupon());
+    }
+    
+    @RequestMapping(value = "saveCouponDetails.do", method = RequestMethod.POST)
+    public XltcResult saveCouponDetails(@RequestBody CouponDetailsModel model){
+    	service.saveCouponDetails(model);
+    	return XltcResult.ok();
+    }
+    
+    @RequestMapping(value = "selectCouponDetails.do", method = RequestMethod.POST)
+    public XltcResult selectCouponDetails(String couponId, CommonPage page){
+    	return XltcResult.ok(service.selectCouponDetails(couponId, page));
+    }
+
+    @RequestMapping(value = "deleteDetails.do", method = RequestMethod.POST)
+    public XltcResult deleteDetails(String couponId, String type, String... codes){
+    	service.deleteDetails(couponId, type, codes);
+    	return XltcResult.ok();
+    }
+    
+    @RequestMapping(value = "selectAllCoupon.do", method = RequestMethod.GET)
+    public XltcResult selectAllCoupon(){
+    	return XltcResult.ok(CouponType.findAll());
+    }
+    
+    @RequestMapping(value = "selectAllCouponByMap.do", method = RequestMethod.GET)
+    public XltcResult findAllByMap(){
+    	return XltcResult.ok(CouponType.findAllByMap());
+    }
+    
+    @RequestMapping(value = "deleteCoupon.do", method = RequestMethod.GET)
+    public XltcResult deleteCoupon(String... ids){
+    	service.deleteCoupon(ids);
+    	return XltcResult.ok();
+    }
+    
+}

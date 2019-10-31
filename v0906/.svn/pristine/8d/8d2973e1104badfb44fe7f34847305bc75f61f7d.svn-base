@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qigan.qiganshop.mapper.UserCouponMapper">
+    <resultMap id="BaseResultMap" type="com.qigan.qiganshop.pojo.UserCoupon">
+        <id column="userCouponId" property="userCouponId" jdbcType="VARCHAR"/>
+        <result column="userId" property="userId" jdbcType="VARCHAR"/>
+        <result column="couponId" property="couponId" jdbcType="VARCHAR"/>
+        <result column="timeOut" property="timeOut" jdbcType="VARCHAR"/>
+        <result column="isUse" property="isUse" jdbcType="VARCHAR"/>
+        <result column="orderId" property="orderId" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <resultMap id="CouponResultMap" type="com.qigan.qiganshop.pojo.Coupon">
+        <id column="couponId" property="couponId" jdbcType="VARCHAR"/>
+        <result column="type" property="type" jdbcType="VARCHAR"/>
+        <result column="fullMoney" property="fullMoney" jdbcType="INTEGER"/>
+        <result column="reduceMoney" property="reduceMoney" jdbcType="INTEGER"/>
+        <result column="eggNumber" property="eggNumber" jdbcType="INTEGER"/>
+        <result column="begin" property="begin" jdbcType="VARCHAR"/>
+        <result column="end" property="end" jdbcType="VARCHAR"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+    userCouponId, userId, couponId, timeOut,isUse,orderId,disableTime,startTime 
+  </sql>
+    <select id="findOne" resultMap="BaseResultMap" parameterType="java.lang.String">
+        select
+        <include refid="Base_Column_List"/>
+        from tb_user_coupon
+        where userCouponId = #{userCouponId,jdbcType=VARCHAR}
+    </select>
+    <delete id="delete" parameterType="java.lang.String">
+    delete from tb_user_coupon
+    where userCouponId = #{userCouponId,jdbcType=VARCHAR}
+  </delete>
+    <insert id="insert" parameterType="com.qigan.qiganshop.pojo.UserCoupon">
+    insert into tb_user_coupon (userCouponId, userId, couponId, timeOut,isUse,orderId,startTime,disableTime)
+    values (#{userCouponId,jdbcType=VARCHAR}, #{userId,jdbcType=VARCHAR}, #{couponId,jdbcType=VARCHAR}, 
+       #{timeOut,jdbcType=VARCHAR},#{isUse,jdbcType=VARCHAR},#{orderId,jdbcType=VARCHAR},#{startTime},#{disableTime})
+  </insert>
+    <update id="update" parameterType="com.qigan.qiganshop.pojo.UserCoupon">
+        update tb_user_coupon
+        <set>
+            <if test="userId != null">
+                userId = #{userId,jdbcType=VARCHAR},
+            </if>
+            <if test="couponId != null">
+                couponId = #{couponId,jdbcType=VARCHAR},
+            </if>
+            <if test="timeOut != null">
+                timeOut = #{timeOut,jdbcType=VARCHAR},
+            </if>
+            <if test="isUse != null">
+                isUse = #{isUse,jdbcType=VARCHAR},
+            </if>
+            <if test="orderId != null">
+                orderId = #{orderId,jdbcType=VARCHAR},
+            </if>
+            <if test="disableTime != null">
+                disableTime = #{disableTime,jdbcType=VARCHAR},
+            </if>
+            <if test="startTime != null">
+                startTime = #{startTime,jdbcType=VARCHAR},
+            </if>
+        </set>
+        where userCouponId = #{userCouponId,jdbcType=VARCHAR}
+    </update>
+    <update id="updateByOrder" parameterType="com.qigan.qiganshop.pojo.UserCoupon">
+        update tb_user_coupon
+        <set>
+            isUse = #{isUse,jdbcType=VARCHAR},
+            orderId = #{orderId,jdbcType=VARCHAR},
+            useTime = now()
+        </set>
+        where userCouponId = #{userCouponId}
+       <!--  userId = #{userId,jdbcType=VARCHAR}
+        and
+        couponId = #{couponId,jdbcType=VARCHAR} -->
+
+    </update>
+    <select id="findPage" parameterType="map" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from tb_user_coupon
+        <if test="record != null">
+            where
+            <if test="record.userId != null">
+                userId = #{userId,jdbcType=VARCHAR} and
+            </if>
+            isUse = '0'
+        </if>
+        <if test="page!= null and size!= null">
+            limit #{page},#{size}
+        </if>
+    </select>
+    <select id="findByUserIdAndCouponId" parameterType="map" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from tb_user_coupon
+        where userId = #{userId}
+        and couponId = #{couponId}
+    </select>
+    <select id="findCanUse" parameterType="map" resultMap="CouponResultMap">
+        SELECT
+        t1.*
+        FROM
+        tb_coupon t1,
+        tb_user_coupon t2
+        WHERE
+        t1.couponId = t2.couponId
+        and t1.fullMoney <![CDATA[ <= ]]> #{total}
+        and t2.userId = #{userId}
+        and t2.isUse = '0'
+        and t2.timeOut is null
+        and t1.enable= '1'
+        order by t1.end
+    </select>
+    
+    
+    <select id="findReport" parameterType="com.qigan.qiganshop.pojo.UserCoupon" resultType="com.qigan.qiganshop.pojo.XltcCouponModel"> 
+    	select  
+    		t.userId,
+    		t.phone,
+    		t.nickName, 
+    		x.createTime,
+    		x.isUse,
+    		x.orderId,
+    		y.couponName,
+    		y.type
+    	from tb_user t
+    	right join tb_user_coupon x on x.userId = t.userId
+		left join tb_coupon y on x.couponId = y.couponId
+		<if test="record != null">
+			where 
+			<if test="record.isUse == 1">
+				x.isUse = '1' and 
+				<if test="record.startTime != null and record.disableTime != null">
+					date_format(x.useTime, '%Y-%m-%d %T') between #{record.startTime} and #{record.disableTime} and
+				</if>
+			</if>
+			<if test="record.isUse == 0">
+				x.isUse = '0' and 
+				<if test="record.startTime != null and record.disableTime != null">
+					date_format(x.createTime, '%Y-%m-%d %T') between #{record.startTime} and #{record.disableTime} and
+				</if>
+			</if>
+			<if test="record.phone != null">
+				t.phone = #{record.phone} and 
+			</if> 
+			<if test="record.orderId != null">
+				x.orderId = #{record.orderId} and 
+			</if> 
+			<if test="record.timeOut != null">
+				x.timeOut is not null and 
+			</if>
+			<if test="record.fullMoney != null">
+				y.fullMoney = #{record.fullMoney} and 
+			</if>
+			<if test="record.reduceMoney != null">
+				y.reduceMoney = #{record.reduceMoney} and 
+			</if>
+			1 = 1
+		</if>
+    </select>
+    
+</mapper>

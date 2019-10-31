@@ -1,0 +1,53 @@
+package com.qigan.qiganshop.service;
+
+
+import com.github.pagehelper.PageInfo;
+import com.qigan.qiganshop.pojo.TbRefundRecord;
+import com.qigan.qiganshop.util.result.XltcResult;
+import org.springframework.http.ResponseEntity;
+
+import java.util.List;
+
+/**
+ * 退款服务
+ *
+ * @author wanghao
+ * @time 2019-07-01 10:33
+ */
+public interface RefundService {
+    /**
+     * 退款接口
+     * app 用户在商品未出仓之前进行退货
+     *
+     * @param orderId
+     * @param userId
+     * @return
+     */
+    public String refund(
+            String orderId,
+            String userId
+            );
+
+    String refundButNotCheck(String orderId, String userId);
+
+    /**
+     * 退款接口
+     * web 操作订单退款
+     *
+     * @param orderId
+     * @return
+     */
+    public String webRefund(String orderId);
+
+    ResponseEntity aliRefund(String out_trade_no, String refund_amount);
+
+    ResponseEntity wxRefund(String out_trade_no, String amount);
+
+    XltcResult questionOrderRefund(String orderId, List<String> orderItemIds, String status, String money);
+
+    XltcResult onlyRefundBalance(TbRefundRecord tbRefundRecord);
+
+    PageInfo<TbRefundRecord> queryBalanceRefundRecord(String startTime, String endTime, String no, int page, int size);
+
+    List<TbRefundRecord> queryBalanceRefundRecordForExportExcel(String startTime, String endTime, String no);
+}

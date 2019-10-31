@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qigan.qiganshop.mapper.OrderItemMapper">
+    <resultMap id="BaseResultMap" type="com.qigan.qiganshop.pojo.OrderItem">
+        <id column="orderItemId" property="orderItemId" jdbcType="VARCHAR"/>
+        <result column="orderId" property="orderId" jdbcType="VARCHAR"/>
+        <result column="userId" property="userId" jdbcType="VARCHAR"/>
+        <result column="goodsId" property="goodsId" jdbcType="VARCHAR"/>
+        <result column="itemId" property="itemId" jdbcType="VARCHAR"/>
+        <result column="goodsName" property="goodsName" jdbcType="VARCHAR"/>
+        <result column="itemName" property="itemName" jdbcType="VARCHAR"/>
+        <result column="byPrice" property="byPrice" jdbcType="DOUBLE"/>
+        <result column="picUrls" property="picUrls" jdbcType="VARCHAR"/>
+        <result column="count" property="count" jdbcType="INTEGER"/>
+        <result column="unit" property="unit" jdbcType="VARCHAR"/>
+        <result column="code" property="code" jdbcType="VARCHAR"/>
+        <result column="count" property="count" jdbcType="INTEGER"/>
+        <result column="subTotal" property="subTotal" jdbcType="DOUBLE"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+    t.orderItemId, t.orderId, t.userId, t.goodsId, t.itemId, t.goodsName, t.itemName, t.byPrice, t.picUrls, 
+    t.count, t.unit,t.subTotal, x.code 
+  </sql>
+    <select id="findByOrderId" parameterType="string" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from tb_order_Item t left join  tb_goods x on t.goodsId = x.goodsId
+        where t.orderId = #{orderId}
+        order by t.orderId
+    </select>
+
+    <insert id="insert" parameterType="com.qigan.qiganshop.pojo.OrderItem" >
+    insert into tb_order_Item (orderItemId, orderId, userId,
+      goodsId, itemId, goodsName,
+      itemName, byPrice, picUrls,
+      count, unit,subTotal)
+    values (#{orderItemId,jdbcType=VARCHAR}, #{orderId,jdbcType=VARCHAR}, #{userId,jdbcType=VARCHAR},
+      #{goodsId,jdbcType=VARCHAR}, #{itemId,jdbcType=VARCHAR}, #{goodsName,jdbcType=VARCHAR},
+      #{itemName,jdbcType=VARCHAR}, #{byPrice,jdbcType=DOUBLE}, #{picUrls,jdbcType=VARCHAR},
+      #{count,jdbcType=INTEGER}, #{unit,jdbcType=VARCHAR}, #{subTotal,jdbcType=DOUBLE})
+  </insert>
+</mapper>

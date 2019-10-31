@@ -1,0 +1,103 @@
+/**
+ * 
+ */
+package com.qigan.qiganshop.util.result;
+
+/**
+ * @author wyy
+ *
+ */
+public class XltcResult {
+	
+	private int res_code;
+	
+	private String message;
+	
+	private Object data;
+	
+	private enum ResultStatus{
+		
+		success(200, "操作成功"), 
+		error(500, "失败！请联系管理员");
+		
+		private int value;
+		
+		private String message;
+		
+		private ResultStatus(int value, String message){
+			this.value = value;
+			this.message = message;
+		}
+		
+		@SuppressWarnings("unused")
+		public int value(){
+			return this.value;
+		}
+		
+		@SuppressWarnings("unused")
+		public String message(){
+			return this.message;
+		}
+		
+	}
+	
+	public XltcResult() {
+
+    }
+	
+	public XltcResult(Object data){
+		this.data = data;
+	}
+	
+	public XltcResult(int res_code, String message){
+		this.res_code = res_code;
+		this.message = message;
+	}
+	
+	public XltcResult(int res_code, String message, Object data){
+		this.res_code = res_code;
+		this.message = message;
+		this.data = data;
+	}
+	
+	public int getRes_code() {
+		return res_code;
+	}
+
+	public void setRes_code(int res_code) {
+		this.res_code = res_code;
+	}
+
+	public String getMessage() {
+		return message;
+	}
+
+	public void setMessage(String message) {
+		this.message = message;
+	}
+
+	public Object getData() {
+		return data;
+	}
+
+	public void setData(Object data) {
+		this.data = data;
+	}
+
+	public static XltcResult error(){
+		return new XltcResult(ResultStatus.error.value, ResultStatus.error.message, null);
+	}
+	
+	public static XltcResult ok(){
+		return new XltcResult(ResultStatus.success.value, ResultStatus.success.message, null);
+	}
+	
+	public static XltcResult ok(Object data){
+		return new XltcResult(ResultStatus.success.value, ResultStatus.success.message, data);
+	}
+	
+	public static XltcResult build(int res_code, String message, Object data){
+		return new XltcResult(res_code, message, data);
+	}
+
+}

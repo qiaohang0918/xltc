@@ -1,0 +1,77 @@
+/**
+ * 
+ */
+package com.qigan.qiganshop.redis.event;
+
+import javax.annotation.PostConstruct;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.connection.Message;
+import org.springframework.stereotype.Service;
+
+import com.qigan.qiganshop.constant.RedisConstant;
+import com.qigan.qiganshop.redis.config.RedisSubscribeListenerAbstract;
+import com.qigan.qiganshop.service.UserCouponService;
+import com.qigan.qiganshop.util.Redis.RedisLock;
+import com.qigan.qiganshop.util.Redis.RedisUtil;
+
+import redis.clients.jedis.Jedis;
+
+/**
+ * @author wyy
+ *
+ */
+@Service("keyExpired")
+public class KeyExpiredListener extends RedisSubscribeListenerAbstract{
+
+	private Jedis jedis;
+	
+	private static final String SUFF = "expired:";
+	
+	private static final String SUCCESS = "success";
+	
+	private static final String FAIL = "fail";
+	
+	@Autowired
+	UserCouponService couponService;
+	
+	public static KeyExpiredListener keyListener;
+	
+	@PostConstruct
+	public void init(){
+		keyListener = this;
+	}
+	
+	@Override
+	public void redisChannelHandle(Message message, byte[] pattern) {
+		// TODO Auto-generated method stub
+		final String body = new String(message.getBody());
+		if(StringUtils.isNotBlank(body) && body.indexOf(":") != -1){
+			String[] keys = body.split(":");
+			handleExpireKey(keys[0], keys[1]);
+		}
+	}
+
+	private void handleExpireKey(String type, String expiredKey){
+		String newKey = SUFF + expiredKey ;
+		try {
+			jedis = RedisUtil.getConnection();
+			switch (type + ":") {
+			case RedisConstant.USER_COUPON:
+				keyListener.couponService.expireUserCoupon(expiredKey);
+				return;
+
+			default:
+				break;
+			}
+		} catch (Exception e) {
+			// TODO: handle exception
+			jedis.hset("KEY_EXPIRED", newKey, FAIL);
+		} finally {
+			// TODO: handle finally clause
+			jedis.close();
+		}
+	}
+
+}

@@ -1,0 +1,30 @@
+package com.qigan.qiganshop.mapper;
+
+import com.qigan.qiganshop.pojo.TbSpecialUnit;
+import com.qigan.qiganshop.pojo.TbSpecialUnitExample;
+import java.util.List;
+import org.apache.ibatis.annotations.Param;
+
+public interface TbSpecialUnitMapper {
+    int countByExample(TbSpecialUnitExample example);
+
+    int deleteByExample(TbSpecialUnitExample example);
+
+    int deleteByPrimaryKey(String unitId);
+
+    int insert(TbSpecialUnit record);
+
+    int insertSelective(TbSpecialUnit record);
+
+    List<TbSpecialUnit> selectByExample(TbSpecialUnitExample example);
+
+    TbSpecialUnit selectByPrimaryKey(String unitId);
+
+    int updateByExampleSelective(@Param("record") TbSpecialUnit record, @Param("example") TbSpecialUnitExample example);
+
+    int updateByExample(@Param("record") TbSpecialUnit record, @Param("example") TbSpecialUnitExample example);
+
+    int updateByPrimaryKeySelective(TbSpecialUnit record);
+
+    int updateByPrimaryKey(TbSpecialUnit record);
+}

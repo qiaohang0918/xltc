@@ -1,0 +1,227 @@
+package com.qigan.qiganshop.controller.backstage;
+
+import com.qigan.qiganshop.exception.XltcRuntimeException;
+import com.qigan.qiganshop.myutils.SqlConstructUtils;
+import com.qigan.qiganshop.pojo.TbActivityMain;
+import com.qigan.qiganshop.pojo.TbActivityUnion;
+import com.qigan.qiganshop.pojo.TbActivityUnionGoods;
+import com.qigan.qiganshop.service.GoodsService;
+import com.qigan.qiganshop.service.XltcActivityManageService;
+import com.qigan.qiganshop.service.XltcActivityService;
+import com.qigan.qiganshop.util.notnull.StringNotNull;
+import com.qigan.qiganshop.util.result.XltcResult;
+import com.qigan.qiganshop.util.result.format.JsonResult;
+import com.sun.org.apache.regexp.internal.RE;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
+import static com.qigan.qiganshop.service.impl.XltcHomeServiceImpl.MES_NOT_SEND;
+
+/**
+ * @Aurher: QiaoHang
+ * @Description:
+ * @Data: 2019/10/17 14:19
+ * @Modified By:
+ */
+@RestController
+@RequestMapping("/activity/manage")
+public class XltcActivityManageController {
+
+    @Autowired
+    XltcActivityManageService activityManageService;
+    @Autowired
+    GoodsService goodsService;
+
+    /**
+     * 查询当前活动，返回活动信息，活动下的分类信息，以及分类下的商品信息
+     * @param activityId
+     * @param coordinate
+     * @return
+     */
+    @RequestMapping(value = "/selectCurrentActivityCascade.do",method = RequestMethod.POST)
+    public XltcResult selectCurrentActivityCascade(@RequestParam String activityId,
+                                                   @RequestParam String coordinate){
+        if(!StringNotNull.check(activityId,coordinate)){
+            return XltcResult.error("参数不足：[活动id，经纬度] 必传！");
+        }
+        return activityManageService.selectCurrentActivityCascade(activityId,coordinate);
+    }
+
+    /**
+     * 添加活动分类
+     * @param activity
+     * @return
+     */
+    @RequestMapping(value = "/addMainActivity.do",method = RequestMethod.POST)
+    public XltcResult addMainActivity(@RequestBody TbActivityMain activity){
+        if(!StringNotNull.check(activity.getActivityId(),
+                activity.getActivityName(),
+                activity.getActivitySkipUrl(),
+                activity.getTopPicture(),
+                activity.getBottomPicture(),
+                activity.getSmallPicture(),
+                activity.getBackground())){
+            return XltcResult.error("缺少参数，[ 活动id,顶图,底图,小图,背景色,跳转url,名称 ]必传!");
+        }
+        return activityManageService.addMainActivity(activity);
+    }
+
+    /**
+     * 修改活动分类
+     * @param activity
+     * @return
+     */
+    @RequestMapping(value = "/updateMainActivity.do",method = RequestMethod.POST)
+    public XltcResult updateMainActivity(@RequestBody TbActivityMain activity){
+        if(!StringNotNull.check(activity.getActivityName(),
+                activity.getActivitySkipUrl(),
+                activity.getTopPicture(),
+                activity.getBottomPicture(),
+                activity.getSmallPicture(),
+                activity.getBackground(),
+                activity.getActivityId())){
+            return XltcResult.error("缺少参数，[ 活动id,顶图,底图,小图,背景色,跳转url,名称 ]必传!");
+        }
+        return activityManageService.updateMainActivity(activity);
+    }
+
+
+    /**
+     * 查询活动分类
+     * @param activity
+     * @return
+     */
+    @RequestMapping(value = "/findMainActivity.do",method = RequestMethod.POST)
+    public XltcResult findMainActivity(@RequestBody TbActivityMain activity){
+        return activityManageService.findMainActivity(activity);
+    }
+
+    /**
+     * 删除主活动(可根据条件)
+     * @return
+     */
+    @RequestMapping(value = "/deleteMainActivity.do",method = RequestMethod.POST)
+    public XltcResult deleteMainActivity(@RequestBody TbActivityMain activity){
+        if(!StringNotNull.check(activity.getActivityId()))
+            return XltcResult.error("参数不全：[ 活动id ] 必传！");
+        return activityManageService.deleteMainActivity(activity);
+    }
+
+
+    /**
+     * 添加关联子类
+     * @param union
+     * @return
+     */
+    @RequestMapping(value = "/addUnionType.do",method = RequestMethod.POST)
+    public XltcResult addUnionType(@RequestBody TbActivityUnion union){
+        if(!StringNotNull.check(union.getActivityId(),
+                union.getUnionName(),
+                union.getUnionPicture(),
+                union.getUnionSort())){
+            return XltcResult.error("参数不全：[ 活动id,联合分类name,联合分类主图,排序字段 ] 必填！");
+        }
+        try {
+            Integer.parseInt(union.getUnionSort());
+        }catch (Exception e){
+            return XltcResult.error("排序字段必须是数字格式的String");
+        }
+        return activityManageService.addUnionType(union);
+    }
+
+
+    /**
+     * 查询关联分类(不含商品 web用)
+     * @param union
+     * @return
+     */
+    @RequestMapping(value = "/findUnionTypes.do",method = RequestMethod.POST)
+    public XltcResult findUnionTypes(@RequestBody TbActivityUnion union){
+        return activityManageService.findUnionTypes(union);
+    }
+
+
+    /**
+     * 编辑关联分类
+     * @return
+     */
+    @RequestMapping(value = "/updateUnionType.do",method = RequestMethod.POST)
+    public XltcResult updateUnionType(@RequestBody TbActivityUnion union){
+        if(!StringNotNull.check(union.getUnionId())){
+            return XltcResult.error("参数不全：[ 关联id ] 必填！");
+        }
+        try {
+            Integer.parseInt(union.getUnionSort());
+        }catch (Exception e){
+            return XltcResult.error("排序字段必须是数字格式的String");
+        }
+        return activityManageService.updateUnionType(union);
+    }
+
+
+    /**
+     * 删除关联分类
+     * @return
+     */
+    @RequestMapping(value = "/deleteUnionType.do",method = RequestMethod.POST)
+    public XltcResult deleteUnionType(@RequestBody TbActivityUnion union){
+        if(!StringNotNull.check(union.getUnionId())) {
+            return XltcResult.error("参数不全：[ 关联id ] 必填！");
+        }
+        return activityManageService.deleteUnionType(union);
+    }
+
+    /**
+     * 关联商品
+     * @param list
+     * @return
+     */
+    @RequestMapping(value = "/unionGoods.do",method = RequestMethod.POST)
+    public XltcResult unionGoods(@RequestBody List<TbActivityUnionGoods> list){
+        if(SqlConstructUtils.nullList(list))
+            return XltcResult.error("关联商品集合不能为空！");
+        return activityManageService.unionGoods(list);
+    }
+
+
+    /**
+     * 解除商品
+     * @param list
+     * @return
+     */
+    @RequestMapping(value = "/releaseUnionGoods.do",method = RequestMethod.POST)
+    public XltcResult releaseUnionGoods(@RequestBody List<TbActivityUnionGoods> list){
+        if(SqlConstructUtils.nullList(list))
+            return XltcResult.error("解除关联商品集合不能为空！");
+        return activityManageService.releaseUnionGoods(list);
+    }
+
+
+    /**
+     * 查询关联商品
+     * @param unionId
+     * @param coordinate  117.301685,34.781937
+     * @return
+     */
+    @RequestMapping(value = "/findUnionGoodsByUnionId.do",method = RequestMethod.POST)
+    public XltcResult findUnionGoods(@RequestParam String unionId,String coordinate){
+        if(!StringNotNull.check(unionId,coordinate))
+            return XltcResult.error("关联类型id 和 经纬度 [unionId,coordinate] 必传！");
+        //根据经纬度查询仓库
+        JsonResult wareIdJson = goodsService.getWarehouseId(coordinate);
+        String wareId = "";
+        if ("200".equals(wareIdJson.getRes_code())) {
+            wareId = wareIdJson.getMessage();
+        } else {
+            //无法定位到仓库，返回空数据
+            return XltcResult.ok(new ArrayList<>());
+        }
+        return activityManageService.findUnionGoods(unionId,wareId);
+    }
+
+}

@@ -1,0 +1,91 @@
+package com.qigan.qiganshop.pojo;
+
+import java.io.Serializable;
+
+public class TbPresellGoods implements Serializable {
+
+    //预售商品code
+    private String presellgoodscode;
+
+    //预售发起时间
+    private String duringbefore;
+
+    //预售截至时间
+    private String duringafter;
+
+    //是否启用
+    private String enabled;
+
+    //操作员工的编号
+    private String no;
+
+    //图片url(暂时不用)
+    private String pictureurl;
+
+    private static final long serialVersionUID = 1L;
+
+    public String getPresellgoodscode() {
+        return presellgoodscode;
+    }
+
+    public void setPresellgoodscode(String presellgoodscode) {
+        this.presellgoodscode = presellgoodscode;
+    }
+
+    public String getDuringbefore() {
+        return duringbefore;
+    }
+
+    public void setDuringbefore(String duringbefore) {
+        this.duringbefore = duringbefore == null ? null : duringbefore.trim();
+    }
+
+    public String getDuringafter() {
+        return duringafter;
+    }
+
+    public void setDuringafter(String duringafter) {
+        this.duringafter = duringafter == null ? null : duringafter.trim();
+    }
+
+    public String getEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(String enabled) {
+        this.enabled = enabled == null ? null : enabled.trim();
+    }
+
+    public String getNo() {
+        return no;
+    }
+
+    public void setNo(String no) {
+        this.no = no == null ? null : no.trim();
+    }
+
+    public String getPictureurl() {
+        return pictureurl;
+    }
+
+    public void setPictureurl(String pictureurl) {
+        this.pictureurl = pictureurl == null ? null : pictureurl.trim();
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(getClass().getSimpleName());
+        sb.append(" [");
+        sb.append("Hash = ").append(hashCode());
+        sb.append(", presellgoodscode=").append(presellgoodscode);
+        sb.append(", duringbefore=").append(duringbefore);
+        sb.append(", duringafter=").append(duringafter);
+        sb.append(", enabled=").append(enabled);
+        sb.append(", no=").append(no);
+        sb.append(", pictureurl=").append(pictureurl);
+        sb.append(", serialVersionUID=").append(serialVersionUID);
+        sb.append("]");
+        return sb.toString();
+    }
+}

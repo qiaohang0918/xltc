@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qigan.qiganshop.mapper.ManagerMapper">
+
+	<insert id="insert" parameterType="com.qigan.qiganshop.pojo.Manager">
+		<selectKey keyProperty="managerId" keyColumn="managerId"
+			resultType="Integer" order="BEFORE" statementType="PREPARED">
+			select
+			if(max(manager_id) is null, 1, max(manager_id) + 1) as managerId
+			from
+			tb_manager
+		</selectKey>
+
+		insert into
+		tb_manager(manager_id,`no`,`name`,phone,enabled,`password`,create_time)
+		values(#{managerId},#{no},#{name},#{phone},
+		<if test="enabled == true">
+			1,
+		</if>
+		<if test="enabled == false">
+			0,
+		</if>
+		#{password},now())
+	</insert>
+
+	<insert id="update" parameterType="com.qigan.qiganshop.pojo.Manager">
+		update tb_manager
+		set
+		<if test="no !=null">
+			no = #{no} ,
+		</if>
+		<if test="name !=null">
+			name = #{name} ,
+		</if>
+		<if test="phone !=null">
+			phone = #{phone} ,
+		</if>
+		<if test="enabled == true">
+			enabled = 1 ,
+		</if>
+		<if test="enabled == false">
+			enabled = 0 ,
+		</if>
+		<if test="password != null">
+			password = #{password},
+		</if>
+		modified_time = now()
+		where 1=1 and `manager_id`= #{managerId}
+	</insert>
+
+	<select id="getManagerPage" resultType="com.qigan.qiganshop.pojo.Manager"
+		parameterType="map">
+		select manager_id as managerId, `no`,`name`,phone,enabled,authRefund as authRefund, create_time as createTime, modified_time as modifiedTime
+		from tb_manager
+		where 1=1
+		order by ${order}
+		<if test="sort != 'NORMAL'">
+			${sort}
+		</if>
+		<if test="size !=0 ">
+			limit ${(page - 1) * size} , ${size}
+		</if>
+	</select>
+
+	<select id="count" resultType="java.lang.Long">
+		select count(0) from tb_manager
+		where 1=1
+	</select>
+
+	<select id="getManager" resultType="com.qigan.qiganshop.pojo.Manager"
+		parameterType="map">
+		select manager_id as managerId,
+		`no`,`name`,phone,enabled,password,create_time as createTime,
+		modified_time as modifiedTime
+		from tb_manager
+		where 1=1 and manager_id =
+		#{managerId}
+	</select>
+
+	<select id="getManagerByNo" resultType="com.qigan.qiganshop.pojo.Manager"
+		parameterType="map">
+		select manager_id as managerId,
+		`no`,`name`,phone,enabled,password,create_time as createTime,
+		modified_time as modifiedTime
+		from tb_manager
+		where 1=1 and no = #{no}
+	</select>
+
+
+</mapper>

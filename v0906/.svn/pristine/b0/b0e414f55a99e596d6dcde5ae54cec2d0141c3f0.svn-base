@@ -1,0 +1,139 @@
+package com.qigan.qiganshop.pojo;
+
+import java.io.Serializable;
+
+public class TbDeposit implements Serializable {
+    private String orderId;
+
+    private String depositType;
+
+    private String outTradeNum;
+
+    private String createtime;
+
+    private String paytime;
+
+    private String userId;
+
+    private String phone;
+
+    private String status;
+
+    private String depositCardId;
+
+    private String depositMoneyUnit;
+
+    private String transactionId;
+
+    private static final long serialVersionUID = 1L;
+
+    public String getOrderId() {
+        return orderId;
+    }
+
+    public void setOrderId(String orderId) {
+        this.orderId = orderId == null ? null : orderId.trim();
+    }
+
+    public String getDepositType() {
+        return depositType;
+    }
+
+    public void setDepositType(String depositType) {
+        this.depositType = depositType == null ? null : depositType.trim();
+    }
+
+    public String getOutTradeNum() {
+        return outTradeNum;
+    }
+
+    public void setOutTradeNum(String outTradeNum) {
+        this.outTradeNum = outTradeNum == null ? null : outTradeNum.trim();
+    }
+
+    public String getCreatetime() {
+        return createtime;
+    }
+
+    public void setCreatetime(String createtime) {
+        this.createtime = createtime == null ? null : createtime.trim();
+    }
+
+    public String getPaytime() {
+        return paytime;
+    }
+
+    public void setPaytime(String paytime) {
+        this.paytime = paytime == null ? null : paytime.trim();
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId == null ? null : userId.trim();
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone == null ? null : phone.trim();
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status == null ? null : status.trim();
+    }
+
+    public String getDepositCardId() {
+        return depositCardId;
+    }
+
+    public void setDepositCardId(String depositCardId) {
+        this.depositCardId = depositCardId == null ? null : depositCardId.trim();
+    }
+
+    public String getDepositMoneyUnit() {
+        return depositMoneyUnit;
+    }
+
+    public void setDepositMoneyUnit(String depositMoneyUnit) {
+        this.depositMoneyUnit = depositMoneyUnit == null ? null : depositMoneyUnit.trim();
+    }
+
+    public String getTransactionId() {
+        return transactionId;
+    }
+
+    public void setTransactionId(String transactionId) {
+        this.transactionId = transactionId == null ? null : transactionId.trim();
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(getClass().getSimpleName());
+        sb.append(" [");
+        sb.append("Hash = ").append(hashCode());
+        sb.append(", orderId=").append(orderId);
+        sb.append(", depositType=").append(depositType);
+        sb.append(", outTradeNum=").append(outTradeNum);
+        sb.append(", createtime=").append(createtime);
+        sb.append(", paytime=").append(paytime);
+        sb.append(", userId=").append(userId);
+        sb.append(", phone=").append(phone);
+        sb.append(", status=").append(status);
+        sb.append(", depositCardId=").append(depositCardId);
+        sb.append(", depositMoneyUnit=").append(depositMoneyUnit);
+        sb.append(", transactionId=").append(transactionId);
+        sb.append(", serialVersionUID=").append(serialVersionUID);
+        sb.append("]");
+        return sb.toString();
+    }
+}

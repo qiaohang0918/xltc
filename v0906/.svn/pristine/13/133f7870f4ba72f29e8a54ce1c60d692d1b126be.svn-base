@@ -1,0 +1,354 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qigan.qiganshop.mapper.TbSpecialUnitMapper" >
+  <resultMap id="BaseResultMap" type="com.qigan.qiganshop.pojo.TbSpecialUnit" >
+    <id column="unit_id" property="unitId" jdbcType="VARCHAR" />
+    <result column="unit_picture" property="unitPicture" jdbcType="VARCHAR" />
+    <result column="unit_title" property="unitTitle" jdbcType="VARCHAR" />
+    <result column="unit_sub_notice" property="unitSubNotice" jdbcType="VARCHAR" />
+    <result column="unit_owner_picture" property="unitOwnerPicture" jdbcType="VARCHAR" />
+    <result column="unit_owner_no" property="unitOwnerNo" jdbcType="VARCHAR" />
+    <result column="unit_owner_name" property="unitOwnerName" jdbcType="VARCHAR" />
+    <result column="unit_like" property="unitLike" jdbcType="VARCHAR" />
+    <result column="unit_stored" property="unitStored" jdbcType="VARCHAR" />
+    <result column="create_time" property="createTime" jdbcType="VARCHAR" />
+    <result column="update_time" property="updateTime" jdbcType="VARCHAR" />
+    <result column="enable" property="enable" jdbcType="VARCHAR" />
+    <result column="unit_details" property="unitDetails" jdbcType="VARCHAR" />
+    <result column="sort" property="sort" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    unit_id, unit_picture, unit_title, unit_sub_notice, unit_owner_picture, unit_owner_no, 
+    unit_owner_name, unit_like, unit_stored, create_time, update_time, enable, unit_details, 
+    sort
+  </sql>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.qigan.qiganshop.pojo.TbSpecialUnitExample" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from tb_special_unit
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from tb_special_unit
+    where unit_id = #{unitId,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from tb_special_unit
+    where unit_id = #{unitId,jdbcType=VARCHAR}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.qigan.qiganshop.pojo.TbSpecialUnitExample" >
+    delete from tb_special_unit
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.qigan.qiganshop.pojo.TbSpecialUnit" >
+    insert into tb_special_unit (unit_id, unit_picture, unit_title, 
+      unit_sub_notice, unit_owner_picture, unit_owner_no, 
+      unit_owner_name, unit_like, unit_stored, 
+      create_time, update_time, enable, 
+      unit_details, sort)
+    values (#{unitId,jdbcType=VARCHAR}, #{unitPicture,jdbcType=VARCHAR}, #{unitTitle,jdbcType=VARCHAR}, 
+      #{unitSubNotice,jdbcType=VARCHAR}, #{unitOwnerPicture,jdbcType=VARCHAR}, #{unitOwnerNo,jdbcType=VARCHAR}, 
+      #{unitOwnerName,jdbcType=VARCHAR}, #{unitLike,jdbcType=VARCHAR}, #{unitStored,jdbcType=VARCHAR}, 
+      #{createTime,jdbcType=VARCHAR}, #{updateTime,jdbcType=VARCHAR}, #{enable,jdbcType=VARCHAR}, 
+      #{unitDetails,jdbcType=VARCHAR}, #{sort,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.qigan.qiganshop.pojo.TbSpecialUnit" >
+    insert into tb_special_unit
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="unitId != null" >
+        unit_id,
+      </if>
+      <if test="unitPicture != null" >
+        unit_picture,
+      </if>
+      <if test="unitTitle != null" >
+        unit_title,
+      </if>
+      <if test="unitSubNotice != null" >
+        unit_sub_notice,
+      </if>
+      <if test="unitOwnerPicture != null" >
+        unit_owner_picture,
+      </if>
+      <if test="unitOwnerNo != null" >
+        unit_owner_no,
+      </if>
+      <if test="unitOwnerName != null" >
+        unit_owner_name,
+      </if>
+      <if test="unitLike != null" >
+        unit_like,
+      </if>
+      <if test="unitStored != null" >
+        unit_stored,
+      </if>
+      <if test="createTime != null" >
+        create_time,
+      </if>
+      <if test="updateTime != null" >
+        update_time,
+      </if>
+      <if test="enable != null" >
+        enable,
+      </if>
+      <if test="unitDetails != null" >
+        unit_details,
+      </if>
+      <if test="sort != null" >
+        sort,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="unitId != null" >
+        #{unitId,jdbcType=VARCHAR},
+      </if>
+      <if test="unitPicture != null" >
+        #{unitPicture,jdbcType=VARCHAR},
+      </if>
+      <if test="unitTitle != null" >
+        #{unitTitle,jdbcType=VARCHAR},
+      </if>
+      <if test="unitSubNotice != null" >
+        #{unitSubNotice,jdbcType=VARCHAR},
+      </if>
+      <if test="unitOwnerPicture != null" >
+        #{unitOwnerPicture,jdbcType=VARCHAR},
+      </if>
+      <if test="unitOwnerNo != null" >
+        #{unitOwnerNo,jdbcType=VARCHAR},
+      </if>
+      <if test="unitOwnerName != null" >
+        #{unitOwnerName,jdbcType=VARCHAR},
+      </if>
+      <if test="unitLike != null" >
+        #{unitLike,jdbcType=VARCHAR},
+      </if>
+      <if test="unitStored != null" >
+        #{unitStored,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null" >
+        #{createTime,jdbcType=VARCHAR},
+      </if>
+      <if test="updateTime != null" >
+        #{updateTime,jdbcType=VARCHAR},
+      </if>
+      <if test="enable != null" >
+        #{enable,jdbcType=VARCHAR},
+      </if>
+      <if test="unitDetails != null" >
+        #{unitDetails,jdbcType=VARCHAR},
+      </if>
+      <if test="sort != null" >
+        #{sort,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.qigan.qiganshop.pojo.TbSpecialUnitExample" resultType="java.lang.Integer" >
+    select count(*) from tb_special_unit
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update tb_special_unit
+    <set >
+      <if test="record.unitId != null" >
+        unit_id = #{record.unitId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.unitPicture != null" >
+        unit_picture = #{record.unitPicture,jdbcType=VARCHAR},
+      </if>
+      <if test="record.unitTitle != null" >
+        unit_title = #{record.unitTitle,jdbcType=VARCHAR},
+      </if>
+      <if test="record.unitSubNotice != null" >
+        unit_sub_notice = #{record.unitSubNotice,jdbcType=VARCHAR},
+      </if>
+      <if test="record.unitOwnerPicture != null" >
+        unit_owner_picture = #{record.unitOwnerPicture,jdbcType=VARCHAR},
+      </if>
+      <if test="record.unitOwnerNo != null" >
+        unit_owner_no = #{record.unitOwnerNo,jdbcType=VARCHAR},
+      </if>
+      <if test="record.unitOwnerName != null" >
+        unit_owner_name = #{record.unitOwnerName,jdbcType=VARCHAR},
+      </if>
+      <if test="record.unitLike != null" >
+        unit_like = #{record.unitLike,jdbcType=VARCHAR},
+      </if>
+      <if test="record.unitStored != null" >
+        unit_stored = #{record.unitStored,jdbcType=VARCHAR},
+      </if>
+      <if test="record.createTime != null" >
+        create_time = #{record.createTime,jdbcType=VARCHAR},
+      </if>
+      <if test="record.updateTime != null" >
+        update_time = #{record.updateTime,jdbcType=VARCHAR},
+      </if>
+      <if test="record.enable != null" >
+        enable = #{record.enable,jdbcType=VARCHAR},
+      </if>
+      <if test="record.unitDetails != null" >
+        unit_details = #{record.unitDetails,jdbcType=VARCHAR},
+      </if>
+      <if test="record.sort != null" >
+        sort = #{record.sort,jdbcType=VARCHAR},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update tb_special_unit
+    set unit_id = #{record.unitId,jdbcType=VARCHAR},
+      unit_picture = #{record.unitPicture,jdbcType=VARCHAR},
+      unit_title = #{record.unitTitle,jdbcType=VARCHAR},
+      unit_sub_notice = #{record.unitSubNotice,jdbcType=VARCHAR},
+      unit_owner_picture = #{record.unitOwnerPicture,jdbcType=VARCHAR},
+      unit_owner_no = #{record.unitOwnerNo,jdbcType=VARCHAR},
+      unit_owner_name = #{record.unitOwnerName,jdbcType=VARCHAR},
+      unit_like = #{record.unitLike,jdbcType=VARCHAR},
+      unit_stored = #{record.unitStored,jdbcType=VARCHAR},
+      create_time = #{record.createTime,jdbcType=VARCHAR},
+      update_time = #{record.updateTime,jdbcType=VARCHAR},
+      enable = #{record.enable,jdbcType=VARCHAR},
+      unit_details = #{record.unitDetails,jdbcType=VARCHAR},
+      sort = #{record.sort,jdbcType=VARCHAR}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.qigan.qiganshop.pojo.TbSpecialUnit" >
+    update tb_special_unit
+    <set >
+      <if test="unitPicture != null" >
+        unit_picture = #{unitPicture,jdbcType=VARCHAR},
+      </if>
+      <if test="unitTitle != null" >
+        unit_title = #{unitTitle,jdbcType=VARCHAR},
+      </if>
+      <if test="unitSubNotice != null" >
+        unit_sub_notice = #{unitSubNotice,jdbcType=VARCHAR},
+      </if>
+      <if test="unitOwnerPicture != null" >
+        unit_owner_picture = #{unitOwnerPicture,jdbcType=VARCHAR},
+      </if>
+      <if test="unitOwnerNo != null" >
+        unit_owner_no = #{unitOwnerNo,jdbcType=VARCHAR},
+      </if>
+      <if test="unitOwnerName != null" >
+        unit_owner_name = #{unitOwnerName,jdbcType=VARCHAR},
+      </if>
+      <if test="unitLike != null" >
+        unit_like = #{unitLike,jdbcType=VARCHAR},
+      </if>
+      <if test="unitStored != null" >
+        unit_stored = #{unitStored,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null" >
+        create_time = #{createTime,jdbcType=VARCHAR},
+      </if>
+      <if test="updateTime != null" >
+        update_time = #{updateTime,jdbcType=VARCHAR},
+      </if>
+      <if test="enable != null" >
+        enable = #{enable,jdbcType=VARCHAR},
+      </if>
+      <if test="unitDetails != null" >
+        unit_details = #{unitDetails,jdbcType=VARCHAR},
+      </if>
+      <if test="sort != null" >
+        sort = #{sort,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where unit_id = #{unitId,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.qigan.qiganshop.pojo.TbSpecialUnit" >
+    update tb_special_unit
+    set unit_picture = #{unitPicture,jdbcType=VARCHAR},
+      unit_title = #{unitTitle,jdbcType=VARCHAR},
+      unit_sub_notice = #{unitSubNotice,jdbcType=VARCHAR},
+      unit_owner_picture = #{unitOwnerPicture,jdbcType=VARCHAR},
+      unit_owner_no = #{unitOwnerNo,jdbcType=VARCHAR},
+      unit_owner_name = #{unitOwnerName,jdbcType=VARCHAR},
+      unit_like = #{unitLike,jdbcType=VARCHAR},
+      unit_stored = #{unitStored,jdbcType=VARCHAR},
+      create_time = #{createTime,jdbcType=VARCHAR},
+      update_time = #{updateTime,jdbcType=VARCHAR},
+      enable = #{enable,jdbcType=VARCHAR},
+      unit_details = #{unitDetails,jdbcType=VARCHAR},
+      sort = #{sort,jdbcType=VARCHAR}
+    where unit_id = #{unitId,jdbcType=VARCHAR}
+  </update>
+</mapper>

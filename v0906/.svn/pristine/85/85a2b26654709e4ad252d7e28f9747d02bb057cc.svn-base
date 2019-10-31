@@ -1,0 +1,216 @@
+package com.qigan.qiganshop.controller.backstage;
+
+import com.qigan.qiganshop.controller.utils.PublicControl;
+import com.qigan.qiganshop.pojo.Label;
+import com.qigan.qiganshop.service.GoodsService;
+import com.qigan.qiganshop.service.LabelService;
+import com.qigan.qiganshop.util.result.PageResult;
+import com.qigan.qiganshop.util.result.format.JsonResult;
+import com.qigan.qiganshop.util.result.format.ResultCode;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.crypto.MacSpi;
+import java.util.HashMap;
+import java.util.List;
+
+/**
+ * 标签 controller
+ *
+ * @author wanghao
+ * @time 2019-04-15 10:30
+ */
+@SuppressWarnings("all")
+@RestController
+@RequestMapping("/Label")
+@Api(value = "标签 controller", tags = {"WEB 商品标签操作接口"})
+public class LabelController {
+    @Autowired
+    private LabelService service;
+    @Autowired
+    private GoodsService goodsService;
+    @Autowired
+    private JsonResult jr;
+    @Autowired
+    private PublicControl pc;
+
+
+    /**
+     * 查询所有规格信息或者分页查询或者条件查询,三者随意组合
+     *
+     * @param cateId
+     * @return
+     */
+    @RequestMapping("findByCateId.do")
+    @ApiOperation(
+            value = "根据 cateId 获取所有的标签列表",
+            notes = "获取标签信息,cateId为分类ID   \r\n",
+            httpMethod = "POST")
+    public JsonResult findPage(@RequestParam String cateId) {
+        if (cateId != null && !"".equals(cateId)) {
+            Label label = new Label();
+            label.setCateId(cateId);
+            PageResult result = service.findByLabel(label);
+
+            HashMap<String, Object> map = new HashMap<>();
+            map.put("labelList", result);
+            map.put("goodsList", null);
+            return jr.jsonResultData(ResultCode.SUCCESS.res_code(), ResultCode.SUCCESS.message(), map);
+        }
+        return jr.jsonResultData(ResultCode.FAIL.res_code(), "cateId 不能为空", null);
+
+    }
+
+    /**
+     * 添加标签
+     *
+     * @param labelList
+     * @return
+     */
+    @RequestMapping("add.do")
+    @ApiOperation(
+            value = "根据 cateId 添加标签",
+            notes = "添加标签信息 上级 ID(cateId) 必传  前端需要做好排序,根据传入的集合的顺序,自动进行排序 \r\n" +
+                    "比如一次针对某个分类,添加了 10 个标签,第一个插入的标签,sort 即为 1,前端不必传入,后端根据传入数据顺序依次添加",
+            httpMethod = "POST")
+    public JsonResult add(@RequestBody List<Label> labelList) {
+        if (labelList.size() > 0) {
+            Integer add = service.add(labelList);
+            if (add == 0) {
+                return jr.jsonResultData(ResultCode.FAIL.res_code(), "cateId 不能为空");
+            }
+            return jr.jsonResultData(ResultCode.SUCCESS.res_code(), ResultCode.SUCCESS.message());
+        }
+        return jr.jsonResultData(ResultCode.FAIL.res_code(), "集合不能为空");
+
+    }
+
+    /**
+     * 修改标签
+     *
+     * @param labelList
+     * @return
+     */
+    @RequestMapping("update.do")
+    @ApiOperation(
+            value = "根据 cateId 添加标签",
+            notes = "修改标签信息 所有信息必传  前端需要做好排序,根据传入的集合的顺序,自动进行排序 \r\n" +
+                    "比如一次针对某个分类,添加了 10 个标签,第一个插入的标签,sort 即为 1,前端不必传入,后端根据传入数据顺序依次添加  \n" +
+                    "前端不必传入,后端根据传入数据顺序依次添加 顺序只跟传入顺序有关,跟 sort 无关 \n" +
+                    "前端不必传入,后端根据传入数据顺序依次添加 顺序只跟传入顺序有关,跟 sort 无关 \n",
+            httpMethod = "POST")
+    public JsonResult update(@RequestBody List<Label> labelList) {
+        if (labelList.size() > 0) {
+            Integer update = service.update(labelList);
+            if (update == 0) {
+                return jr.jsonResultData(ResultCode.FAIL.res_code(), "cateId 不能为空");
+            }
+            return jr.jsonResultData(ResultCode.SUCCESS.res_code(), ResultCode.SUCCESS.message());
+        }
+        return jr.jsonResultData(ResultCode.FAIL.res_code(), "集合不能为空");
+
+    }
+
+    /**
+     * 修改标签
+     *
+     * @param labelIds
+     * @return
+     */
+    @RequestMapping("delete.do")
+    @ApiOperation(
+            value = "根据 labelId 删除标签",
+            notes = "根据 labelId 删除标签,多个 labelId 向数组中添加数据即可",
+            httpMethod = "POST")
+    public JsonResult delete(String[] labelIds) {
+        if (labelIds.length > 0) {
+            return pc.deleteUtils(labelIds, service.delete(labelIds));
+        }
+        return jr.jsonResultData(ResultCode.FAIL.res_code(), "集合不能为空");
+
+    }
+
+    /**
+     * 关联
+     *
+     * @param labelId
+     * @return
+     */
+    @RequestMapping("unionGoods.do")
+    @ApiOperation(
+            value = "根据 labelId 和 goodsId集合 进行关联或取消关联",
+            notes = "根据 labelId 和 goodsId集合 进行商品与标签的关联或取消关联,商品 ID 需要使用英文逗号','进行分割  \n" +
+                    "flag 为标识位,add 为关联操作,del 为取消关联操作,传其他无效",
+            httpMethod = "POST")
+    public JsonResult unionGoods(String labelId, String goodsIds, String flag) {
+        if (!"add".equals(flag) && !"del".equals(flag)) {
+
+            return jr.jsonResultData(ResultCode.FAIL.res_code(), "flag 错误,只能传 add 或 del");
+        }
+        if (goodsIds != null && !"".equals(goodsIds)) {
+            if ("add".equals(flag)) {
+
+                return pc.addUtils(service.unionGoods(labelId, goodsIds, flag));
+            }
+            if ("del".equals(flag)) {
+
+                return pc.deleteUtils(goodsIds.split(","), service.unionGoods(labelId, goodsIds, flag));
+            }
+        }
+        return jr.jsonResultData(ResultCode.FAIL.res_code(), "商品 ID集合不能为空");
+
+    }
+
+    /**
+     * 查询
+     *
+     * @param labelId
+     * @return
+     */
+    @RequestMapping("findUnionGoods.do")
+    @ApiOperation(
+            value = "查询标签下的商品",
+            notes = "因为标签可能存在重复,所以传递标签 ID 和分类 ID 进行查询商品信息",
+            httpMethod = "POST")
+    public JsonResult findUnionGoods(String categoryId, String labelId) {
+        if (categoryId != null
+                && !"".equals(categoryId)
+                && labelId != null
+                && !"".equals(labelId)) {
+            return jr.jsonResultData(ResultCode.SUCCESS.res_code(), ResultCode.SUCCESS.message(), goodsService.findUnionGoods(categoryId, labelId));
+        }
+        return jr.jsonResultData(ResultCode.FAIL.res_code(), "categoryId 或 labelId 不能为空");
+
+    }
+
+    @RequestMapping("updateSort.do")
+    @ApiOperation(
+            value = "修改商品规格排序",
+            notes = "修改商品规格排序,传递排序后的 list ,为保证排序不会重复,后台不参考前端传递的排序值 \r\n" +
+                    "只参考传到后台的商品规格顺序,第一个排序即为1,以此类推\r\n" +
+                    "注意:每次修改必须传递完整的商品分类排序后的ID,数据不完整,亲人两行泪!",
+            httpMethod = "POST")
+    public JsonResult updateSort(String labelId1, String labelId2) {
+        if (labelId1 != null && !"".equals(labelId1) && labelId1 != null && !"".equals(labelId2)) {
+            Integer count = service.updateSort(labelId1,labelId2);
+            if (count == 2) {
+                return jr.jsonResultData(ResultCode.SUCCESS.res_code(), "修改排序成功!");
+            } else if (count == -1) {
+                return jr.jsonResultData(ResultCode.FAIL.res_code(), "所选标签集合不属于同一个分类,无法修改排序!");
+            } else {
+                return jr.jsonResultData(ResultCode.FAIL.res_code(), "修改排序失败!");
+            }
+        } else {
+            return jr.jsonResultData(ResultCode.FAIL.res_code(), "修改排序失败,ID为空!");
+
+        }
+    }
+
+}

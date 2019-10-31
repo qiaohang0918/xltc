@@ -1,0 +1,105 @@
+package com.qigan.qiganshop.pojo;
+
+public class Banner {
+
+    private int bannerId;
+    private String moduleType;
+    private String type;
+    private String typeId;
+    private String itemId;
+    private String image;
+    private String url;
+    private String sort;
+    private String updateTime;
+    private String createTime;
+    private boolean isReceive;
+
+    public String getModuleType() {
+        return moduleType;
+    }
+
+    public void setModuleType(String moduleType) {
+        this.moduleType = moduleType;
+    }
+
+    public String getItemId() {
+        return itemId;
+    }
+
+    public void setItemId(String itemId) {
+        this.itemId = itemId;
+    }
+
+    public String getSort() {
+        return sort;
+    }
+
+    public String getTypeId() {
+        return typeId;
+    }
+
+    public void setTypeId(String typeId) {
+        this.typeId = typeId;
+    }
+
+    public void setSort(String sort) {
+        this.sort = sort;
+    }
+
+    public int getBannerId() {
+        return bannerId;
+    }
+
+    public void setBannerId(int bannerId) {
+        this.bannerId = bannerId;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getImage() {
+        return image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
+    public String getUpdateTime() {
+        return updateTime;
+    }
+
+    public void setUpdateTime(String updateTime) {
+        this.updateTime = updateTime;
+    }
+
+    public String getCreateTime() {
+        return createTime;
+    }
+
+    public void setCreateTime(String createTime) {
+        this.createTime = createTime;
+    }
+
+	public boolean isReceive() {
+		return isReceive;
+	}
+
+	public void setReceive(boolean isReceive) {
+		this.isReceive = isReceive;
+	}
+
+}

@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qigan.qiganshop.mapper.TbSpecialTopicMapper" >
+  <resultMap id="BaseResultMap" type="com.qigan.qiganshop.pojo.TbSpecialTopic" >
+    <id column="topic_id" property="topicId" jdbcType="VARCHAR" />
+    <result column="special_id" property="specialId" jdbcType="VARCHAR" />
+    <result column="topic_name" property="topicName" jdbcType="VARCHAR" />
+    <result column="topic_picture" property="topicPicture" jdbcType="VARCHAR" />
+    <result column="topic_sort" property="topicSort" jdbcType="VARCHAR" />
+    <result column="create_time" property="createTime" jdbcType="VARCHAR" />
+    <result column="update_time" property="updateTime" jdbcType="VARCHAR" />
+    <result column="no" property="no" jdbcType="VARCHAR" />
+    <result column="enable" property="enable" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    topic_id, special_id, topic_name, topic_picture, topic_sort, create_time, update_time, 
+    no, enable
+  </sql>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.qigan.qiganshop.pojo.TbSpecialTopicExample" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from tb_special_topic
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    order by topic_sort asc
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from tb_special_topic
+    where topic_id = #{topicId,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from tb_special_topic
+    where topic_id = #{topicId,jdbcType=VARCHAR}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.qigan.qiganshop.pojo.TbSpecialTopicExample" >
+    delete from tb_special_topic
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.qigan.qiganshop.pojo.TbSpecialTopic" >
+    insert into tb_special_topic (topic_id, special_id, topic_name, 
+      topic_picture, topic_sort, create_time, 
+      update_time, no, enable
+      )
+    values (#{topicId,jdbcType=VARCHAR}, #{specialId,jdbcType=VARCHAR}, #{topicName,jdbcType=VARCHAR}, 
+      #{topicPicture,jdbcType=VARCHAR}, #{topicSort,jdbcType=VARCHAR}, #{createTime,jdbcType=VARCHAR}, 
+      #{updateTime,jdbcType=VARCHAR}, #{no,jdbcType=VARCHAR}, #{enable,jdbcType=VARCHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.qigan.qiganshop.pojo.TbSpecialTopic" >
+    insert into tb_special_topic
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="topicId != null" >
+        topic_id,
+      </if>
+      <if test="specialId != null" >
+        special_id,
+      </if>
+      <if test="topicName != null" >
+        topic_name,
+      </if>
+      <if test="topicPicture != null" >
+        topic_picture,
+      </if>
+      <if test="topicSort != null" >
+        topic_sort,
+      </if>
+      <if test="createTime != null" >
+        create_time,
+      </if>
+      <if test="updateTime != null" >
+        update_time,
+      </if>
+      <if test="no != null" >
+        no,
+      </if>
+      <if test="enable != null" >
+        enable,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="topicId != null" >
+        #{topicId,jdbcType=VARCHAR},
+      </if>
+      <if test="specialId != null" >
+        #{specialId,jdbcType=VARCHAR},
+      </if>
+      <if test="topicName != null" >
+        #{topicName,jdbcType=VARCHAR},
+      </if>
+      <if test="topicPicture != null" >
+        #{topicPicture,jdbcType=VARCHAR},
+      </if>
+      <if test="topicSort != null" >
+        #{topicSort,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null" >
+        #{createTime,jdbcType=VARCHAR},
+      </if>
+      <if test="updateTime != null" >
+        #{updateTime,jdbcType=VARCHAR},
+      </if>
+      <if test="no != null" >
+        #{no,jdbcType=VARCHAR},
+      </if>
+      <if test="enable != null" >
+        #{enable,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.qigan.qiganshop.pojo.TbSpecialTopicExample" resultType="java.lang.Integer" >
+    select count(*) from tb_special_topic
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update tb_special_topic
+    <set >
+      <if test="record.topicId != null" >
+        topic_id = #{record.topicId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.specialId != null" >
+        special_id = #{record.specialId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.topicName != null" >
+        topic_name = #{record.topicName,jdbcType=VARCHAR},
+      </if>
+      <if test="record.topicPicture != null" >
+        topic_picture = #{record.topicPicture,jdbcType=VARCHAR},
+      </if>
+      <if test="record.topicSort != null" >
+        topic_sort = #{record.topicSort,jdbcType=VARCHAR},
+      </if>
+      <if test="record.createTime != null" >
+        create_time = #{record.createTime,jdbcType=VARCHAR},
+      </if>
+      <if test="record.updateTime != null" >
+        update_time = #{record.updateTime,jdbcType=VARCHAR},
+      </if>
+      <if test="record.no != null" >
+        no = #{record.no,jdbcType=VARCHAR},
+      </if>
+      <if test="record.enable != null" >
+        enable = #{record.enable,jdbcType=VARCHAR},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update tb_special_topic
+    set topic_id = #{record.topicId,jdbcType=VARCHAR},
+      special_id = #{record.specialId,jdbcType=VARCHAR},
+      topic_name = #{record.topicName,jdbcType=VARCHAR},
+      topic_picture = #{record.topicPicture,jdbcType=VARCHAR},
+      topic_sort = #{record.topicSort,jdbcType=VARCHAR},
+      create_time = #{record.createTime,jdbcType=VARCHAR},
+      update_time = #{record.updateTime,jdbcType=VARCHAR},
+      no = #{record.no,jdbcType=VARCHAR},
+      enable = #{record.enable,jdbcType=VARCHAR}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.qigan.qiganshop.pojo.TbSpecialTopic" >
+    update tb_special_topic
+    <set >
+      <if test="specialId != null" >
+        special_id = #{specialId,jdbcType=VARCHAR},
+      </if>
+      <if test="topicName != null" >
+        topic_name = #{topicName,jdbcType=VARCHAR},
+      </if>
+      <if test="topicPicture != null" >
+        topic_picture = #{topicPicture,jdbcType=VARCHAR},
+      </if>
+      <if test="topicSort != null" >
+        topic_sort = #{topicSort,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null" >
+        create_time = #{createTime,jdbcType=VARCHAR},
+      </if>
+      <if test="updateTime != null" >
+        update_time = #{updateTime,jdbcType=VARCHAR},
+      </if>
+      <if test="no != null" >
+        no = #{no,jdbcType=VARCHAR},
+      </if>
+      <if test="enable != null" >
+        enable = #{enable,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where topic_id = #{topicId,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.qigan.qiganshop.pojo.TbSpecialTopic" >
+    update tb_special_topic
+    set special_id = #{specialId,jdbcType=VARCHAR},
+      topic_name = #{topicName,jdbcType=VARCHAR},
+      topic_picture = #{topicPicture,jdbcType=VARCHAR},
+      topic_sort = #{topicSort,jdbcType=VARCHAR},
+      create_time = #{createTime,jdbcType=VARCHAR},
+      update_time = #{updateTime,jdbcType=VARCHAR},
+      no = #{no,jdbcType=VARCHAR},
+      enable = #{enable,jdbcType=VARCHAR}
+    where topic_id = #{topicId,jdbcType=VARCHAR}
+  </update>
+</mapper>

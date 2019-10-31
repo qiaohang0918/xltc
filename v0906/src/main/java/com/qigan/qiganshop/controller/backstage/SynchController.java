@@ -1,0 +1,223 @@
+package com.qigan.qiganshop.controller.backstage;
+
+import com.qigan.qiganshop.annocation.StepRecordWatchAble;
+import com.qigan.qiganshop.constant.RedisConstant;
+import com.qigan.qiganshop.service.synchronization.SynchGoodsService;
+import com.qigan.qiganshop.service.synchronization.SynchStockService;
+import com.qigan.qiganshop.service.synchronization.SynchWareHouseService;
+import com.qigan.qiganshop.service.synchronization.XltcAsyncGoodsService;
+import com.qigan.qiganshop.util.access.JedisUtil;
+import com.qigan.qiganshop.util.notnull.StringNotNull;
+import com.qigan.qiganshop.util.result.format.JsonResult;
+import com.qigan.qiganshop.util.result.format.ResultCode;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
+
+import java.util.Date;
+
+@SuppressWarnings("all")
+@RestController
+@Api(tags = {"同步接口,测试用,请勿调用"})
+public class SynchController {
+
+    @Autowired
+    private JsonResult jr;
+    @Autowired
+    private SynchGoodsService service;
+    @Autowired
+    private SynchWareHouseService synchWareHouseService;
+    @Autowired
+    private SynchStockService stockService;
+    @Autowired
+    private XltcAsyncGoodsService asyncGoodsService;
+    @Autowired
+    JedisPool jedisPool;
+
+    /**
+     * 查询所有规格信息或者分页查询或者条件查询,三者随意组合
+     *
+     * @return
+     */
+    @RequestMapping("updateAllGoods.do")
+    @ApiOperation(
+            value = "同步商品,spu ,sku,分类",
+            notes = "",
+            httpMethod = "POST")
+    @StepRecordWatchAble
+    public JsonResult updateAllGoods(
+            @RequestParam(required = true) String no,
+            @RequestParam(required = true) String name,
+            @RequestParam(defaultValue = "/updateAllGoods.do") String inter,
+            @RequestParam(defaultValue = "获取管易商品同步数据")String Func) {
+        /* *
+         * 全部查询
+         */
+        Jedis jedis = jedisPool.getResource();
+        String s = jedis.get(RedisConstant.ASYNCRO_STEP);
+        if(StringNotNull.check(s))
+            return jr.jsonResultData(ResultCode.FAIL.res_code(), "其他管理员正在操作，稍后重试！");
+        String result =null;
+        try {
+            jedis.set(RedisConstant.ASYNCRO_STEP,"1");
+            result = service.updateAllGoods();
+        }catch (Exception e){
+            jedis.del(RedisConstant.ASYNCRO_STEP);
+            return jr.jsonResultData(ResultCode.FAIL.res_code(), ResultCode.FAIL.message());
+        }finally {
+            jedis.del(RedisConstant.ASYNCRO_STEP);
+            jedis.close();
+        }
+        return jr.jsonResultData(ResultCode.SUCCESS.res_code(), ResultCode.SUCCESS.message(), result);
+
+    }
+
+
+    /**
+     * 同步部分商品(新增 / 修改)
+     * @param start_date
+     * @param end_date
+     * @return
+     */
+    @RequestMapping("/asyncGoodByTime.do")
+    @StepRecordWatchAble
+    public JsonResult asyncGoodByTime(String start_date,String end_date,
+                                     @RequestParam(required = true) String no,
+                                      @RequestParam(required = true) String name,
+                                      @RequestParam(defaultValue = "/asyncGoodByTime.do") String inter,
+                                      @RequestParam(defaultValue = "同步部分商品")String Func){
+        System.out.println("开始时间"+new Date().getTime());
+        if(!StringNotNull.check(start_date) || !StringNotNull.check(end_date) ){
+            return new JsonResult(ResultCode.FAIL.res_code(),"请选择更新商品的起始时间");
+        }
+        Jedis jedis = jedisPool.getResource();
+        String s = jedis.get(RedisConstant.ASYNCRO_STEP);
+        if(StringNotNull.check(s)) {
+            return jr.jsonResultData(ResultCode.FAIL.res_code(), "其他管理员正在操作，稍后重试！");
+        }
+        try {
+            jedis.set(RedisConstant.ASYNCRO_STEP,"1");
+            asyncGoodsService.syncGoodsAll(start_date,end_date);
+        }catch (Exception e){
+            jedis.del(RedisConstant.ASYNCRO_STEP);
+            return jr.jsonResultData(ResultCode.FAIL.res_code(), ResultCode.FAIL.message());
+        }finally {
+            jedis.del(RedisConstant.ASYNCRO_STEP);
+            jedis.close();
+        }
+        System.out.println("结束时间"+new Date().getTime());
+        return new JsonResult(ResultCode.SUCCESS.res_code(),"更新成功");
+    }
+
+
+    @RequestMapping("updateAllWarehouse.do")
+    @ApiOperation(
+            value = "同步仓库信息",
+            notes = "",
+            httpMethod = "POST")
+    @StepRecordWatchAble
+    public JsonResult updateAllWarehouse( @RequestParam(required = true) String no,
+                                          @RequestParam(required = true) String name,
+                                          @RequestParam(defaultValue = "/updateAllWarehouse.do") String inter,
+                                          @RequestParam(defaultValue = "获取管易仓库数据")String Func) {
+        /* *
+         * 全部查询
+         */
+        Jedis jedis = jedisPool.getResource();
+        String s = jedis.get(RedisConstant.ASYNCRO_STEP);
+        if(StringNotNull.check(s))
+            return jr.jsonResultData(ResultCode.FAIL.res_code(), "其他管理员正在操作，稍后重试！");
+        String result =null;
+        try {
+            jedis.set(RedisConstant.ASYNCRO_STEP,"1");
+            result = synchWareHouseService.updateAllWareHouse();
+        }catch (Exception e){
+            jedis.del(RedisConstant.ASYNCRO_STEP);
+            return jr.jsonResultData(ResultCode.FAIL.res_code(), ResultCode.FAIL.message());
+        }finally {
+            jedis.del(RedisConstant.ASYNCRO_STEP);
+            jedis.close();
+        }
+        return jr.jsonResultData(ResultCode.SUCCESS.res_code(), ResultCode.SUCCESS.message(), result);
+
+    }
+
+    @RequestMapping("updateAllStock.do")
+    @ApiOperation(
+            value = "同步库存信息",
+            notes = "",
+            httpMethod = "POST")
+    @StepRecordWatchAble
+    public JsonResult updateAllStock(
+            @RequestParam(required = true) String no,
+            @RequestParam(required = true) String name,
+            @RequestParam(defaultValue = "/updateAllStock.do") String inter,
+            @RequestParam(defaultValue = "获取管易库存数据")String Func) {
+        /* *
+         * 全部查询
+         */
+        Jedis jedis = jedisPool.getResource();
+        String s = jedis.get(RedisConstant.ASYNCRO_STEP);
+        if(StringNotNull.check(s))
+            return jr.jsonResultData(ResultCode.FAIL.res_code(), "其他管理员正在操作，稍后重试！");
+        String result =null;
+        try {
+            jedis.set(RedisConstant.ASYNCRO_STEP,"1");
+            result = stockService.updateAllStock();
+        }catch (Exception e){
+            jedis.del(RedisConstant.ASYNCRO_STEP);
+            return jr.jsonResultData(ResultCode.FAIL.res_code(), ResultCode.FAIL.message());
+        }finally {
+            jedis.del(RedisConstant.ASYNCRO_STEP);
+            jedis.close();
+        }
+        return jr.jsonResultData(ResultCode.SUCCESS.res_code(), ResultCode.SUCCESS.message(), result);
+
+    }
+
+    /**
+     * 更新商品库存
+     * @param start_date    更新的起止时间
+     * @param end_date
+     * @param warehouseId
+     * @return
+     */
+    @RequestMapping("/asyncStockByTime.do")
+    @StepRecordWatchAble
+    public JsonResult asyncStockByTime(String start_date,String end_date,String warehouseId,
+                                       @RequestParam(required = true) String no,
+                                       @RequestParam(required = true) String name,
+                                       @RequestParam(defaultValue = "/asyncStockByTime.do") String inter,
+                                       @RequestParam(defaultValue = "同步部分库存")String Func){
+        if(!StringNotNull.check(start_date) || !StringNotNull.check(end_date)){
+            return new JsonResult(ResultCode.FAIL.res_code(),"需要传入待更新商品库存的起止时间");
+        }
+        if(!StringNotNull.check(warehouseId)){
+            return new JsonResult(ResultCode.FAIL.res_code(),"需要传入待更新的仓库代码");
+        }
+        Jedis jedis = jedisPool.getResource();
+        String s = jedis.get(RedisConstant.ASYNCRO_STEP);
+        if(StringNotNull.check(s))
+            return jr.jsonResultData(ResultCode.FAIL.res_code(), "其他管理员正在操作，稍后重试！");
+        String result =null;
+        try {
+            jedis.set(RedisConstant.ASYNCRO_STEP,"1");
+            result = stockService.updateAllStock(start_date,end_date,warehouseId);
+        }catch (Exception e){
+            jedis.del(RedisConstant.ASYNCRO_STEP);
+            return jr.jsonResultData(ResultCode.FAIL.res_code(), ResultCode.FAIL.message());
+        }finally {
+            jedis.del(RedisConstant.ASYNCRO_STEP);
+            jedis.close();
+        }
+        return new JsonResult(ResultCode.SUCCESS.res_code(),result);
+    }
+
+
+}

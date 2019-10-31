@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                    http://www.springframework.org/schema/beans/spring-beans-3.1.xsd  
+                    http://www.springframework.org/schema/context  
+                    http://www.springframework.org/schema/context/spring-context-3.1.xsd  
+                    http://www.springframework.org/schema/mvc  
+                    http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd">
+
+
+    <!--订单库存还原定时器-->
+
+    <bean id="orderJobDetail" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+        <property name="targetObject" ref="orderQuartzJob"/>
+        <property name="targetMethod" value="removeLockStock"/>
+    </bean>
+
+    <!-- 触发器是CornTrigger -->
+    <bean id="orderCornTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+        <property name="jobDetail" ref="orderJobDetail"/>
+        <property name="cronExpression" value="0 0/1 * * * ?"/>
+    </bean>
+
+    <!--订单库存还原定时器-->
+
+    <!-- 定义核心调度器  如果将lazy-init='false'那么容器启动就会执行调度程序 默认是false-->
+    <bean id="scheduler" class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+        <property name="triggers">
+            <list>
+                <!--<ref bean="cornTrigger"/>-->
+                <ref bean="orderCornTrigger"/>
+            </list>
+        </property>
+    </bean>
+
+
+</beans>

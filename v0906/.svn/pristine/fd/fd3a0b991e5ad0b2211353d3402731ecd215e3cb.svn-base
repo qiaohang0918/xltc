@@ -1,0 +1,44 @@
+package com.qigan.qiganshop.pojo;
+
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import lombok.Getter;
+import lombok.Setter;
+
+/**
+ * 配送员实体
+ *
+ * @author wanghao
+ */
+@ApiModel(value = "Deliveryer", description = "配送员实体")
+public class Deliveryer {
+
+    @ApiModelProperty(value = "工号(系统自动生成)")
+    @Getter
+    @Setter
+    private Integer deliveryerId;
+    @ApiModelProperty(value = "员工姓名")
+    @Getter
+    @Setter
+    private String name;
+    @ApiModelProperty(value = "密码")
+    @Getter
+    @Setter
+    @JsonIgnore
+    private String passwd;
+    @ApiModelProperty(value = "手机号")
+    @Getter
+    @Setter
+    private String phoneNum;
+    @ApiModelProperty(value = "入职日期 (系统自动生成)")
+    @Getter
+    @Setter
+    private String createTime;
+    @ApiModelProperty(value = "是否启用 0 禁用 1 启用")
+    @Getter
+    @Setter
+    private String enable;
+
+}

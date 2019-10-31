@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qigan.qiganshop.mapper.CouponMapper">
+    <resultMap id="BaseResultMap" type="com.qigan.qiganshop.pojo.Coupon">
+        <id column="couponId" property="couponId" jdbcType="VARCHAR"/>
+        <result column="type" property="type" jdbcType="VARCHAR"/>
+        <result column="couponName" property="couponName" jdbcType="VARCHAR"/>
+        <result column="fullMoney" property="fullMoney" jdbcType="INTEGER"/>
+        <result column="reduceMoney" property="reduceMoney" jdbcType="INTEGER"/>
+        <result column="eggNumber" property="eggNumber" jdbcType="INTEGER"/>
+        <result column="begin" property="begin" jdbcType="VARCHAR"/>
+        <result column="end" property="end" jdbcType="VARCHAR"/>
+        <result column="enable" property="enable" jdbcType="VARCHAR"/>
+        <result column="enableTime" property="enableTime" jdbcType="VARCHAR"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+    couponId, type, fullMoney, reduceMoney, eggNumber, begin, end,enable,enableTime,couponName
+  </sql>
+    <select id="findOne" resultMap="BaseResultMap" parameterType="java.lang.String">
+        select
+        <include refid="Base_Column_List"/>
+        from tb_coupon
+        where couponId = #{couponId,jdbcType=VARCHAR}
+    </select>
+    <delete id="delete" parameterType="java.lang.String">
+    delete from tb_coupon
+    where couponId = #{couponId,jdbcType=VARCHAR}
+  </delete>
+    <insert id="insert" parameterType="com.qigan.qiganshop.pojo.Coupon">
+    insert into tb_coupon (couponId, type,
+      fullMoney, reduceMoney, eggNumber,
+      begin, end,enable,enableTime, couponName)
+    values (#{couponId,jdbcType=VARCHAR},  #{type,jdbcType=VARCHAR},
+      #{fullMoney,jdbcType=INTEGER}, #{reduceMoney,jdbcType=INTEGER}, #{eggNumber,jdbcType=INTEGER},
+      #{begin,jdbcType=VARCHAR}, #{end,jdbcType=VARCHAR}, #{enable,jdbcType=VARCHAR}, #{enableTime,jdbcType=VARCHAR},#{couponName})
+  </insert>
+    <update id="update" parameterType="com.qigan.qiganshop.pojo.Coupon">
+        update tb_coupon
+        <set>
+            <if test="type != null">
+                type = #{type,jdbcType=VARCHAR},
+            </if>
+            <if test="fullMoney != null">
+                fullMoney = #{fullMoney,jdbcType=INTEGER},
+            </if>
+            <if test="reduceMoney != null">
+                reduceMoney = #{reduceMoney,jdbcType=INTEGER},
+            </if>
+            <if test="eggNumber != null">
+                eggNumber = #{eggNumber,jdbcType=INTEGER},
+            </if>
+            <if test="begin != null">
+                begin = #{begin,jdbcType=VARCHAR},
+            </if>
+            <if test="end != null">
+                end = #{end,jdbcType=VARCHAR},
+            </if>
+            <if test="enable != null">
+                enable = #{enable,jdbcType=VARCHAR},
+            </if>
+            <if test="enableTime != null">
+                enableTime = #{enableTime,jdbcType=VARCHAR},
+            </if>
+            <if test="couponName != null">
+                couponName = #{couponName,jdbcType=VARCHAR},
+            </if>
+        </set>
+        where couponId = #{couponId,jdbcType=VARCHAR}
+    </update>
+    <select id="findPage" resultMap="BaseResultMap" parameterType="map">
+        select
+        <include refid="Base_Column_List"/>
+        from tb_coupon
+        <if test="record != null">
+            where
+            <if test="record.type != null">
+                type = #{record.type,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.fullMoney != null">
+                fullMoney = #{record.fullMoney,jdbcType=INTEGER} and
+            </if>
+            <if test="record.reduceMoney != null">
+                reduceMoney = #{record.reduceMoney,jdbcType=INTEGER} and
+            </if>
+            <if test="record.eggNumber != null">
+                eggNumber = #{record.eggNumber,jdbcType=INTEGER} and
+            </if>
+            <if test="record.begin != null">
+                begin = #{record.begin,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.end != null">
+                end = #{record.end,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.enable != null">
+                enable = #{record.enable,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.enableTime != null">
+                enableTime = #{record.enableTime,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.couponName != null">
+                couponName like '%#{record.enableTime,jdbcType=VARCHAR}%' and
+            </if>
+            1=1
+        </if>
+        order by enable desc, begin desc
+        <if test="page != null and size != null">
+           limit #{page},#{size}
+        </if>
+    </select>
+</mapper>

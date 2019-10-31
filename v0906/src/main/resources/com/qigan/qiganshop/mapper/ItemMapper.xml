@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qigan.qiganshop.mapper.ItemMapper">
+    <resultMap id="BaseResultMap" type="com.qigan.qiganshop.pojo.Item">
+        <id column="itemId" property="itemId" jdbcType="VARCHAR"/>
+        <result column="spuId" property="spuId" jdbcType="VARCHAR"/>
+        <result column="code" property="code" jdbcType="VARCHAR"/>
+        <result column="name" property="name" jdbcType="VARCHAR"/>
+        <result column="note" property="note" jdbcType="VARCHAR"/>
+        <result column="weight" property="weight" jdbcType="DOUBLE"/>
+        <result column="volume" property="volume" jdbcType="VARCHAR"/>
+        <result column="salesPrice" property="salesPrice" jdbcType="DECIMAL"/>
+        <result column="costPrice" property="costPrice" jdbcType="DECIMAL"/>
+        <result column="stockStatusCode" property="stockStatusCode" jdbcType="VARCHAR"/>
+        <result column="stockNum" property="stockNum" jdbcType="INTEGER"/>
+        <result column="barCode" property="barCode" jdbcType="VARCHAR"/>
+        <result column="originArea" property="originArea" jdbcType="VARCHAR"/>
+        <result column="del" property="del" jdbcType="VARCHAR"/>
+        <result column="isVipItem" property="isVipItem" jdbcType="VARCHAR"/>
+        <result column="VIPrice" property="vIPrice" jdbcType="DECIMAL"/>
+        <result column="activePrice" property="activePrice" jdbcType="DECIMAL"/>
+        <result column="praise" property="praise" jdbcType="VARCHAR"/>
+        <result column="salesNum" property="salesNum" jdbcType="INTEGER"/>
+        <result column="info" property="info" jdbcType="VARCHAR"/>
+        <result column="shareNum" property="shareNum" jdbcType="INTEGER"/>
+        <result column="unit" property="unit" jdbcType="VARCHAR"/>
+        <result column="status" property="status" jdbcType="VARCHAR"/>
+
+    </resultMap>
+    <sql id="Base_Column_List">
+        itemId, spuId, code, name, note, weight, volume, salesPrice, costPrice, stockStatusCode,
+        stockNum, barCode, originArea, del, isVipItem, VIPrice, praise, salesNum, info, shareNum,activePrice,unit,status
+    </sql>
+    <select id="findOne" resultMap="BaseResultMap" parameterType="java.lang.String">
+        select
+        <include refid="Base_Column_List"/>
+        from tb_item
+        where itemId = #{itemId,jdbcType=VARCHAR}
+    </select>
+    <select id="findByItem" resultMap="BaseResultMap" parameterType="java.lang.String">
+        select
+        <include refid="Base_Column_List"/>
+        from tb_item
+        <if test="record!= null">
+            where
+            <if test="record.itemId != null">
+                itemId = #{record.itemId,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.spuId != null">
+                spuId = #{record.spuId,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.code != null">
+                code = #{record.code,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.name != null">
+                name = #{record.name,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.note != null">
+                note = #{record.note,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.weight != null">
+                weight = #{record.weight,jdbcType=DOUBLE} and
+            </if>
+            <if test="record.volume != null">
+                volume = #{record.volume,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.salesPrice != null">
+                salesPrice = #{record.salesPrice,jdbcType=DECIMAL} and
+            </if>
+            <if test="record.costPrice != null">
+                costPrice = #{record.costPrice,jdbcType=DECIMAL} and
+            </if>
+            <if test="record.stockStatusCode != null">
+                stockStatusCode = #{record.stockStatusCode,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.stockNum != null">
+                stockNum = #{record.stockNum,jdbcType=INTEGER} and
+            </if>
+            <if test="record.barCode != null">
+                barCode = #{record.barCode,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.originArea != null">
+                originArea = #{record.originArea,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.del != null">
+                del = #{record.del,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.isVipItem != null">
+                isVipItem = #{record.isVipItem,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.vIPrice != null">
+                VIPrice = #{record.vIPrice,jdbcType=DECIMAL} and
+            </if>
+            <if test="record.activePrice != null">
+                activePrice = #{record.activePrice,jdbcType=DECIMAL} and
+            </if>
+            <if test="record.praise != null">
+                praise = #{record.praise,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.salesNum != null">
+                salesNum = #{record.salesNum,jdbcType=INTEGER} and
+            </if>
+            <if test="record.info != null">
+                info = #{record.info,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.shareNum != null">
+                shareNum = #{record.shareNum,jdbcType=INTEGER} and
+            </if>
+            <if test="record.status != null">
+                status = #{record.status,jdbcType=VARCHAR} and
+            </if>
+            1=1
+        </if>
+
+        <if test="page != null and rows!= null">
+            limit #{page},#{rows}
+        </if>
+    </select>
+    <delete id="delete" parameterType="java.lang.String">
+        delete
+        from tb_item
+        where itemId = #{itemId,jdbcType=VARCHAR}
+    </delete>
+    <delete id="deleteBySPUId" parameterType="java.lang.String">
+        delete
+        from tb_item
+        where spuId = #{spuId,jdbcType=VARCHAR}
+    </delete>
+    <insert id="insert" parameterType="com.qigan.qiganshop.pojo.Item">
+        insert into tb_item (itemId, spuId, code,
+                             name, note, weight,
+                             volume, salesPrice, costPrice,
+                             stockStatusCode, stockNum, barCode,
+                             originArea, del, isVipItem,
+                             VIPrice, praise, salesNum,
+                             info, shareNum, activePrice, status, unit)
+        values (#{itemId,jdbcType=VARCHAR}, #{spuId,jdbcType=VARCHAR}, #{code,jdbcType=VARCHAR},
+                #{name,jdbcType=VARCHAR}, #{note,jdbcType=VARCHAR}, #{weight,jdbcType=DOUBLE},
+                #{volume,jdbcType=VARCHAR}, #{salesPrice,jdbcType=DECIMAL}, #{costPrice,jdbcType=DECIMAL},
+                #{stockStatusCode,jdbcType=VARCHAR}, #{stockNum,jdbcType=INTEGER}, #{barCode,jdbcType=VARCHAR},
+                #{originArea,jdbcType=VARCHAR}, #{del,jdbcType=VARCHAR}, #{isVipItem,jdbcType=VARCHAR},
+                #{vIPrice,jdbcType=DECIMAL}, #{praise,jdbcType=VARCHAR}, #{salesNum,jdbcType=INTEGER},
+                #{info,jdbcType=VARCHAR}, #{shareNum,jdbcType=INTEGER}, #{activePrice,jdbcType=DECIMAL},
+                #{status,jdbcType=VARCHAR}, #{unit,jdbcType=VARCHAR})
+    </insert>
+    <update id="update" parameterType="map">
+        update tb_item
+        <set>
+            <if test="record.spuId != null">
+                spuId = #{record.spuId,jdbcType=VARCHAR},
+            </if>
+            <if test="record.code != null">
+                code = #{record.code,jdbcType=VARCHAR},
+            </if>
+            <if test="record.name != null">
+                name = #{record.name,jdbcType=VARCHAR},
+            </if>
+            <if test="record.note != null">
+                note = #{record.note,jdbcType=VARCHAR},
+            </if>
+            <if test="record.weight != null">
+                weight = #{record.weight,jdbcType=DOUBLE},
+            </if>
+            <if test="record.volume != null">
+                volume = #{record.volume,jdbcType=VARCHAR},
+            </if>
+            <if test="record.salesPrice != null">
+                salesPrice = #{record.salesPrice,jdbcType=DECIMAL},
+            </if>
+            <if test="record.costPrice != null">
+                costPrice = #{record.costPrice,jdbcType=DECIMAL},
+            </if>
+            <if test="record.stockStatusCode != null">
+                stockStatusCode = #{record.stockStatusCode,jdbcType=VARCHAR},
+            </if>
+            <if test="record.stockNum != null">
+                stockNum = #{record.stockNum,jdbcType=INTEGER},
+            </if>
+            <if test="record.barCode != null">
+                barCode = #{record.barCode,jdbcType=VARCHAR},
+            </if>
+            <if test="record.originArea != null">
+                originArea = #{record.originArea,jdbcType=VARCHAR},
+            </if>
+            <if test="record.del != null">
+                del = #{record.del,jdbcType=VARCHAR},
+            </if>
+            <if test="record.isVipItem != null">
+                isVipItem = #{record.isVipItem,jdbcType=VARCHAR},
+            </if>
+            <if test="record.vIPrice != null">
+                VIPrice = #{record.vIPrice,jdbcType=DECIMAL},
+            </if>
+            <if test="record.activePrice != null">
+                activePrice = #{record.activePrice,jdbcType=DECIMAL},
+            </if>
+            <if test="record.praise != null">
+                praise = #{record.praise,jdbcType=VARCHAR},
+            </if>
+            <if test="record.salesNum != null">
+                salesNum = #{record.salesNum,jdbcType=INTEGER},
+            </if>
+            <if test="record.info != null">
+                info = #{record.info,jdbcType=VARCHAR},
+            </if>
+            <if test="record.shareNum != null">
+                shareNum = #{record.shareNum,jdbcType=INTEGER},
+            </if>
+            <if test="record.status != null">
+                status = #{record.status,jdbcType=VARCHAR},
+            </if>
+        </set>
+        where
+        itemId = #{record.itemId,jdbcType=VARCHAR}
+    </update>
+    <select id="findByCode" parameterType="map" resultMap="BaseResultMap">
+        SELECT
+        t1.* FROM
+        tb_item t1,
+        tb_goods t2
+        WHERE
+        t1.spuId = t2.goodsId
+        AND t2.code = #{goodsCode}
+        <if test="itemCode!= null">
+            AND t1.code = #{itemCode}
+        </if>
+    </select>
+    <select id="findItemByCode" resultMap="BaseResultMap">
+        SELECT
+        t1.itemId,t1.spuId FROM tb_item t1
+        left join tb_goods t2 on t1.spuId = t2.goodsId
+        where  t2.code = #{goodsCode}
+        <if test="itemCode!= null">
+            AND t1.code = #{itemCode}
+        </if>
+    </select>
+    <select id="findBySpuId" parameterType="string" resultMap="BaseResultMap">
+        SELECT t1.itemId,
+               t1.spuId,
+               t1.code,
+               t1.name,
+               t1.note,
+               t1.weight,
+               t1.volume,
+               t1.salesPrice,
+               t1.costPrice,
+               t1.stockStatusCode,
+               t2.salableNum as stockNum,
+               t1.barCode,
+               t1.originArea,
+               t1.del,
+               t1.isVipItem,
+               t1.VIPrice,
+               t1.praise,
+--                t1.salesNum + 20 as salesNum,
+                if(isnull(t1.salesNum),20,t1.salesNum+20) as salesNum,
+               t1.info,
+               t1.shareNum,
+               t1.activePrice,
+               t1.unit,
+               t1.status,
+               t2.warehouseId
+        FROM tb_item t1,
+             tb_stock t2
+        WHERE t1.itemId = t2.itemId
+          and t1.spuId = #{spuId}
+          and t2.salableNum > 0
+
+    </select>
+    <select id="findBySpuIdNotStock" parameterType="string" resultMap="BaseResultMap">
+        SELECT  t1.itemId,
+               t1.spuId,
+               t1.code,
+               t1.name,
+               t1.note,
+               t1.weight,
+               t1.volume,
+               t1.salesPrice,
+               t1.costPrice,
+               t1.stockStatusCode,
+               t2.salableNum as stockNum,
+               t1.barCode,
+               t1.originArea,
+               t1.del,
+               t1.isVipItem,
+               t1.VIPrice,
+               t1.praise,
+               t1.salesNum,
+               t1.info,
+               t1.shareNum,
+               t1.activePrice,
+               t1.unit,
+               t1.status,
+               t3.name as warehouseName
+        FROM tb_item t1,
+             tb_stock t2,
+             tb_warehouse t3
+        WHERE t1.itemId = t2.itemId
+          and t1.spuId = #{spuId}
+          and t2.warehouseId = t3.warehouseId
+
+    </select>
+
+    <update id="updateSaleCount" parameterType="map">
+        update tb_item
+        set salesNum = if(salesNum is null, 0 , salesNum) + #{count}
+        where itemId = #{itemId}
+    </update>
+</mapper>
+
+
+

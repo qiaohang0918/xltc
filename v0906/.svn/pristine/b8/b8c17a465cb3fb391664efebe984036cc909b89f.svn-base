@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qigan.qiganshop.mapper.OptInfoMapper" >
+  <resultMap id="BaseResultMap" type="com.qigan.qiganshop.pojo.OptInfo" >
+    <id column="optId" property="optid" jdbcType="VARCHAR" />
+    <result column="optTime" property="opttime" jdbcType="VARCHAR" />
+    <result column="optDetails" property="optdetails" jdbcType="VARCHAR" />
+    <result column="managerId" property="managerid" jdbcType="VARCHAR" />
+    <result column="managerName" property="managername" jdbcType="VARCHAR" />
+    <result column="optInter" property="optinter" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    optId, optTime, optDetails, managerId, managerName, optInter
+  </sql>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.qigan.qiganshop.pojo.OptInfoExample" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from tb_opt_info
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from tb_opt_info
+    where optId = #{optid,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from tb_opt_info
+    where optId = #{optid,jdbcType=VARCHAR}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.qigan.qiganshop.pojo.OptInfoExample" >
+    delete from tb_opt_info
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.qigan.qiganshop.pojo.OptInfo" >
+    insert into tb_opt_info (optId, optTime, optDetails, 
+      managerId, managerName, optInter
+      )
+    values (#{optid,jdbcType=VARCHAR}, #{opttime,jdbcType=VARCHAR}, #{optdetails,jdbcType=VARCHAR}, 
+      #{managerid,jdbcType=VARCHAR}, #{managername,jdbcType=VARCHAR}, #{optinter,jdbcType=VARCHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.qigan.qiganshop.pojo.OptInfo" >
+    insert into tb_opt_info
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="optid != null" >
+        optId,
+      </if>
+      <if test="opttime != null" >
+        optTime,
+      </if>
+      <if test="optdetails != null" >
+        optDetails,
+      </if>
+      <if test="managerid != null" >
+        managerId,
+      </if>
+      <if test="managername != null" >
+        managerName,
+      </if>
+      <if test="optinter != null" >
+        optInter,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="optid != null" >
+        #{optid,jdbcType=VARCHAR},
+      </if>
+      <if test="opttime != null" >
+        #{opttime,jdbcType=VARCHAR},
+      </if>
+      <if test="optdetails != null" >
+        #{optdetails,jdbcType=VARCHAR},
+      </if>
+      <if test="managerid != null" >
+        #{managerid,jdbcType=VARCHAR},
+      </if>
+      <if test="managername != null" >
+        #{managername,jdbcType=VARCHAR},
+      </if>
+      <if test="optinter != null" >
+        #{optinter,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.qigan.qiganshop.pojo.OptInfoExample" resultType="java.lang.Integer" >
+    select count(*) from tb_opt_info
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update tb_opt_info
+    <set >
+      <if test="record.optid != null" >
+        optId = #{record.optid,jdbcType=VARCHAR},
+      </if>
+      <if test="record.opttime != null" >
+        optTime = #{record.opttime,jdbcType=VARCHAR},
+      </if>
+      <if test="record.optdetails != null" >
+        optDetails = #{record.optdetails,jdbcType=VARCHAR},
+      </if>
+      <if test="record.managerid != null" >
+        managerId = #{record.managerid,jdbcType=VARCHAR},
+      </if>
+      <if test="record.managername != null" >
+        managerName = #{record.managername,jdbcType=VARCHAR},
+      </if>
+      <if test="record.optinter != null" >
+        optInter = #{record.optinter,jdbcType=VARCHAR},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update tb_opt_info
+    set optId = #{record.optid,jdbcType=VARCHAR},
+      optTime = #{record.opttime,jdbcType=VARCHAR},
+      optDetails = #{record.optdetails,jdbcType=VARCHAR},
+      managerId = #{record.managerid,jdbcType=VARCHAR},
+      managerName = #{record.managername,jdbcType=VARCHAR},
+      optInter = #{record.optinter,jdbcType=VARCHAR}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.qigan.qiganshop.pojo.OptInfo" >
+    update tb_opt_info
+    <set >
+      <if test="opttime != null" >
+        optTime = #{opttime,jdbcType=VARCHAR},
+      </if>
+      <if test="optdetails != null" >
+        optDetails = #{optdetails,jdbcType=VARCHAR},
+      </if>
+      <if test="managerid != null" >
+        managerId = #{managerid,jdbcType=VARCHAR},
+      </if>
+      <if test="managername != null" >
+        managerName = #{managername,jdbcType=VARCHAR},
+      </if>
+      <if test="optinter != null" >
+        optInter = #{optinter,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where optId = #{optid,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.qigan.qiganshop.pojo.OptInfo" >
+    update tb_opt_info
+    set optTime = #{opttime,jdbcType=VARCHAR},
+      optDetails = #{optdetails,jdbcType=VARCHAR},
+      managerId = #{managerid,jdbcType=VARCHAR},
+      managerName = #{managername,jdbcType=VARCHAR},
+      optInter = #{optinter,jdbcType=VARCHAR}
+    where optId = #{optid,jdbcType=VARCHAR}
+  </update>
+</mapper>

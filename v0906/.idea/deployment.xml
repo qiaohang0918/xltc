@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PublishConfigData" serverName="192.168.3.129">
+    <serverData>
+      <paths name="192.168.3.129">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/opt/soft/tomcat/apache-tomcat-8.5.47/webapps/qiganshop" local="$PROJECT_DIR$/target/qiganshop" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+    </serverData>
+  </component>
+</project>

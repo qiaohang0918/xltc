@@ -1,0 +1,107 @@
+package com.qigan.qiganshop.util.quartz;
+
+import com.qigan.qiganshop.constant.RedisConstant;
+import com.qigan.qiganshop.constant.TimeFormat;
+import com.qigan.qiganshop.myutils.SqlConstructUtils;
+import com.qigan.qiganshop.pojo.Order;
+import com.qigan.qiganshop.pojo.TbPresellOrder;
+import com.qigan.qiganshop.service.XltcOrderService;
+import com.qigan.qiganshop.service.XltcPreSellGoodsService;
+import com.qigan.qiganshop.service.XltcPreSellOrderService;
+import com.qigan.qiganshop.util.access.JedisUtil;
+import com.qigan.qiganshop.util.notnull.StringNotNull;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
+import java.time.LocalDateTime;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
+
+/**
+ * @Aurher: QiaoHang
+ * @Description:
+ * @Data: 2019/10/8 17:27
+ * @Modified By:
+ */
+@Component
+@EnableScheduling
+public class PreSellOrderTask {
+
+    @Autowired
+    private XltcPreSellOrderService preSellOrderService;
+    @Autowired
+    private XltcOrderService orderService;
+    @Autowired
+    private JedisUtil jedisUtil;
+    @Value("${presell.order.push.info.retation.days}")
+    private String PRESELL_ORDER_PUSH_INFO_RERETATION_DAYS;
+
+    @Scheduled(cron = "0 0 1 * * ?")
+    public void findSuitPreSellOrderAndPush(){
+        //查询当前适合推送的订单 （time  isPushed）
+        List<TbPresellOrder>  preSellOrders = preSellOrderService.findCurrentSuitPushOrders();
+        //校验订单进行推送
+        int success = 0;
+        if(!SqlConstructUtils.nullList(preSellOrders)){
+            for (TbPresellOrder preSellOrder : preSellOrders) {
+                //查询订单详情
+                Order order = orderService.findOne(preSellOrder.getPresellorderid());
+                if(order != null){
+                    if("1".equals(order.getStatus())){
+                        //推送订单
+                        String result = orderService.pullToGuanYi(order.getOrderId());
+                        if("ok".equals(result)){
+                            //修改当前订单isPushed = 1
+                            int i = preSellOrderService.updateCurrentOrderStatusIsPushed(order.getOrderId(),order.getLevel());
+                            ++success;
+                        }
+                    }
+                }
+            }
+        }
+        jedisUtil.setToHash(RedisConstant.PRESELL_ORDER_PUSH_AUTO,TimeFormat.nomalFormat.format(new Date()),"suitable:"+preSellOrders.size()+"    success:"+success);
+        //retation thirty days
+        this.deletePushAutoInfo();
+    }
+
+    /**
+     * 每天0点重置左右的弹窗
+     */
+    @Scheduled(cron = "0 0 0 * * *")
+    public void resetAlert(){
+    	jedisUtil.del(RedisConstant.USER_ALERT_FLAG);
+    }
+
+
+    /**
+     * retaintion thirty days (push info)
+     * @return
+     */
+    public boolean deletePushAutoInfo(){
+        long days = 30;
+        if(StringNotNull.check(PRESELL_ORDER_PUSH_INFO_RERETATION_DAYS)){
+            try {
+                days = Long.parseLong(PRESELL_ORDER_PUSH_INFO_RERETATION_DAYS);
+            }catch (Exception e){
+
+            }
+        }
+        Set<String> elements = jedisUtil.getElementsFromHash(RedisConstant.PRESELL_ORDER_PUSH_AUTO);
+        if(elements!=null && elements.size()>0){
+            LocalDateTime now = LocalDateTime.now();
+            for (String element : elements) {
+                LocalDateTime parse = LocalDateTime.parse(element, TimeFormat.normalDateTimeFormater);
+                if(parse.plusDays(days).isBefore(now)){
+                    //存储超过30天，删除
+                    jedisUtil.removeElementFromHash(RedisConstant.PRESELL_ORDER_PUSH_AUTO,element);
+                }
+            }
+        }
+        return true;
+    }
+
+}

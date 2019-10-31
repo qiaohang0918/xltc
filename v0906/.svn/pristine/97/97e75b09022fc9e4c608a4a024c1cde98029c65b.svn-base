@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qigan.qiganshop.mapper.LabelMapper">
+    <resultMap id="BaseResultMap" type="com.qigan.qiganshop.pojo.Label">
+        <id column="labelId" property="labelId" jdbcType="VARCHAR"/>
+        <result column="labelName" property="labelName" jdbcType="VARCHAR"/>
+        <result column="cateId" property="cateId" jdbcType="VARCHAR"/>
+        <result column="sort" property="sort" jdbcType="INTEGER"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+    labelId, labelName, cateId, sort, labelImage
+  </sql>
+    <insert id="insert" parameterType="com.qigan.qiganshop.pojo.Label">
+    insert into tb_label (labelId, labelName, cateId,
+    sort, labelImage)
+    values (#{labelId,jdbcType=VARCHAR}, #{labelName,jdbcType=VARCHAR}, #{cateId,jdbcType=VARCHAR},
+    ( SELECT
+		next
+		FROM
+			( SELECT IF ( MAX( sort ) IS NULL, 1, MAX( sort ) + 1 ) AS next FROM tb_label where cateId =  #{cateId,jdbcType=VARCHAR} ) AS temp
+		), #{labelImage})
+  </insert>
+    <delete id="delete" parameterType="java.lang.String">
+    delete from tb_label
+    where labelId = #{labelId,jdbcType=VARCHAR}
+  </delete>
+    <select id="findByLabel" resultMap="BaseResultMap" parameterType="java.util.Map">
+        select
+        <include refid="Base_Column_List"/>
+        from tb_label
+        <if test="record != null">
+            where
+            <if test="record.labelId != null">
+                labelId = #{record.labelId,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.labelName != null">
+                labelName = #{record.labelName,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.cateId != null">
+                cateId = #{record.cateId,jdbcType=VARCHAR} and
+            </if>
+            1=1
+        </if>
+        order by sort
+    </select>
+    <select id="findOne" resultMap="BaseResultMap" parameterType="java.lang.String">
+        select
+        <include refid="Base_Column_List"/>
+        from tb_label where labelId = #{labelId}
+    </select>
+    <delete id="deleteByCateId" parameterType="java.lang.String">
+        <if test="cateId != null">
+            delete from tb_label where cateId = #{cateId,jdbcType=VARCHAR}
+        </if>
+    </delete>
+    <update id="update" parameterType="map">
+        update tb_label
+        <set>
+            <if test="record.labelName != null">
+                labelName = #{record.labelName,jdbcType=VARCHAR},
+            </if>
+            <if test="record.cateId != null">
+                cateId = #{record.cateId,jdbcType=VARCHAR},
+            </if>
+            <if test="record.sort != null">
+                sort = #{record.sort,jdbcType=INTEGER},
+            </if>
+            <if test="record.labelImage != null">
+                sort = #{record.labelImage,jdbcType=VARCHAR},
+            </if>
+        </set>
+        where labelId = #{record.labelId,jdbcType=VARCHAR}
+    </update>
+
+
+</mapper>

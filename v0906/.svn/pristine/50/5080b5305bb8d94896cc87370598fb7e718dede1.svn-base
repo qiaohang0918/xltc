@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qigan.qiganshop.mapper.BalanceMapper">
+    <resultMap id="BaseResultMap" type="com.qigan.qiganshop.pojo.Balance">
+        <id column="balanceId" property="balanceId" jdbcType="VARCHAR"/>
+        <result column="userId" property="userId" jdbcType="VARCHAR"/>
+        <result column="money" property="money" jdbcType="DECIMAL"/>
+        <result column="moneyFlow" property="moneyFlow" jdbcType="VARCHAR"/>
+        <result column="flowNum" property="flowNum" jdbcType="DECIMAL"/>
+        <result column="flowInfo" property="flowInfo" jdbcType="VARCHAR"/>
+        <result column="createTime" property="createTime" jdbcType="VARCHAR"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        balanceId, userId, oldMoney,money,moneyFlow, flowNum, flowInfo,orderId,createTime
+    </sql>
+    <insert id="insert" parameterType="com.qigan.qiganshop.pojo.Balance">
+        insert into tb_balance (balanceId, userId, oldMoney, money,
+                                moneyFlow, flowNum, flowInfo, orderId,
+                                createTime)
+        values (#{balanceId,jdbcType=VARCHAR}, #{userId,jdbcType=VARCHAR}, #{oldMoney,jdbcType=DECIMAL},
+                #{money,jdbcType=DECIMAL},
+                #{moneyFlow,jdbcType=VARCHAR}, #{flowNum,jdbcType=DECIMAL}, #{flowInfo,jdbcType=VARCHAR},
+                #{orderId,jdbcType=VARCHAR},
+                #{createTime,jdbcType=VARCHAR})
+    </insert>
+    <select id="findPage" resultMap="BaseResultMap" parameterType="map">
+        select
+        <include refid="Base_Column_List"/>
+        from tb_balance
+        where userId = #{userId}
+        and createTime between #{beginTime} and #{endTime}
+        order by createTime desc
+        <if test="page != null and size != null">
+            limit #{page},#{size}
+        </if>
+
+
+    </select>
+    <select id="findOne" resultMap="BaseResultMap" parameterType="java.lang.String">
+        select
+        <include refid="Base_Column_List"/>
+        from tb_balance
+        where balanceId = #{balanceId}
+
+
+    </select>
+    <select id="findByUserId" resultMap="BaseResultMap" parameterType="java.lang.String">
+        select
+        <include refid="Base_Column_List"/>
+        from tb_balance
+        where userId = #{userId,jdbcType=VARCHAR}
+        order by createTime desc limit 0,1;
+    </select>
+
+
+</mapper>

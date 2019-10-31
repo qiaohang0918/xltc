@@ -1,0 +1,57 @@
+package com.qigan.qiganshop.mapper;
+
+import com.qigan.qiganshop.pojo.AppUser;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public interface AppUserMapper {
+    public AppUser getAppUserByToken(String token);
+
+    public AppUser findAppUserByPhone(String phone);
+
+    public int addAppUser(@Param("user") AppUser user);
+
+    public int updateAppUser(@Param("user") AppUser appUser);
+
+    public int updateAppUserToken(@Param("user") AppUser appUser);
+
+    public AppUser selectByPrimaryKey(String userId);
+
+    public AppUser getAppUserById(String id);
+
+    AppUser getAppUserByOpenid(String openid);
+
+    AppUser getAppUserByQOpenid(String openid);
+
+
+    List<AppUser> findPage(@Param("user") AppUser appUser, @Param("page") Integer page, @Param("size") Integer size);
+
+    int addDeal(@Param("userId") String userId, @Param("payMoney") Double payMoney);
+
+    /**
+     * 删选appuser
+     * @param map
+     * @return
+     */
+    List<AppUser> findPageByCondition(@Param("map") HashMap<String, String> map);
+
+    /**
+     * 是啊简单为内新增的人数
+     * @param startTime
+     * @param endTime
+     * @return
+     */
+    List<Map<String, Object>> daysUserRecords(@Param("startTime") String startTime, @Param("endTime")String endTime);
+
+    @Update("update tb_user set balance = balance + ${wishesAmount} where userId = #{orginUserId} ")
+    int givenWishesAmount(@Param("orginUserId") String orginUserId, @Param("wishesAmount")double wishesAmount);
+
+    @Select("select DISTINCT userId from tb_user where phone = #{phone}")
+    String getUserId(@Param("phone") String phone);
+}
+

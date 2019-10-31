@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qigan.qiganshop.mapper.TbClueActivityMapper" >
+  <resultMap id="BaseResultMap" type="com.qigan.qiganshop.pojo.TbClueActivity" >
+    <id column="clue_activity_id" property="clueActivityId" jdbcType="VARCHAR" />
+    <result column="picture_url" property="pictureUrl" jdbcType="VARCHAR" />
+    <result column="enable" property="enable" jdbcType="VARCHAR" />
+    <result column="create_time" property="createTime" jdbcType="VARCHAR" />
+    <result column="description" property="description" jdbcType="VARCHAR" />
+    <result column="money" property="money" jdbcType="VARCHAR" />
+    <result column="update_time" property="updateTime" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    clue_activity_id, picture_url, enable, create_time, description, money, update_time
+  </sql>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.qigan.qiganshop.pojo.TbClueActivityExample" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from tb_clue_activity
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from tb_clue_activity
+    where clue_activity_id = #{clueActivityId,jdbcType=VARCHAR}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from tb_clue_activity
+    where clue_activity_id = #{clueActivityId,jdbcType=VARCHAR}
+  </delete>
+  <delete id="deleteByExample" parameterType="com.qigan.qiganshop.pojo.TbClueActivityExample" >
+    delete from tb_clue_activity
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="com.qigan.qiganshop.pojo.TbClueActivity" >
+    insert into tb_clue_activity (clue_activity_id, picture_url, enable, 
+      create_time, description, money, 
+      update_time)
+    values (#{clueActivityId,jdbcType=VARCHAR}, #{pictureUrl,jdbcType=VARCHAR}, #{enable,jdbcType=VARCHAR}, 
+      #{createTime,jdbcType=VARCHAR}, #{description,jdbcType=VARCHAR}, #{money,jdbcType=VARCHAR}, 
+      #{updateTime,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="com.qigan.qiganshop.pojo.TbClueActivity" >
+    insert into tb_clue_activity
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="clueActivityId != null" >
+        clue_activity_id,
+      </if>
+      <if test="pictureUrl != null" >
+        picture_url,
+      </if>
+      <if test="enable != null" >
+        enable,
+      </if>
+      <if test="createTime != null" >
+        create_time,
+      </if>
+      <if test="description != null" >
+        description,
+      </if>
+      <if test="money != null" >
+        money,
+      </if>
+      <if test="updateTime != null" >
+        update_time,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="clueActivityId != null" >
+        #{clueActivityId,jdbcType=VARCHAR},
+      </if>
+      <if test="pictureUrl != null" >
+        #{pictureUrl,jdbcType=VARCHAR},
+      </if>
+      <if test="enable != null" >
+        #{enable,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null" >
+        #{createTime,jdbcType=VARCHAR},
+      </if>
+      <if test="description != null" >
+        #{description,jdbcType=VARCHAR},
+      </if>
+      <if test="money != null" >
+        #{money,jdbcType=VARCHAR},
+      </if>
+      <if test="updateTime != null" >
+        #{updateTime,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="com.qigan.qiganshop.pojo.TbClueActivityExample" resultType="java.lang.Integer" >
+    select count(*) from tb_clue_activity
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update tb_clue_activity
+    <set >
+      <if test="record.clueActivityId != null" >
+        clue_activity_id = #{record.clueActivityId,jdbcType=VARCHAR},
+      </if>
+      <if test="record.pictureUrl != null" >
+        picture_url = #{record.pictureUrl,jdbcType=VARCHAR},
+      </if>
+      <if test="record.enable != null" >
+        enable = #{record.enable,jdbcType=VARCHAR},
+      </if>
+      <if test="record.createTime != null" >
+        create_time = #{record.createTime,jdbcType=VARCHAR},
+      </if>
+      <if test="record.description != null" >
+        description = #{record.description,jdbcType=VARCHAR},
+      </if>
+      <if test="record.money != null" >
+        money = #{record.money,jdbcType=VARCHAR},
+      </if>
+      <if test="record.updateTime != null" >
+        update_time = #{record.updateTime,jdbcType=VARCHAR},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update tb_clue_activity
+    set clue_activity_id = #{record.clueActivityId,jdbcType=VARCHAR},
+      picture_url = #{record.pictureUrl,jdbcType=VARCHAR},
+      enable = #{record.enable,jdbcType=VARCHAR},
+      create_time = #{record.createTime,jdbcType=VARCHAR},
+      description = #{record.description,jdbcType=VARCHAR},
+      money = #{record.money,jdbcType=VARCHAR},
+      update_time = #{record.updateTime,jdbcType=VARCHAR}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="com.qigan.qiganshop.pojo.TbClueActivity" >
+    update tb_clue_activity
+    <set >
+      <if test="pictureUrl != null" >
+        picture_url = #{pictureUrl,jdbcType=VARCHAR},
+      </if>
+      <if test="enable != null" >
+        enable = #{enable,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null" >
+        create_time = #{createTime,jdbcType=VARCHAR},
+      </if>
+      <if test="description != null" >
+        description = #{description,jdbcType=VARCHAR},
+      </if>
+      <if test="money != null" >
+        money = #{money,jdbcType=VARCHAR},
+      </if>
+      <if test="updateTime != null" >
+        update_time = #{updateTime,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where clue_activity_id = #{clueActivityId,jdbcType=VARCHAR}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.qigan.qiganshop.pojo.TbClueActivity" >
+    update tb_clue_activity
+    set picture_url = #{pictureUrl,jdbcType=VARCHAR},
+      enable = #{enable,jdbcType=VARCHAR},
+      create_time = #{createTime,jdbcType=VARCHAR},
+      description = #{description,jdbcType=VARCHAR},
+      money = #{money,jdbcType=VARCHAR},
+      update_time = #{updateTime,jdbcType=VARCHAR}
+    where clue_activity_id = #{clueActivityId,jdbcType=VARCHAR}
+  </update>
+</mapper>

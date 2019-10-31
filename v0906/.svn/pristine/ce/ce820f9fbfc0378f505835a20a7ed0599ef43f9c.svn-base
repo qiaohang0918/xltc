@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qigan.qiganshop.mapper.HomepageCateMapper">
+
+    <resultMap id="BaseResultMap" type="com.qigan.qiganshop.pojo.HomepageCate">
+        <id column="homepagecateId" jdbcType="VARCHAR" property="homepagecateId"/>
+        <result column="title" jdbcType="VARCHAR" property="title"/>
+        <result column="subtitle" jdbcType="VARCHAR" property="subtitle"/>
+        <result column="sort" jdbcType="INTEGER" property="sort"/>
+        <result column="enable" jdbcType="VARCHAR" property="enable"/>
+        <result column="location" jdbcType="VARCHAR" property="location"/>
+        <result column="picUrl" jdbcType="VARCHAR" property="picUrl"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+    homepagecateId, title, subtitle, sort, enable,location,picUrl
+  </sql>
+
+    <select id="findOne" parameterType="java.lang.String" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from tb_homepagecate
+        where homepagecateId = #{homepagecateId,jdbcType=VARCHAR}
+    </select>
+
+    <delete id="delete" parameterType="java.lang.String">
+    delete from tb_homepagecate
+    where homepagecateId = #{homepagecateId,jdbcType=VARCHAR}
+  </delete>
+
+    <insert id="insert" parameterType="com.qigan.qiganshop.pojo.HomepageCate">
+    insert into tb_homepagecate (homepagecateId, title, subtitle, 
+      sort, enable,location,picUrl)
+    values (#{homepagecateId,jdbcType=VARCHAR}, #{title,jdbcType=VARCHAR}, #{subtitle,jdbcType=VARCHAR}, 
+     ( SELECT next FROM (SELECT IF( MAX( sort ) IS NULL, 1, MAX( sort ) + 1 ) AS next FROM tb_homepagecate where location = #{location} ) AS temp
+		), #{enable,jdbcType=VARCHAR}, #{location,jdbcType=VARCHAR},#{picUrl,jdbcType=VARCHAR})
+  </insert>
+
+    <update id="update" parameterType="com.qigan.qiganshop.pojo.HomepageCate">
+        update tb_homepagecate
+        <set>
+            <if test="title != null">
+                title = #{title,jdbcType=VARCHAR},
+            </if>
+            <if test="subtitle != null">
+                subtitle = #{subtitle,jdbcType=VARCHAR},
+            </if>
+            <if test="sort != null">
+                sort = #{sort,jdbcType=INTEGER},
+            </if>
+            <if test="enable != null">
+                enable = #{enable,jdbcType=VARCHAR},
+            </if>
+            <if test="location != null">
+                location = #{location,jdbcType=VARCHAR},
+            </if>
+            <if test="picUrl != null">
+                picUrl = #{picUrl,jdbcType=VARCHAR},
+            </if>
+        </set>
+        where homepagecateId = #{homepagecateId,jdbcType=VARCHAR}
+    </update>
+
+    <select id="findPage" parameterType="map" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from tb_homepagecate
+        <if test="record!= null">
+            where
+            <if test="record.title != null">
+                title = #{record.title,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.subtitle != null">
+                subtitle = #{record.subtitle,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.sort != null">
+                sort = #{record.sort,jdbcType=INTEGER} and
+            </if>
+
+            <if test="record.location != null">
+                location = #{record.location,jdbcType=VARCHAR} and
+            </if>
+            enable = '1'
+        </if>
+        order by sort
+        <if test="page != null and size != null">
+            limit #{page},#{size}
+        </if>
+    </select>
+
+</mapper>

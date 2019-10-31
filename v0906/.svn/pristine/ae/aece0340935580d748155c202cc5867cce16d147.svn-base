@@ -1,0 +1,83 @@
+package com.qigan.qiganshop.pojo;
+
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+import lombok.*;
+
+import java.io.Serializable;
+
+/**
+ * 配送员订单关联表
+ *
+ * @author wanghao
+ */
+@ApiModel(value = "配送员订单关联表实体")
+@RequiredArgsConstructor()
+@NoArgsConstructor
+@AllArgsConstructor
+@ToString
+@EqualsAndHashCode
+public class DeliveryOrder implements Serializable {
+
+    @NonNull
+    @Getter
+    @Setter
+    @ApiModelProperty(value = "关联 ID")
+    private String deliverOrderId;
+
+    @Getter
+    @Setter
+    @ApiModelProperty(value = "配送员 ID")
+
+    private Integer deliverId;
+    @Getter
+    @Setter
+    @ApiModelProperty(value = "订单ID")
+    private String orderId;
+
+    @Getter
+    @Setter
+    @ApiModelProperty(value = "订单状态 ")
+    private String status;
+
+    @Getter
+    @Setter
+    @ApiModelProperty(value = "配送结果 0 已完成 1,拒收 2,地址错误 3,问题")
+    private String deliverStatus;
+
+    @Getter
+    @Setter
+    @ApiModelProperty(value = "签收人")
+    private String signer;
+
+    @Getter
+    @Setter
+    @ApiModelProperty(value = "创建时间(领取订单)")
+    private String createTime;
+
+    @Getter
+    @Setter
+    @ApiModelProperty(value = "出库时间(开始配送)")
+    private String outboundTime;
+
+    @Getter
+    @Setter
+    @ApiModelProperty(value = "送达时间(已签收订单)")
+    private String endTime;
+
+    @Getter
+    @Setter
+    @ApiModelProperty(value = "问题描述")
+    private String problem;
+
+    @Getter
+    @Setter
+    @ApiModelProperty(value = "用户选择的配送时间")
+    private String deliveryTime;
+    @Getter
+    @Setter
+    @ApiModelProperty(value = "是否超时")
+    private String isTimeout;
+
+
+}

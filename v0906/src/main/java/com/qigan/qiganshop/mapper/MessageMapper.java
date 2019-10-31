@@ -1,0 +1,66 @@
+package com.qigan.qiganshop.mapper;
+
+import com.qigan.qiganshop.constant.DataState;
+import com.qigan.qiganshop.pojo.Message;
+
+import org.apache.ibatis.annotations.Insert;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
+
+import java.util.List;
+
+public interface MessageMapper {
+
+    List<Message> unread(String userId);
+
+    int markRead(@Param("messageid") String messageid);
+    
+    @Insert({
+    	"insert into tb_message(userId, type, readstatus, flag, title, context, url, status) ",
+    	"values(",
+    	"#{userId},#{type},",
+    	"#{readstatus}, #{flag}, #{title}, #{context},",
+    	"#{url}, #{status})"
+    })
+    Integer insert(Message message);
+    
+    @Select({
+    	"select messageId, userId, type, status,readstatus, flag, title, context, url, date_format(time, '%Y-%m-%d') as time",
+    	"from tb_message ",
+    	"where userId = #{userId} and (status = '" + DataState.NOR + "' or status is null)",
+    	"order by time desc"
+    })
+    List<Message> findAllByUserId(@Param("userId") String userId);
+    
+    @Select({
+    	"select messageId, userId, type, readstatus, status, flag, title, context, url, date_format(time, '%Y-%m-%d') as time",
+    	"from tb_message ",
+    	"where userId = #{userId} and type = #{type} and (status = '" + DataState.NOR + "' or status is null)",
+    	"order by time desc"
+    })
+    List<Message> findAllByUserIdAndType(@Param("userId") String userId, @Param("type") String type);
+    
+    @Update({
+    	"update tb_message set readstatus = '2' where userId = #{userId}"
+    })
+    Integer updateAllRead(String userId);
+    
+    @Select({
+    	"select count(0) from tb_message where readstatus = '1' and userId = #{userId}"
+    })
+    Integer countUnRead(String userId);
+    
+    @Insert({
+    	"insert into tb_message(messageId, userId, type, readstatus, flag, title, context, status) ",
+    	"select REPLACE(UUID(),'-',''), userId, #{msgType}, '1', 'false', #{title}, #{message}, '10' ",
+    	"from tb_user "
+    })
+    int insertJGMessage(@Param("message") String message, @Param("title") String title, @Param("msgType") String msgType);
+    
+    @Update({
+    	"update tb_message set status = #{status} where messageId = #{id}",
+    })
+    int deleteById(@Param("id") String id, @Param("status") String status);
+    
+}

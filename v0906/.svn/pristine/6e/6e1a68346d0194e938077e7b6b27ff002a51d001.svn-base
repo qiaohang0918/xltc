@@ -1,0 +1,46 @@
+package com.qigan.qiganshop.pojo.synchronization;
+
+import lombok.Getter;
+import lombok.Setter;
+
+/**
+ * TODO
+ *
+ * @author wanghao
+ * @time 2019-07-02 15:34
+ */
+public class ResultRefund {
+
+    /**
+     * success : true
+     * errorCode :
+     * subErrorCode :
+     * errorDesc :
+     * subErrorDesc :
+     * requestMethod : gy.erp.trade.refund.update
+     * platform_code : 201907021562051368092042
+     */
+    @Getter
+    @Setter
+    private boolean success;
+    @Getter
+    @Setter
+    private String errorCode;
+    @Getter
+    @Setter
+    private String subErrorCode;
+    @Getter
+    @Setter
+    private String errorDesc;
+    @Getter
+    @Setter
+    private String subErrorDesc;
+    @Getter
+    @Setter
+    private String requestMethod;
+    @Getter
+    @Setter
+    private String platform_code;
+
+
+}

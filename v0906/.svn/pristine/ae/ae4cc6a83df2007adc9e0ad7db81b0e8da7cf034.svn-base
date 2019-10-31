@@ -1,0 +1,40 @@
+package com.qigan.qiganshop.pojo;
+
+import java.io.Serializable;
+
+public class TbExpland implements Serializable {
+    private String explanduserid;
+
+    private String explandregisters;
+
+    private static final long serialVersionUID = 1L;
+
+    public String getExplanduserid() {
+        return explanduserid;
+    }
+
+    public void setExplanduserid(String explanduserid) {
+        this.explanduserid = explanduserid == null ? null : explanduserid.trim();
+    }
+
+    public String getExplandregisters() {
+        return explandregisters;
+    }
+
+    public void setExplandregisters(String explandregisters) {
+        this.explandregisters = explandregisters == null ? null : explandregisters.trim();
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(getClass().getSimpleName());
+        sb.append(" [");
+        sb.append("Hash = ").append(hashCode());
+        sb.append(", explanduserid=").append(explanduserid);
+        sb.append(", explandregisters=").append(explandregisters);
+        sb.append(", serialVersionUID=").append(serialVersionUID);
+        sb.append("]");
+        return sb.toString();
+    }
+}

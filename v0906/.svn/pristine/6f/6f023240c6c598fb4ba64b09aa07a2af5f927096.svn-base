@@ -1,0 +1,95 @@
+package com.qigan.qiganshop.pojo;
+
+import java.io.Serializable;
+
+public class TbRefundRecord implements Serializable {
+    private String refundrecordid;
+
+    private String orderid;
+
+    private String opttime;
+
+    private String no;
+
+    private String name;
+
+    private String refundtype;
+
+    private String money;
+
+    private static final long serialVersionUID = 1L;
+
+    public String getRefundrecordid() {
+        return refundrecordid;
+    }
+
+    public void setRefundrecordid(String refundrecordid) {
+        this.refundrecordid = refundrecordid == null ? null : refundrecordid.trim();
+    }
+
+    public String getOrderid() {
+        return orderid;
+    }
+
+    public void setOrderid(String orderid) {
+        this.orderid = orderid == null ? null : orderid.trim();
+    }
+
+    public String getOpttime() {
+        return opttime;
+    }
+
+    public void setOpttime(String opttime) {
+        this.opttime = opttime == null ? null : opttime.trim();
+    }
+
+    public String getNo() {
+        return no;
+    }
+
+    public void setNo(String no) {
+        this.no = no == null ? null : no.trim();
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name == null ? null : name.trim();
+    }
+
+    public String getRefundtype() {
+        return refundtype;
+    }
+
+    public void setRefundtype(String refundtype) {
+        this.refundtype = refundtype == null ? null : refundtype.trim();
+    }
+
+    public String getMoney() {
+        return money;
+    }
+
+    public void setMoney(String money) {
+        this.money = money == null ? null : money.trim();
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(getClass().getSimpleName());
+        sb.append(" [");
+        sb.append("Hash = ").append(hashCode());
+        sb.append(", refundrecordid=").append(refundrecordid);
+        sb.append(", orderid=").append(orderid);
+        sb.append(", opttime=").append(opttime);
+        sb.append(", no=").append(no);
+        sb.append(", name=").append(name);
+        sb.append(", refundtype=").append(refundtype);
+        sb.append(", money=").append(money);
+        sb.append(", serialVersionUID=").append(serialVersionUID);
+        sb.append("]");
+        return sb.toString();
+    }
+}

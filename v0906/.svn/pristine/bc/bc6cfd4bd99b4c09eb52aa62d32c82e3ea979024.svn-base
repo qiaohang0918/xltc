@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qigan.qiganshop.mapper.StockMapper">
+    <resultMap id="BaseResultMap" type="com.qigan.qiganshop.pojo.Stock">
+        <id column="stockId" property="stockId" jdbcType="VARCHAR"/>
+        <result column="warehouseId" property="warehouseId" jdbcType="VARCHAR"/>
+        <result column="itemId" property="itemId" jdbcType="VARCHAR"/>
+        <result column="goodsId" property="goodsId" jdbcType="VARCHAR"/>
+        <result column="stockNum" property="stockNum" jdbcType="INTEGER"/>
+        <result column="lockNum" property="lockNum" jdbcType="INTEGER"/>
+        <result column="salableNum" property="salableNum" jdbcType="INTEGER"/>
+        <result column="isDel" property="isDel" jdbcType="VARCHAR"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        stockId, warehouseId, goodsId,itemId, stockNum, lockNum, salableNum, isDel
+    </sql>
+    <select id="findOne" resultMap="BaseResultMap" parameterType="java.lang.String">
+        select
+        <include refid="Base_Column_List"/>
+        from tb_stock
+        where stockId = #{stockId,jdbcType=VARCHAR}
+    </select>
+    <delete id="delete" parameterType="java.lang.String">
+        delete
+        from tb_stock
+        where stockId = #{stockId,jdbcType=VARCHAR}
+    </delete>
+
+    <insert id="insert" parameterType="com.qigan.qiganshop.pojo.Stock">
+        insert into tb_stock (stockId, warehouseId, goodsId, itemId,
+                              stockNum, lockNum, salableNum,
+                              isDel)
+        values (#{stockId,jdbcType=VARCHAR}, #{warehouseId,jdbcType=VARCHAR}, #{goodsId,jdbcType=VARCHAR},
+                #{itemId,jdbcType=VARCHAR},
+                #{stockNum,jdbcType=INTEGER}, #{lockNum,jdbcType=INTEGER}, #{salableNum,jdbcType=INTEGER},
+                #{isDel,jdbcType=VARCHAR})
+    </insert>
+    <insert id="insertOrUpdate">
+        insert into tb_stock (stockId, warehouseId, goodsId, itemId,
+                              stockNum, lockNum, salableNum,
+                              isDel)
+         values 
+         <foreach collection='list' item='item' index='index' separator=','> 
+         (#{item.stockId,jdbcType=VARCHAR}, #{item.warehouseId,jdbcType=VARCHAR}, #{item.goodsId,jdbcType=VARCHAR},
+                #{item.itemId,jdbcType=VARCHAR},
+                #{item.stockNum,jdbcType=INTEGER}, #{item.lockNum,jdbcType=INTEGER}, #{item.salableNum,jdbcType=INTEGER},
+                #{item.isDel,jdbcType=VARCHAR})
+         </foreach>
+              ON DUPLICATE KEY UPDATE 
+                stockNum = VALUES(stockNum),
+                lockNum = VALUES(lockNum),
+                salableNum = VALUES(salableNum),
+                warehouseId = VALUES(warehouseId)
+    </insert>
+    <update id="update" parameterType="map">
+        update tb_stock
+        <set>
+
+            <if test="record.warehouseId != null">
+                warehouseId = #{record.warehouseId,jdbcType=VARCHAR},
+            </if>
+            <if test="record.goodsId != null">
+                goodsId = #{record.goodsId,jdbcType=VARCHAR},
+            </if>
+            <if test="record.itemId != null">
+                itemId = #{record.itemId,jdbcType=VARCHAR},
+            </if>
+            <if test="record.stockNum != null">
+                stockNum = #{record.stockNum,jdbcType=INTEGER},
+            </if>
+            <if test="record.lockNum != null">
+                lockNum = #{record.lockNum,jdbcType=INTEGER},
+            </if>
+            <if test="record.salableNum != null">
+                salableNum = #{record.salableNum,jdbcType=INTEGER},
+            </if>
+            <if test="record.isDel != null">
+                isDel = #{record.isDel,jdbcType=VARCHAR},
+            </if>
+        </set>
+        where
+        stockId = #{record.stockId,jdbcType=VARCHAR}
+    </update>
+    
+    <update id="updates">
+    <foreach separator=";" collection="list" item="record" index="index">
+        update tb_stock 
+        <set> 
+        
+            <if test="record.warehouseId != null">
+                warehouseId = #{record.warehouseId,jdbcType=VARCHAR},
+            </if>
+            <if test="record.goodsId != null">
+                goodsId = #{record.goodsId,jdbcType=VARCHAR},
+            </if>
+            <if test="record.itemId != null">
+                itemId = #{record.itemId,jdbcType=VARCHAR},
+            </if>
+            <if test="record.stockNum != null">
+                stockNum = #{record.stockNum,jdbcType=INTEGER},
+            </if>
+            <if test="record.lockNum != null">
+                lockNum = #{record.lockNum,jdbcType=INTEGER},
+            </if>
+            <if test="record.salableNum != null">
+                salableNum = #{record.salableNum,jdbcType=INTEGER},
+            </if>
+            <if test="record.isDel != null">
+                isDel = #{record.isDel,jdbcType=VARCHAR},
+            </if>
+        </set>
+        where
+        stockId = #{record.stockId,jdbcType=VARCHAR}
+        </foreach>
+    </update>
+
+    <select id="findPage" parameterType="map" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from tb_stock
+        <if test="record!= null">
+            where
+            <if test="record.warehouseId != null">
+                warehouseId = #{record.warehouseId,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.goodsId != null">
+                goodsId = #{record.goodsId,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.itemId != null">
+                itemId = #{record.itemId,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.stockNum != null">
+                stockNum = #{record.stockNum,jdbcType=INTEGER} and
+            </if>
+            <if test="record.lockNum != null">
+                lockNum = #{record.lockNum,jdbcType=INTEGER} and
+            </if>
+            <if test="record.salableNum != null">
+                salableNum = #{record.salableNum,jdbcType=INTEGER} and
+            </if>
+            <if test="record.isDel != null">
+                isDel = #{record.isDel,jdbcType=VARCHAR} and
+            </if>
+            1=1
+
+        </if>
+        order by salableNum
+        <if test="page!= null and rows != null">
+            limit #{page},#{rows}
+        </if>
+    </select>
+    <select id="checkExits" parameterType="map" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from tb_stock
+        where itemId=#{itemId} and warehouseId = #{warehouseId}
+        limit 0,1
+    </select>
+    <select id="findStockNum" parameterType="map" resultMap="BaseResultMap">
+        select
+        distinct
+        warehouseId, goodsId, stockNum, lockNum, salableNum
+        from tb_stock
+        where warehouseId=#{wareHouseId} and salableNum <![CDATA[ > ]]> 0
+        <if test="page!= null and size!= null">
+            limit #{page},#{size}
+        </if>
+    </select>
+    <select id="findStock" parameterType="map" resultMap="BaseResultMap">
+        select
+        distinct
+        warehouseId, goodsId
+        from tb_stock
+        where warehouseId=#{wareHouseId} and salableNum <![CDATA[ > ]]> 0
+        <if test="page!= null and size!= null">
+            limit #{page},#{size}
+        </if>
+    </select>
+    <select id="findByItemIdAndWareHouseId" resultMap="BaseResultMap" parameterType="map">
+        select
+        <include refid="Base_Column_List"/>
+        from tb_stock
+        where itemId = #{itemId}
+        and warehouseId= #{warehouseId}
+        limit 0,1
+    </select>
+
+    <update id="cancelLock" parameterType="map">
+        update tb_stock
+        set lockNum    = lockNum - #{countNum}, 
+        <if test="#{saleNum} != null">
+        	salableNum = #{saleNum}
+        </if>
+        <if test="#{saleNum} == null">
+        	salableNum = stockNum - lockNum
+        </if>
+        where warehouseId = #{warehouseCode}
+          and itemId = #{itemId}
+          and lockNum > 0
+    </update>
+</mapper>

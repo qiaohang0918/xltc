@@ -1,0 +1,117 @@
+package com.qigan.qiganshop.controller.frontend;
+
+import cn.afterturn.easypoi.excel.ExcelExportUtil;
+import cn.afterturn.easypoi.excel.entity.ExportParams;
+import com.qigan.qiganshop.mapper.CouponMapper;
+import com.qigan.qiganshop.pojo.DeliveryDetails;
+import com.qigan.qiganshop.pojo.Info;
+import com.qigan.qiganshop.pojo.TbExpland;
+import com.qigan.qiganshop.service.InfoService;
+import com.qigan.qiganshop.service.ScopeService;
+import com.qigan.qiganshop.service.WareHouseService;
+import com.qigan.qiganshop.util.notnull.StringNotNull;
+import com.qigan.qiganshop.util.result.PageResult;
+import com.qigan.qiganshop.util.result.format.JsonResult;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import org.apache.commons.lang.StringUtils;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.List;
+import java.util.Map;
+
+@SuppressWarnings("all")
+@RestController
+@RequestMapping("/app/homepage")
+@Api(tags = {"APP 首页经纬度判断"})
+public class AppHomePageController {
+
+    @Autowired
+    private ScopeService scopeService;
+    @Autowired
+    CouponMapper couponMapper;
+
+    /**
+     * Regarding JsonResult, I really don't want to say anything.
+     * There used to be a silly man named Li Pengfei.
+     * It was a fucking stupidity that made a JsonResult such a universal return entity.
+     * The thief used by Laozi was fucking unhappy
+     * forget it* For the money
+     * Zaozhuang’s surname Zhou’s stupidity is all over the sky, Laozi ran 13 kilometers, saying that Laozi was stimulated,
+     * I received your mother’s stimulation. You are fucking sick
+     * You wait* Have children, no Asshole
+     *
+     * @param orderId
+     * @return
+     */
+    @RequestMapping("/checkIn.do")
+    @ApiOperation(
+            value = "查询当前坐标是否在配送范围内",
+            notes = "orderId ",
+            httpMethod = "POST")
+    public ResponseEntity getInfo(@RequestParam(defaultValue = "") String coordinate) {
+        if (StringUtils.isEmpty(coordinate)) {
+            return new ResponseEntity(new JsonResult("400", "经纬度不能为空"), HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity(new JsonResult("200","success",scopeService.checkIn(coordinate)), HttpStatus.OK);
+    }
+
+
+    @RequestMapping(value = "/exportExcel.do",method = RequestMethod.GET)
+    public String exportExcel(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        List<DeliveryDetails> list = couponMapper.exportExcel();
+        response.setHeader("content-Type", "application/vnd.ms-excel;charset=UTF-8");
+        response.setHeader("Content-Disposition", "attachment;filename=OrderDeliveryDetails.xls");
+        Workbook workbook = ExcelExportUtil.exportExcel(new ExportParams("配送详情(2019-10-01至今)","newSheet"), DeliveryDetails.class, list);
+        OutputStream out = response.getOutputStream();
+        workbook.write(out);
+        out.close();
+        return "success";
+    }
+
+
+    @RequestMapping(value = "/exportExcelExporeOrder.do",method = RequestMethod.GET)
+    public String exportExcelExporeOrder(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        List<DeliveryDetails> list = couponMapper.exportExcelExporeOrder();
+        response.setHeader("content-Type", "application/vnd.ms-excel;charset=UTF-8");
+        response.setHeader("Content-Disposition", "attachment;filename=OrderExpired.xls");
+        Workbook workbook = ExcelExportUtil.exportExcel(new ExportParams("延迟订单","newSheet"), DeliveryDetails.class, list);
+        OutputStream out = response.getOutputStream();
+        workbook.write(out);
+        out.close();
+        return "success";
+    }
+
+
+    @RequestMapping(value = "/exportExcelExporeOrderByTime.do",method = RequestMethod.GET)
+    public String exportExcelExporeOrderByTime(HttpServletRequest request, HttpServletResponse response,String startTime,String endTime) throws IOException {
+        StringBuffer buffer = new StringBuffer(" ");
+        if(StringNotNull.check(startTime)){
+            buffer.append(" and a.payTime > '"+startTime+"' ");
+        }
+        if(StringNotNull.check(endTime)){
+            buffer.append(" and a.payTime < '"+endTime+"' ");
+        }
+        List<DeliveryDetails> list = couponMapper.exportExcelExporeOrderByTime(buffer.toString());
+        response.setHeader("content-Type", "application/vnd.ms-excel;charset=UTF-8");
+        response.setHeader("Content-Disposition", "attachment;filename=OrderExpired.xls");
+        Workbook workbook = ExcelExportUtil.exportExcel(new ExportParams("2019-10-25(18:00-20:30)的配送超时的支付订单","newSheet"), DeliveryDetails.class, list);
+        OutputStream out = response.getOutputStream();
+        workbook.write(out);
+        out.close();
+        return "success";
+    }
+
+
+}

@@ -1,0 +1,38 @@
+package com.qigan.qiganshop.mapper;
+
+import com.qigan.qiganshop.pojo.TbExpland;
+import com.qigan.qiganshop.pojo.TbExplandExample;
+import java.util.List;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
+
+public interface TbExplandMapper {
+    int countByExample(TbExplandExample example);
+
+    int deleteByExample(TbExplandExample example);
+
+    int deleteByPrimaryKey(String explanduserid);
+
+    int insert(TbExpland record);
+
+    int insertSelective(TbExpland record);
+
+    List<TbExpland> selectByExample(TbExplandExample example);
+
+    TbExpland selectByPrimaryKey(String explanduserid);
+
+    int updateByExampleSelective(@Param("record") TbExpland record, @Param("example") TbExplandExample example);
+
+    int updateByExample(@Param("record") TbExpland record, @Param("example") TbExplandExample example);
+
+    int updateByPrimaryKeySelective(TbExpland record);
+
+    int updateByPrimaryKey(TbExpland record);
+
+    @Update("update  tb_expland set explandRegisters = explandRegisters + 1 where explandUserId = #{orginUserId} ")
+    void addHisRegistersCount(@Param("orginUserId") String orginUserId);
+
+    @Select("select clueUserId from tb_clue_user where userId = #{userId} ")
+    List<String> findCurrentUsersExplandUserIds(@Param("userId") String searchValue);
+}

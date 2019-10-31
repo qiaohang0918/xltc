@@ -1,0 +1,117 @@
+/**
+ * 
+ */
+package com.qigan.qiganshop.service.impl;
+
+import java.util.List;
+import java.util.Map;
+
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
+import com.qigan.qiganshop.pojo.CountDelivery;
+import com.qigan.qiganshop.pojo.Order;
+import com.qigan.qiganshop.service.OrderService;
+import com.qigan.qiganshop.util.notnull.StringNotNull;
+import com.qigan.qiganshop.util.result.PageResult;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.qigan.qiganshop.mapper.XltcReportDeliveryerMapper;
+import com.qigan.qiganshop.pojo.XltcReportDeliveryerModel;
+import com.qigan.qiganshop.service.XltcReportDeleryerService;
+
+/**
+ * @author wyy
+ *
+ */
+@Service
+@Transactional
+public class XltcReportDeleryerServiceImpl implements XltcReportDeleryerService {
+
+	@Autowired
+	XltcReportDeliveryerMapper mapper;
+	@Autowired
+	OrderService orderService;
+	
+	/* (non-Javadoc)
+	 * @see com.qigan.qiganshop.service.XltcReportDeleryerService#insert(com.qigan.qiganshop.pojo.XltcReportDeliveryerModel)
+	 */
+	@Override
+	public void insert(XltcReportDeliveryerModel model) {
+		// TODO Auto-generated method stub
+		mapper.insert(model);
+	}
+
+	/* (non-Javadoc)
+	 * @see com.qigan.qiganshop.service.XltcReportDeleryerService#selectAll(com.qigan.qiganshop.pojo.XltcReportDeliveryerModel)
+	 */
+	@Override
+	public PageResult selectAll(XltcReportDeliveryerModel model) {
+		// TODO Auto-generated method stub
+		PageHelper.startPage(model.getPage(),model.getRows());
+		List<XltcReportDeliveryerModel> models = mapper.selectAll(model);
+		if(models!=null && models.size()>0){
+			for (XltcReportDeliveryerModel resultBean : models) {
+				if(resultBean.getOrderNum()!=null && !"".equals(resultBean.getOrderNum().trim())){
+					Order order=orderService.findOne(resultBean.getOrderNum());
+					resultBean.setOrder(order);
+				}
+				else
+					continue;
+			}
+		}
+		PageInfo<XltcReportDeliveryerModel> info = new PageInfo<>(models);
+
+		return new PageResult(info.getTotal(),info.getList());
+	}
+
+	@Override
+	public List<?> selectReportByUserId(XltcReportDeliveryerModel model) {
+		// TODO Auto-generated method stub
+		List<XltcReportDeliveryerModel> models = mapper.selectReportByUserId(model);
+		if(models!=null && models.size()>0){
+			StringBuffer buffer = new StringBuffer(" ");
+			if(StringNotNull.check(model.getStartDate()))
+				buffer.append("and b.create_time_ >= '"+model.getStartDate()+"' ");
+			if(StringNotNull.check(model.getEndDate()))
+				buffer.append("and b.create_time_ <= '"+model.getEndDate()+"' ");
+			for (XltcReportDeliveryerModel deliveryer : models) {
+				try {
+					List<Map> countDelivery=mapper.countDelivery(deliveryer.getUserId(),buffer.toString());
+					if(countDelivery!=null && countDelivery.size()>0){
+						float finish=0.0f;
+						float question=0.0f;
+						float onSending=0.0f;
+						int total=0;
+						for (Map map : countDelivery) {
+							String status =  map.get("status")+"";
+							String sum = map.get("sum")+"";
+							CountDelivery delivery = new CountDelivery();
+							//完成 / 评价
+							if("4".equals(status) || "8".equals(status)){
+								finish+=Float.parseFloat(sum);
+							}else if("3".equals(status) ){  //配送中
+								onSending+=Float.parseFloat(sum);
+							}else {	//问题订单
+								question+=Float.parseFloat(sum);
+							}
+						}
+						//装载订单配送信息
+						CountDelivery delivery = new CountDelivery((finish+question+onSending+"").split("\\.")[0],(finish+"").split("\\.")[0],(question+"").split("\\.")[0],(onSending+"").split("\\.")[0],null);
+						deliveryer.setCountDelivery(delivery);
+					}
+				}catch (Exception e){
+					e.printStackTrace();
+					continue;
+				}
+			}
+		}else {
+			XltcReportDeliveryerModel deliveryerModel = new XltcReportDeliveryerModel();
+			deliveryerModel.setCountDelivery(new CountDelivery());
+			models.add(deliveryerModel);
+		}
+		return models;
+	}
+
+}

@@ -1,0 +1,72 @@
+package com.qigan.qiganshop.controller.backstage;
+
+import com.qigan.qiganshop.pojo.AppUser;
+import com.qigan.qiganshop.service.XltcExpladService;
+import com.qigan.qiganshop.util.notnull.StringNotNull;
+import com.qigan.qiganshop.util.result.XltcResult;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+import java.util.Map;
+
+/**
+ * @Aurher: QiaoHang
+ * @Description:
+ * @Data: 2019/9/18 18:41
+ * @Modified By:
+ */
+@RestController
+@RequestMapping("/expland")
+public class XltcExplandControler {
+
+    @Autowired
+    XltcExpladService expladService;
+
+    /**
+     * 添加推广托儿
+     * @param phone
+     * @return
+     */
+    @RequestMapping(value = "/addExplandUser.do",method = RequestMethod.GET)
+    public XltcResult addExplandUser(String phone){
+        return expladService.addExplandUser(phone);
+    }
+
+    /**
+     * 查询推广托儿用户
+     * @return
+     */
+    @RequestMapping(value = "/findExplandUsers.do",method = RequestMethod.GET)
+    public XltcResult findExplandUsers(){
+       List<Map> list = expladService.findExplandUsers();
+       return XltcResult.ok(list);
+    }
+
+    /**
+     * 查询当前用户的扩展用户信息
+     * @param userId
+     * @param token_
+     * @return
+     */
+    @RequestMapping(value = "/findCurrentUsersExplandUsers.do",method = RequestMethod.GET)
+    public XltcResult findCurrentUsersExplandUsers(String userId,String token_){
+        if(!StringNotNull.check(userId,token_)){
+            return XltcResult.error("请传入userId或者token_");
+        }
+        List<AppUser> explandUsers = null;
+        if(StringNotNull.check(userId)){
+            //默认使用userId查询
+            explandUsers = expladService.findCurrentUsersExplandUsers("userId",userId);
+        }else if(StringNotNull.check(token_)){
+            //其次使用token
+            explandUsers = expladService.findCurrentUsersExplandUsers("token",token_);
+        }else {
+
+        }
+        return XltcResult.ok(explandUsers);
+    }
+
+}

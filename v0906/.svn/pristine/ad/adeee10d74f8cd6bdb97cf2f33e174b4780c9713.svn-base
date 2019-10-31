@@ -1,0 +1,106 @@
+package com.qigan.qiganshop.pojo;
+
+import java.io.Serializable;
+
+public class TbDeposit implements Serializable {
+    private String orderid;
+
+    private String deposittype;
+
+    private String outTradeNum;
+
+    private String createtime;
+
+    private String paytime;
+
+    private String userid;
+
+    private String phone;
+
+    private String status;
+
+    private static final long serialVersionUID = 1L;
+
+    public String getOrderid() {
+        return orderid;
+    }
+
+    public void setOrderid(String orderid) {
+        this.orderid = orderid == null ? null : orderid.trim();
+    }
+
+    public String getDeposittype() {
+        return deposittype;
+    }
+
+    public void setDeposittype(String deposittype) {
+        this.deposittype = deposittype == null ? null : deposittype.trim();
+    }
+
+    public String getOutTradeNum() {
+        return outTradeNum;
+    }
+
+    public void setOutTradeNum(String outTradeNum) {
+        this.outTradeNum = outTradeNum == null ? null : outTradeNum.trim();
+    }
+
+    public String getCreatetime() {
+        return createtime;
+    }
+
+    public void setCreatetime(String createtime) {
+        this.createtime = createtime == null ? null : createtime.trim();
+    }
+
+    public String getPaytime() {
+        return paytime;
+    }
+
+    public void setPaytime(String paytime) {
+        this.paytime = paytime == null ? null : paytime.trim();
+    }
+
+    public String getUserid() {
+        return userid;
+    }
+
+    public void setUserid(String userid) {
+        this.userid = userid == null ? null : userid.trim();
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone == null ? null : phone.trim();
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status == null ? null : status.trim();
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(getClass().getSimpleName());
+        sb.append(" [");
+        sb.append("Hash = ").append(hashCode());
+        sb.append(", orderid=").append(orderid);
+        sb.append(", deposittype=").append(deposittype);
+        sb.append(", outTradeNum=").append(outTradeNum);
+        sb.append(", createtime=").append(createtime);
+        sb.append(", paytime=").append(paytime);
+        sb.append(", userid=").append(userid);
+        sb.append(", phone=").append(phone);
+        sb.append(", status=").append(status);
+        sb.append(", serialVersionUID=").append(serialVersionUID);
+        sb.append("]");
+        return sb.toString();
+    }
+}

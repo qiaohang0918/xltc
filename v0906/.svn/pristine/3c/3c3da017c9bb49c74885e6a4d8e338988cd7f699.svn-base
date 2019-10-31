@@ -1,0 +1,126 @@
+package com.qigan.qiganshop.service.impl;
+
+import com.qigan.qiganshop.mapper.UserCouponMapper;
+import com.qigan.qiganshop.pojo.Coupon;
+import com.qigan.qiganshop.pojo.UserCoupon;
+import com.qigan.qiganshop.service.UserAddrService;
+import com.qigan.qiganshop.service.UserCouponService;
+import com.qigan.qiganshop.util.notnull.NotNull;
+import com.qigan.qiganshop.util.notnull.StringNotNull;
+import com.qigan.qiganshop.util.result.PageResult;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+/**
+ * 用户收货地址实现层
+ *
+ * @author wanghao
+ */
+@Service
+@Transactional(rollbackFor = Exception.class)
+public class UserCouponServiceImpl implements UserCouponService {
+    @Autowired
+    private UserCouponMapper mapper;
+
+    /**
+     * 增加
+     *
+     * @param userCoupon
+     */
+    @Override
+    public Integer add(UserCoupon userCoupon) {
+        if (!StringNotNull.check(userCoupon.getUserCouponId())) {
+            userCoupon.setUserCouponId(UUID.randomUUID().toString().replace("-", ""));
+        }
+        userCoupon.setIsUse("0");
+        return mapper.insert(userCoupon);
+    }
+
+    /**
+     * 修改
+     *
+     * @param userCoupon
+     */
+    @Override
+    public Integer update(UserCoupon userCoupon) {
+
+        return mapper.update(userCoupon);
+    }
+
+
+    /**
+     * 根据ID获取实体
+     *
+     * @param userCouponId
+     * @return
+     */
+    @Override
+    public UserCoupon findOne(String userCouponId) {
+        return mapper.findOne(userCouponId);
+    }
+
+    /**
+     * 根据userId和优惠券ID获取实体
+     *
+     * @param userid
+     * @param couponId
+     * @return
+     */
+    @Override
+    public UserCoupon findByUserIdAndCouponId(String userid, String couponId) {
+        List<UserCoupon> list = mapper.findByUserIdAndCouponId(userid, couponId);
+        if (list.size() > 0) {
+            return (UserCoupon) NotNull.checkNull(list.get(0));
+        }
+        return new UserCoupon();
+    }
+
+
+    /**
+     * 分页
+     *
+     * @param userId
+     * @param pageNum  当前页 码
+     * @param pageSize 每页记录数
+     * @return
+     */
+    @Override
+    public List<UserCoupon> findPage(String userId, Integer pageNum, Integer pageSize) {
+        List<UserCoupon> list = new ArrayList<>();
+        if (pageNum != null && pageSize != null) {
+
+            list = mapper.findPage(userId, (pageNum - 1) * pageSize, pageSize);
+        } else {
+            list = mapper.findPage(userId, null, null);
+
+        }
+        return (List<UserCoupon>) NotNull.checkListNull(list);
+    }
+
+    /**
+     * 查询可用优惠券
+     *
+     * @param userId
+     * @param total
+     * @return
+     */
+    @Override
+    public List<Coupon> findCanUse(String userId, double total) {
+        return (List<Coupon>) NotNull.checkListNull(mapper.findCanUse(userId, total));
+    }
+
+    /**
+     * 下单时修改优惠券状态
+     *
+     * @param userCoupon
+     */
+    @Override
+    public Integer updateByOrder(UserCoupon userCoupon) {
+        return mapper.updateByOrder(userCoupon);
+    }
+}

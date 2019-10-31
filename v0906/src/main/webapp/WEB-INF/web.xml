@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
+	version="3.1">
+
+	<context-param>
+		<param-name>contextConfigLocation</param-name>
+		<param-value>classpath*:spring/applicationContext.xml</param-value>
+	</context-param>
+	<listener>
+		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+	</listener>
+	<listener>
+		<listener-class>org.springframework.web.context.request.RequestContextListener</listener-class>
+	</listener>
+	<!-- 解决post乱码 -->
+	<filter>
+		<filter-name>CharacterEncodingFilter</filter-name>
+		<filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+		<init-param>
+			<param-name>encoding</param-name>
+			<param-value>utf-8</param-value>
+		</init-param>
+		<init-param>
+			<param-name>forceEncoding</param-name>
+			<param-value>true</param-value>
+		</init-param>
+	</filter>
+	<filter-mapping>
+		<filter-name>CharacterEncodingFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+
+	<filter>
+		<filter-name>corsFilter</filter-name>
+		<filter-class>com.qigan.qiganshop.util.filter.CorsFilter</filter-class>
+	</filter>
+	<filter-mapping>
+		<filter-name>corsFilter</filter-name>
+		<url-pattern>*.do</url-pattern>
+
+
+	</filter-mapping>
+	<filter>
+		<filter-name>tokenFilter</filter-name>
+		<filter-class>com.qigan.qiganshop.util.filter.TokenFilter</filter-class>
+	</filter>
+	<filter-mapping>
+		<filter-name>tokenFilter</filter-name>
+		<url-pattern>*.do</url-pattern>
+	</filter-mapping>
+	<!-- 日志 -->
+	<!--Log4jConfigListener监听器，用来监听日志的启动： -->
+	<listener>
+		<listener-class>org.springframework.web.util.Log4jConfigListener</listener-class>
+	</listener>
+	<!--log4j文件的加载路径：不过我后来又尝试了一下，好像<context-param>不需要进行配置也可以运行log4j。 -->
+	<!-- log4j日志输出 -->
+	<!-- <context-param> <param-name>log4jConfigLocation</param-name> <param-value>classpath:properties/log4j.properties</param-value> 
+		</context-param> -->
+	<!-- 日志 -->
+
+	<servlet>
+		<servlet-name>DruidStatView</servlet-name>
+		<servlet-class>com.alibaba.druid.support.http.StatViewServlet</servlet-class>
+		<init-param>
+			<!-- 用户名 -->
+			<param-name>loginUsername</param-name>
+			<param-value>druid</param-value>
+		</init-param>
+		<init-param>
+			<!-- 密码 -->
+			<param-name>loginPassword</param-name>
+			<param-value>druid</param-value>
+		</init-param>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>DruidStatView</servlet-name>
+		<url-pattern>/druid/*</url-pattern>
+	</servlet-mapping>
+	<filter>
+		<filter-name>druidWebStatFilter</filter-name>
+		<filter-class>com.alibaba.druid.support.http.WebStatFilter</filter-class>
+		<init-param>
+			<param-name>exclusions</param-name>
+			<param-value>/public/*,*.js,*.css,/druid*,*.jsp,*.swf</param-value>
+		</init-param>
+	</filter>
+	<filter-mapping>
+		<filter-name>druidWebStatFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+
+
+	<servlet>
+		<servlet-name>springmvc</servlet-name>
+		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+		<!-- 指定加载的配置文件 ，通过参数contextConfigLocation加载 -->
+		<init-param>
+			<param-name>contextConfigLocation</param-name>
+			<param-value>classpath:spring/springmvc.xml</param-value>
+		</init-param>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>springmvc</servlet-name>
+		<url-pattern>*.do</url-pattern>
+	</servlet-mapping>
+
+
+	<welcome-file-list>
+		<welcome-file>index.html</welcome-file>
+	</welcome-file-list>
+
+	<servlet-mapping>
+		<servlet-name>springmvc</servlet-name>
+		<url-pattern>/</url-pattern>
+	</servlet-mapping>
+
+
+</web-app>

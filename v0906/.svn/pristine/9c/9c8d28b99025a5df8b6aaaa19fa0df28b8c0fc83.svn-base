@@ -1,0 +1,117 @@
+package com.qigan.qiganshop.util.picture;
+
+import com.qigan.qiganshop.util.notnull.StringNotNull;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+
+
+/**
+ * TODO
+ *
+ * @author wanghao
+ * @time 2019-05-16 14:29
+ */
+@Component
+public class PicUtil {
+
+    @Value("${pic_url}")
+    private String guanyiPicHead;
+    @Value("${local_pic_url}")
+    private String localPicHead;
+
+    /**
+     * 加头
+     *
+     * @param picurl
+     * @return
+     */
+    public ArrayList<String> addUrlHead(String picurl) {
+        ArrayList<String> picList = new ArrayList<String>();
+        if (StringNotNull.check(picurl)) {
+            String[] split = picurl.split(",");
+            for (String s : split) {
+                String result = null;
+                if (s.startsWith("permanent")) {
+                    result = guanyiPicHead + s;
+                } else {
+                    result = localPicHead + s;
+                }
+                picList.add(result);
+            }
+        }
+        return picList;
+    }
+
+    /**
+     * 加头
+     * @param picUrl
+     * @return
+     */
+    public String addOneUrlHead(String picUrl) {
+        if (StringNotNull.check(picUrl)) {
+            if (picUrl.startsWith("permanent")) {
+                return guanyiPicHead + picUrl;
+            } else if (picUrl.startsWith("http")) {
+                return picUrl;
+            } else {
+                return localPicHead + picUrl;
+            }
+        } else {
+            return "";
+        }
+    }
+
+
+    /**
+     * 去头
+     *
+     * @param picUrls
+     * @return
+     */
+    public String deleteUrlHead(String picUrls) {
+        StringBuffer buffer = new StringBuffer();
+        if (StringNotNull.check(picUrls)) {
+            String[] split = picUrls.split(",");
+            for (String s : split) {
+                if (s.startsWith(guanyiPicHead)) {
+                    buffer.append(s.replace(guanyiPicHead, ""));
+                } else {
+                    buffer.append(s.replace(localPicHead, ""));
+                }
+                buffer.append(",");
+            }
+            String result = buffer.toString();
+            picUrls = result.substring(0, result.lastIndexOf(","));
+            return picUrls;
+        }
+        return "";
+    }
+    /**
+     * 去头 不去逗号
+     *
+     * @param picUrls
+     * @return
+     */
+    public String deleteUrlHead2(String picUrls) {
+        StringBuffer buffer = new StringBuffer();
+        if (StringNotNull.check(picUrls)) {
+            String[] split = picUrls.split(",");
+            for (String s : split) {
+                if (s.startsWith(guanyiPicHead)) {
+                    buffer.append(s.replace(guanyiPicHead, ""));
+                } else {
+                    buffer.append(s.replace(localPicHead, ""));
+                }
+                buffer.append(",");
+            }
+            String result = buffer.toString();
+            //picUrls = result.substring(0, result.lastIndexOf(","));
+            return result;
+        }
+        return "";
+    }
+
+
+}

@@ -1,0 +1,505 @@
+package com.qigan.qiganshop.service.impl;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.StringUtils;
+import org.elasticsearch.common.util.Comparators;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.mchange.v2.beans.BeansUtils;
+import com.qigan.qiganshop.constant.DataState;
+import com.qigan.qiganshop.constant.RedisConstant;
+import com.qigan.qiganshop.domain.TbLocalCategory;
+import com.qigan.qiganshop.exception.XltcRuntimeException;
+import com.qigan.qiganshop.mapper.CategoryMapper;
+import com.qigan.qiganshop.mapper.GoodsMapper;
+import com.qigan.qiganshop.mapper.HomepageCateMapper;
+import com.qigan.qiganshop.mapper.LabelMapper;
+import com.qigan.qiganshop.pojo.Category;
+import com.qigan.qiganshop.pojo.CommonPage;
+import com.qigan.qiganshop.pojo.Goods;
+import com.qigan.qiganshop.pojo.Label;
+import com.qigan.qiganshop.pojo.XltcGoodsLabelModel;
+import com.qigan.qiganshop.pojo.XltcGoodsModel;
+import com.qigan.qiganshop.pojo.XltcGoodsTypeModel;
+import com.qigan.qiganshop.pojo.group.GroupLabel;
+import com.qigan.qiganshop.service.CategoryService;
+import com.qigan.qiganshop.service.GoodsService;
+import com.qigan.qiganshop.service.LabelService;
+import com.qigan.qiganshop.service.TbLocalCategoryService;
+import com.qigan.qiganshop.util.access.JedisUtil;
+import com.qigan.qiganshop.util.notnull.NotNull;
+import com.qigan.qiganshop.util.notnull.StringNotNull;
+import com.qigan.qiganshop.util.picture.PicUtil;
+import com.qigan.qiganshop.util.result.PageResult;
+import com.qigan.qiganshop.util.result.format.JsonResult;
+
+/**
+ * @author wanghao
+ */
+
+
+@Service
+@Transactional(rollbackFor = Exception.class)
+public class CategoryServiceImpl implements CategoryService {
+    @Autowired
+    private CategoryMapper mapper;
+    @Autowired
+    private LabelService service;
+    @Autowired
+    private GoodsService goodsService;
+    
+    @Autowired
+    private GoodsMapper goodsMapper;
+    
+    @Autowired
+    private LabelMapper labelMapper;
+    
+    @Autowired 
+    HomepageCateMapper hmapper;
+    
+    @Autowired
+    JedisUtil jedis;
+    
+    @Autowired
+	private PicUtil picUtil;
+    
+    @Autowired
+    private TbLocalCategoryService localCateService;
+    
+    /**
+     * 返回全部列表
+     *
+     * @return
+     */
+
+
+    @Override
+    public List<Category> findAll() {
+        return mapper.findByCategory(null, null, null);
+    }
+
+
+    /**
+     * 增加
+     *
+     * @param category
+     */
+
+    @Override
+    public Category add(Category category) {
+        if (!StringNotNull.check(category.getCateId())) {
+
+            String uuid = UUID.randomUUID().toString().replace("-", "");
+            category.setCateId(uuid);
+        }
+        mapper.insert(category);
+        return category;
+    }
+
+    /**
+     * 修改
+     *
+     * @param category
+     */
+
+    @Override
+    public Integer update(Category category) {
+        return mapper.update(category);
+
+    }
+
+    /**
+     * 根据ID获取实体
+     *
+     * @param cateId
+     * @return
+     */
+
+    @Override
+    public Category findOne(String cateId) {
+        return mapper.findOne(cateId);
+    }
+
+    /**
+     * 批量删除
+     *
+     * @param ids
+     */
+
+
+    @Override
+    public Integer delete(String[] ids) {
+        int num = 0;
+        for (String id : ids) {
+            num += mapper.delete(id);
+        }
+        return num;
+    }
+
+    /**
+     * 按照条件进行分页查询
+     *
+     * @param category
+     * @param pageNum  当前页码
+     * @param pageSize 每页记录数
+     * @return
+     */
+
+
+    @Override
+    public PageResult findPage(Category category, Integer pageNum, Integer pageSize) {
+        List<Category> list = null;
+        if (pageNum != null && pageSize != null) {
+
+            list = (List<Category>) NotNull.checkListNull(mapper.findByCategory(category, (pageNum - 1) * pageSize, pageSize));
+        } else {
+            list = (List<Category>) NotNull.checkListNull(mapper.findByCategory(category, null, null));
+
+        }
+        
+        // 本地商品分类汇总
+//        List<Category> localList = localCateService.findAll2Category(null);
+//        int total = 0;
+//        if(localList != null && localList.size() > 0){
+//        	list.addAll(localList);
+//        	total = localList.size();
+//        }
+        
+        for (Category cate : list) {
+        	if(cate != null){
+        		/*if(cate.isChangeInterface()){
+        			List<?> lR = labelMapper.findLableByLocalCate(cate.getCateId());
+        			cate.setLabels(lR);
+        			continue;
+        		}*/
+        		List<?> rows = service.findCatesByCate(cate.getCateId());
+        		cate.setLabels(rows);
+        	}
+		}
+        list = list.stream().sorted(Comparator.comparing(Category :: getSort)).collect(Collectors.toList());
+        return new PageResult(mapper.findByCategory(category, null, null).size(), list);
+    }
+
+    /**
+     * 修改所有的分类的排序
+     *
+     * @param cateId1
+     * @param cateId2
+     * @return
+     */
+
+
+    @Override
+    public Integer updateSort(String cateId1, String cateId2) {
+
+        int count = 0;
+        Category one = this.findOne(cateId1);
+        Category two = this.findOne(cateId2);
+
+        if (one == null || two == null) {
+            return -1;
+        }
+        Integer sort1 = one.getSort();
+        Integer sort2 = two.getSort();
+        two.setSort(sort1);
+        one.setSort(sort2);
+        count += this.update(one);
+        count += this.update(two);
+
+        return count;
+    }
+
+    /**
+     * 根据名字精确查询
+     *
+     * @param categoryName
+     * @return
+     */
+    @Override
+    public Category findByName(String categoryName) {
+        return mapper.findByName(categoryName);
+    }
+
+    /**
+     * 查询分类,同时查询标签及其下属商品
+     *
+     * @param cateId
+     * @return
+     */
+
+
+    @Override
+    public Category findByCate(String cateId) {
+        Category category = this.findOne(cateId);
+        Label label = new Label();
+        label.setCateId(cateId);
+        List<Label> rows = service.findByLabel(label).getRows();
+        if (rows.size() == 0) {
+            return category;
+        }
+        ArrayList list = new ArrayList<>();
+        for (Label row : rows) {
+            Goods goods = new Goods();
+            goods.setCategoryCode(cateId);
+            goods.setLabelId(row.getLabelId());
+            if (row == rows.get(0)) {
+                List goodsList = goodsService.findPageGoods(goods, null, null).getRows();
+                GroupLabel label1 = new GroupLabel(row, goodsList);
+                list.add(label1);
+            } else {
+                list.add(new GroupLabel(row, new ArrayList<>()));
+            }
+        }
+        category.setLabelList(list);
+        return (Category) NotNull.checkNull(category);
+    }
+
+    /**
+     * 根据分类 ID 和标签 ID 查询关联的商品
+     *
+     * @param cateId
+     * @param labelId
+     * @return
+     */
+    @Override
+    public List<Goods> findOneLabel(String cateId, String labelId) {
+        Goods goods = new Goods();
+        goods.setCategoryCode(cateId);
+        goods.setLabelId(labelId);
+        return (List<Goods>) NotNull.checkListNull(goodsService.findPageGoods(goods, null, null).getRows());
+    }
+
+    /**
+     * 根据主键查询单个规格信息以及分类下的所有标签以及标签下的所有商品
+     *
+     * @param cateId
+     * @param coordinate
+     * @return
+     */
+    @Override
+    public Category findAllByCateId(String cateId, String coordinate, CommonPage page) {
+//    	long t = System.currentTimeMillis();
+//        Category one = this.findOne(cateId);
+//        Label label = new Label();
+//        label.setCateId(cateId);
+//        List<Label> rows = service.findByLabel(label).getRows();
+//        ArrayList<GroupLabel> list = new ArrayList<>();
+//        if(rows != null && rows.size() == 0){
+//        	 Goods goods1 = new Goods();
+//             goods1.setCategoryCode(cateId);
+//        	 ArrayList<GroupLabel> list1 = new ArrayList<>();
+//        	 String wareHouseId = null;
+//     		JsonResult jsonResult = goodsService.getWarehouseId(coordinate);
+//     		if (!"200".equals(jsonResult.getRes_code())) {
+//     			return null;
+//     		}
+//     		wareHouseId = jsonResult.getMessage();
+//     		 page.startPageHelper();
+//        	 List<XltcGoodsModel> data = hmapper.findGoods1(cateId, wareHouseId, localPicHead);
+//        	 Label label1 = new Label();
+//        	 label1.setCateId(cateId);
+//        	 GroupLabel groupLabel = new GroupLabel(label, data, null);
+//        	 list1.add(groupLabel);
+//        	 one.setLabelList(list1);
+//        	 return one;
+//        }
+//        
+//        for (Label row : rows) {
+//            Goods goods = new Goods();
+//            goods.setCategoryCode(cateId);
+//            goods.setLabelId(row.getLabelId());
+//            goods.setStatus("2");
+//            goods.setDel("1");
+//            List<Goods> data = (List<Goods>) ((PageResult) goodsService.findPage(goods, coordinate, null, null).getData()).getRows();
+//           if(data != null && data.size()!=0){
+//               GroupLabel groupLabel = new GroupLabel(row,data);
+//               list.add(groupLabel);
+//           }
+//        }
+//        one.setLabelList(list);
+//        System.err.println(System.currentTimeMillis() - t);
+//        return one;
+   
+    	// 2.0
+    	long t = System.currentTimeMillis();
+        Category one = this.findOne(cateId);
+        Label label = new Label();
+        label.setCateId(cateId);
+        List<?> rows = service.findCatesByCate(cateId);
+        ArrayList<GroupLabel> list = new ArrayList<>();
+        	 Goods goods1 = new Goods();
+             goods1.setCategoryCode(cateId);
+        	 ArrayList<GroupLabel> list1 = new ArrayList<>();
+        	 String wareHouseId = null;
+     		JsonResult jsonResult = goodsService.getWarehouseId(coordinate);
+     		if (!"200".equals(jsonResult.getRes_code())) {
+     			return null;
+     		}
+     		 wareHouseId = jsonResult.getMessage();
+     		 page.startPageHelper();
+        	 List<XltcGoodsModel> data = hmapper.findGoods1(cateId, wareHouseId, localPicHead);
+        	 Label label1 = new Label();
+        	 label1.setCateId(cateId);
+        	 GroupLabel groupLabel = new GroupLabel(label, data, null);
+        	 list1.add(groupLabel);
+        	 one.setLabelList(list1);
+        	 one.setLabels(rows);
+        return one;
+    	
+    	// 3.0
+//		Category one = this.findOne(cateId);
+//		boolean flag = false;
+//		if (one == null) {
+//			one = new Category();
+//			flag = true;
+//		}
+//
+//		Label label = new Label();
+//		label.setCateId(cateId);
+//		Goods goods1 = new Goods();
+//		goods1.setCategoryCode(cateId);
+//		ArrayList<GroupLabel> list1 = new ArrayList<>();
+//		String wareHouseId = null;
+//		JsonResult jsonResult = goodsService.getWarehouseId(coordinate);
+//		if (!"200".equals(jsonResult.getRes_code())) {
+//			return null;
+//		}
+//		wareHouseId = jsonResult.getMessage();
+//		page.startPageHelper();
+//		List<XltcGoodsModel> data = null;
+//		List<?> rows = null;//根据不同分类查询不同二级分类
+//		if (!flag) {
+//			data = hmapper.findGoods1(cateId, wareHouseId, localPicHead);
+//			rows =  service.findCatesByCate(cateId);
+//		} else {
+//			data = hmapper.findLocalGoods1(cateId, wareHouseId, localPicHead);
+//			rows = labelMapper.findLableByLocalCate(cateId);
+//		}
+//		Label label1 = new Label();
+//		label1.setCateId(cateId);
+//		GroupLabel groupLabel = new GroupLabel(label, data, null);
+//		list1.add(groupLabel);
+//		one.setLabelList(list1);
+//		one.setLabels(rows);
+//		return one;
+    }
+
+
+    @Value("${local_pic_url}")
+    private String localPicHead;
+    
+	@Override
+	public XltcGoodsTypeModel findGoodsByCateId(String cateId, String coordinate) {
+		// TODO Auto-generated method stub
+		XltcGoodsTypeModel typeModel = new XltcGoodsTypeModel();
+        Category one = this.findOne(cateId);
+        if(one == null)
+        	return typeModel;
+        String warehouseId = null;
+        String wareStr = null;
+        if(StringUtils.isNotBlank(wareStr)){
+        	wareStr = warehouseId;
+        }else{
+        	JsonResult ware = goodsService.getWarehouseId(coordinate);
+        	warehouseId = ware == null ? null : ware.getMessage();
+        }
+        if(StringUtils.isBlank(warehouseId)) 
+        	return typeModel;
+        
+        List<XltcGoodsLabelModel> labels = labelMapper.findLabelByCate(cateId);
+        List<XltcGoodsModel> goods = goodsMapper.findGoodsByStockAndLabel(warehouseId, localPicHead, cateId);
+        if(labels == null){
+        	return typeModel;
+        }
+        XltcGoodsTypeModel type = new XltcGoodsTypeModel(one.getCateId(), one.getCateName(), one.getCateImage());
+        List<XltcGoodsLabelModel> labelList = new ArrayList<>();
+        for (XltcGoodsLabelModel label : labels) {
+        	XltcGoodsLabelModel labelModel = new XltcGoodsLabelModel(label.getLabelId(), label.getLabelName());
+        	List<XltcGoodsModel> goodsList = new ArrayList<>();
+			for (XltcGoodsModel model : goods) {
+				if(!label.getLabelId().equals(model.getLabelId()))
+					continue;
+				goodsList.add(model);
+			}
+			labelModel.setGoods(goodsList);
+			labelList.add(labelModel);
+		}
+        type.setLables(labelList);
+        return type;
+	}
+
+
+	@Override
+	public void updateImage(String cateId, String imageUrl) {
+		// TODO Auto-generated method stub
+		if(StringUtils.isBlank(cateId) && StringUtils.isBlank(imageUrl))
+			throw XltcRuntimeException.throwable("参数缺失【分类id或图片地址为空】");
+		mapper.updateCateImage(cateId, imageUrl);
+	}
+
+
+	@Override
+	public List<?> findRandByCateId(String cateId, String coordinate) {
+		// TODO Auto-generated method stub
+		if(StringUtils.isAllBlank(cateId, coordinate))
+			return new ArrayList<>();
+		
+		JsonResult ware = goodsService.getWarehouseId(coordinate);
+		String wareId = "";
+		if ("200".equals(ware.getRes_code())) 
+			wareId = ware.getMessage();
+		
+		if(StringUtils.isBlank(wareId))
+			return new ArrayList<>();
+		List<String> ids = goodsMapper.findGoodsIdByCateIdAndWare(cateId, wareId);
+		List<String> randIds = new ArrayList<>(this.handleSet(ids, 10));
+		List<String> resultIds = new ArrayList<>();
+		if(randIds != null && randIds.size() == 10)
+			resultIds = randIds;
+		else{
+			List<String> idsDiff = goodsMapper.findGoodsIdByWarehouse(wareId);
+			resultIds.addAll(randIds);
+			resultIds.addAll(new ArrayList<>(this.handleSet(idsDiff, 10 - randIds.size())));
+		}
+		if(resultIds.size() == 0)
+			return new ArrayList<>();
+		
+		List<Goods> goods = goodsMapper.findGoodsInIds(resultIds);
+		for (Goods g : goods) {
+			if(g != null) {
+                g.setPicList(picUtil.addUrlHead(g.getPicUrls()));
+                //查询商品预售信息
+                goodsService.searchGoodsPreSellInfo(g);
+                //查询商品其他信息
+                goodsService.searchGoodsOtherInfo(g);
+            }
+		}
+		return goods;
+	}
+	
+	private <T> Set<T> handleSet(List<T> ids, int num) {
+		Set<T> setIds = new HashSet<>();
+		if (ids.size() == 0) {
+			return setIds;
+		}
+		Set<T> sets = new HashSet<>(ids);
+		if(sets.size() < num)
+			num = sets.size();
+		while (setIds.size() < num) {
+			setIds.add(ids.get(new Random().nextInt(ids.size())));
+		}
+		return setIds;
+	}
+
+}

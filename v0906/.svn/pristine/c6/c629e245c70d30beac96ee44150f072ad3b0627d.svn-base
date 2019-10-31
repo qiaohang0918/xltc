@@ -1,0 +1,115 @@
+package com.qigan.qiganshop.service.impl;
+
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
+import com.qigan.qiganshop.constant.TimeFormat;
+import com.qigan.qiganshop.mapper.TbPresellOrderMapper;
+import com.qigan.qiganshop.pojo.TbPresellOrder;
+import com.qigan.qiganshop.pojo.TbPresellOrderExample;
+import com.qigan.qiganshop.service.XltcPreSellOrderService;
+import com.qigan.qiganshop.util.notnull.StringNotNull;
+import com.qigan.qiganshop.util.result.XltcResult;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * @Aurher: QiaoHang
+ * @Description:
+ * @Data: 2019/10/5 16:21
+ * @Modified By:
+ */
+@Service
+@Transactional(rollbackFor = Exception.class)
+public class XltcPreSellOrderServiceImpl implements XltcPreSellOrderService {
+
+    @Autowired
+    private TbPresellOrderMapper mapper;
+
+
+    /**
+     * 添加预售订单 记录
+     * @param
+     * @return
+     */
+    @Override
+    public int insert(TbPresellOrder presellOrder) {
+        return mapper.insert(presellOrder);
+    }
+
+    @Override
+    public TbPresellOrder findByOrderId(String orderId) {
+        return mapper.selectByPrimaryKey(orderId);
+    }
+
+    /**
+     * 按条件查询 预售订单
+     * @param parms
+     * @return
+     */
+    @Override
+    public XltcResult findPreSellOrder(Map<String, String> parms) {
+        String status = parms.get("status");
+        String preSellTime = parms.get("preSellTime");
+        String isPushed = parms.get("isPushed");
+        String phone = parms.get("phone");
+        String page = parms.get("page");
+        String size = parms.get("size");
+        String level = parms.get("level");
+        StringBuffer buffer = new StringBuffer("  ");
+        if(StringNotNull.check(preSellTime)){
+            buffer.append(" and a.preSellTime = '"+preSellTime+"' ");
+        }
+        if(StringNotNull.check(level)){
+            buffer.append(" and a.level = '"+level+"' ");
+        }
+        if(StringNotNull.check(status)){
+            buffer.append(" and b.status = '"+status+"' ");
+        }
+        if(StringNotNull.check(isPushed)){
+            buffer.append(" and a.isPushed = '"+isPushed+"' ");
+        }
+        if(StringNotNull.check(phone)){
+            buffer.append(" and c.phone ='"+phone+"' ");
+        }
+        PageHelper.startPage(page==null?1:Integer.parseInt(page),size==null?10:Integer.parseInt(size));
+        List<Map<String,Object>> mapList = mapper.findPreSellOrder(buffer.toString());
+        PageInfo<Map<String, Object>> info = new PageInfo<>(mapList);
+        return XltcResult.ok(info);
+    }
+
+    @Override
+    public void update(TbPresellOrder preSellOrder) {
+        mapper.updateByPrimaryKeySelective(preSellOrder);
+    }
+
+
+    /**
+     * 查询适合推送的订单
+     * @return
+     */
+    @Override
+    public List<TbPresellOrder> findCurrentSuitPushOrders() {
+        TbPresellOrderExample example = new TbPresellOrderExample();
+        TbPresellOrderExample.Criteria criteria = example.createCriteria();
+        criteria.andIspushedEqualTo("0");
+        criteria.andPreselltimeLessThan(TimeFormat.nomalFormat.format(new Date()));
+        List<TbPresellOrder> orders = mapper.selectByExample(example);
+        return orders;
+    }
+
+    @Override
+    public int updateCurrentOrderStatusIsPushed(String orderId, String level) {
+        TbPresellOrder presellOrder = new TbPresellOrder();
+        presellOrder.setPresellorderid(orderId);
+        presellOrder.setIspushed("1");
+        int i = mapper.updateByPrimaryKeySelective(presellOrder);
+        return i;
+    }
+
+
+}

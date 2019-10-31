@@ -1,0 +1,13 @@
+package com.qigan.qiganshop.service;
+
+import com.qigan.qiganshop.pojo.TbDeposit;
+
+/**
+ * @Aurher: QiaoHang
+ * @Description:
+ * @Data: 2019/10/8 11:23
+ * @Modified By:
+ */
+public interface XltcDepositService {
+    int insert(TbDeposit tbDeposit);
+}

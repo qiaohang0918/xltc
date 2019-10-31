@@ -1,0 +1,32 @@
+package com.qigan.qiganshop.mapper;
+
+import com.qigan.qiganshop.pojo.TbPresellGoods;
+import com.qigan.qiganshop.pojo.TbPresellGoodsExample;
+import java.util.List;
+import org.apache.ibatis.annotations.Param;
+
+public interface TbPresellGoodsMapper {
+    int countByExample(TbPresellGoodsExample example);
+
+    int deleteByExample(TbPresellGoodsExample example);
+
+    int deleteByPrimaryKey(String presellgoodscode);
+
+    int insert(TbPresellGoods record);
+
+    int insertSelective(TbPresellGoods record);
+
+    List<TbPresellGoods> selectByExample(TbPresellGoodsExample example);
+
+    TbPresellGoods selectByPrimaryKey(String presellgoodscode);
+
+    int updateByExampleSelective(@Param("record") TbPresellGoods record, @Param("example") TbPresellGoodsExample example);
+
+    int updateByExample(@Param("record") TbPresellGoods record, @Param("example") TbPresellGoodsExample example);
+
+    int updateByPrimaryKeySelective(TbPresellGoods record);
+
+    int updateByPrimaryKey(TbPresellGoods record);
+
+    int addPreSellGoods(@Param("presellGoods") TbPresellGoods presellGoods);
+}

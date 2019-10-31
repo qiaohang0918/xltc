@@ -1,0 +1,648 @@
+package com.qigan.qiganshop.controller.utils;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+
+import javax.servlet.ServletInputStream;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import com.github.wxpay.sdk.WXPayUtil;
+import com.qigan.qiganshop.constant.TimeFormat;
+import com.qigan.qiganshop.myutils.SqlConstructUtils;
+import com.qigan.qiganshop.pojo.AppUser;
+import com.qigan.qiganshop.pojo.TbDeposit;
+import com.qigan.qiganshop.service.*;
+import com.qigan.qiganshop.util.pay.wxpay.*;
+import com.qigan.qiganshop.util.result.XltcResult;
+import com.qigan.qiganshop.util.upload.IDUtils;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.dom4j.Document;
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.ServletRequestUtils;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.alibaba.druid.util.StringUtils;
+import com.qigan.qiganshop.constant.PayConstant;
+import com.qigan.qiganshop.constant.RedisConstant;
+import com.qigan.qiganshop.mapper.OrderMapper;
+import com.qigan.qiganshop.pojo.Info;
+import com.qigan.qiganshop.pojo.Order;
+import com.qigan.qiganshop.util.access.JedisUtil;
+import com.qigan.qiganshop.util.notnull.StringNotNull;
+import com.qigan.qiganshop.util.pay.PayUtil;
+import com.qigan.qiganshop.util.result.format.JsonResult;
+import com.qigan.qiganshop.util.result.format.ResultCode;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+
+/**
+ * @author lpfei3088
+ */
+@RestController
+@RequestMapping("/app/wxpay")
+@Api(tags = { "微信支付管理接口" })
+public class WxpayController {
+
+	@Value("${SERVER_URL}")
+	private String SERVER_URL;
+	@Autowired
+	private JsonResult jr;
+	@Autowired
+	private PayService payService;
+	@Autowired
+	private JedisUtil jedisUtil;
+	@Value("${Key}")
+	private String Key;
+	@Value("${appid}")
+	private String appid;
+	@Value("${mch_id}")
+	private String mch_id;
+	@Value("${spbill_create_ip}")
+	private String spbill_create_ip;
+	@Value("${trade_type}")
+	private String trade_type;
+	@Autowired
+	private XltcOrderService service;
+	@Autowired
+	private AppUserService userService;
+	
+	@Autowired
+	private XltcOrderServiceConcat serviceConcat;
+
+	@Autowired
+	XltcOrderService orderService;
+
+	@Autowired
+	private InfoService infoService;
+
+	@Autowired
+	private StockService stockService;
+
+	@Autowired
+	private ItemService itemService;
+
+	@Autowired
+	private OrderMapper orderMapper;
+	
+	@Autowired
+	RefundService refoundService;
+
+	@Autowired
+	XltcDepositService depositService;
+
+
+
+
+	
+	public static final String SIT_NOTIFY = "http://sit.xiletongcheng.com/";
+
+    @Autowired
+    private OrderItemService orderItemService;
+    
+    private static final DateTimeFormatter DF = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+
+	@RequestMapping(value = "/pay.do")
+	@ApiOperation(value = "支付接口", notes = "total_fee 支付金额 ，body 主题标题 如果是开通会员，一定要写 开通会员 几个字 钱包充值,orderId 订单id", httpMethod = "POST")
+	public JsonResult pay(HttpServletRequest request, HttpServletResponse Reesponse) throws Exception {
+		try {
+			String notify_url = SERVER_URL + "qiganshop/app/wxpay/notify.do";
+//			String notify_url = SIT_NOTIFY + "qiganshop/app/wxpay/notify.do";
+			String token = ServletRequestUtils.getStringParameter(request, "token", "");
+			String nonce_str = PayUtil.getRandomString(20);
+			String out_trade_no = PayUtil.getCurrTime() + PayUtil.getRandomString(5);
+			String orderId = ServletRequestUtils.getStringParameter(request, "orderId", "");
+			Order o = orderService.findOne(orderId);
+			if(o == null || "2".equals(o.getStatus())){
+				return jr.jsonResultData(ResultCode.FAIL.res_code(), "抱歉:订单超时");
+			}
+			
+			if("1".equals(o.getStatus())){
+				return jr.jsonResultData(ResultCode.FAIL.res_code(), "您已经支付过了");
+			}
+			
+			//锁订单
+			boolean lockResult = service.lockOrderWaitingPay(orderId);
+			if(!lockResult){
+				return jr.jsonResultData(ResultCode.FAIL.res_code(), "拉取支付信息失败，订单不存在或已被释放!");
+			}
+			jedisUtil.set(out_trade_no.getBytes(), (token + "&" + orderId).getBytes());
+//			jedisUtil.setToHash(RedisConstant.ORDER_PAY, orderId, PayConstant.WX_PAY + ":" + out_trade_no);
+			
+			String total = ServletRequestUtils.getStringParameter(request, "total_fee");
+			BigDecimal total1 = new BigDecimal(total);
+			BigDecimal total2 = new BigDecimal(100);
+			int total_fee = total1.multiply(total2).intValue();
+			String body = ServletRequestUtils.getStringParameter(request, "body", "喜乐同城");
+			String orderTime = o.getDealDatetime();
+			LocalDateTime ldt = LocalDateTime.parse(orderTime.replaceAll("[[\\s-:punct:]]", ""), DF);
+		    String expire = ldt.plusMinutes(2).format(DF);
+			
+			SortedMap<Object, Object> parameters = new TreeMap<Object, Object>();
+			parameters.put("appid", appid);
+			parameters.put("body", body);
+			parameters.put("mch_id", mch_id);
+			parameters.put("nonce_str", nonce_str);
+			parameters.put("notify_url", notify_url);
+			parameters.put("out_trade_no", out_trade_no);
+			parameters.put("spbill_create_ip", spbill_create_ip);
+			parameters.put("total_fee", total_fee);
+			parameters.put("trade_type", trade_type);
+			parameters.put("attach", body);
+			parameters.put("time_expire", expire);
+
+			String sign = Sign.createSign(parameters, Key);
+			Pay pay = new Pay();
+			pay.setAppid(appid);
+			pay.setBody(body);
+			pay.setMch_id(mch_id);
+			pay.setNonce_str(nonce_str);
+			pay.setNotify_url(notify_url);
+			pay.setSign(sign);
+			pay.setOut_trade_no(out_trade_no);
+			pay.setSpbill_create_ip(spbill_create_ip);
+			pay.setTrade_type(trade_type);
+			pay.setTotal_fee(total_fee);
+			pay.setAttach(body);
+			pay.setTime_expire(expire);
+
+			Xstreamutil.xstream.alias("xml", Pay.class);
+
+			String xml = Xstreamutil.xstream.toXML(pay).replaceAll("__", "_");
+			// System.out.println(xml);
+			String requestUrl = "https://api.mch.weixin.qq.com/pay/unifiedorder";
+			String respxml = null;
+			String prepay_id = null;
+
+			respxml = Httpsrequest.HttpsRequest(requestUrl, "POST", xml);
+
+			Document doc = DocumentHelper.parseText(respxml);
+			Element root = doc.getRootElement();
+			List<Element> elementList = root.elements();
+			for (int i = 0; i < elementList.size(); i++) {
+				if (elementList.get(i).getName().equals("prepay_id")) {
+					prepay_id = elementList.get(i).getTextTrim();
+				}
+			}
+			String timeStamp = PayUtil.getTempStamp();
+			String Package = "Sign=WXPay";
+			SortedMap<Object, Object> h5parameter = new TreeMap<Object, Object>();
+			h5parameter.put("appid", appid);
+			h5parameter.put("noncestr", nonce_str);
+			h5parameter.put("package", Package);
+			h5parameter.put("partnerid", mch_id);
+			h5parameter.put("prepayid", prepay_id);
+			h5parameter.put("timestamp", timeStamp);
+			String Paysign = Sign.createSign(h5parameter, Key);
+			h5parameter.put("sign", Paysign);
+			h5parameter.put("out_trade_no", out_trade_no);
+			return jr.jsonResultData(ResultCode.SUCCESS.res_code(), "调用成功!", h5parameter);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return jr.jsonResultData(ResultCode.ERROR.res_code());
+		}
+	}
+
+	@RequestMapping("/notify.do")
+	@ApiOperation(value = "支付异步通知接口", notes = "服务器内部接口不用调用", httpMethod = "POST")
+	public void notify(HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws Exception {
+		try {
+			ServletInputStream in = httpRequest.getInputStream();
+			BufferedReader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
+			String sReqData = "";
+			String itemStr = "";
+			while (null != (itemStr = reader.readLine())) {
+				sReqData += itemStr;
+			}
+
+			Map<String, String> map = PayUtil.xmlToMap(sReqData);
+			String return_code = map.get("return_code");
+			String result_code = map.get("result_code");
+			String trade_no = map.get("transaction_id");
+			String out_trade_no = map.get("out_trade_no");
+			String total_fee = map.get("total_fee");
+			String attach = map.get("attach");
+			Double tf = Double.parseDouble(total_fee) / 100;
+			String time_end = map.get("time_end");
+			SimpleDateFormat te = new SimpleDateFormat("yyyyMMddHHmmss");
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+			String tend = sdf.format(te.parse(time_end));
+			if ("SUCCESS".equals(return_code) && "SUCCESS".equals(result_code)) {
+				com.qigan.qiganshop.pojo.Pay old = payService.selectByOutpaycode(out_trade_no);
+				if (old != null) {
+					return;
+				}
+				String tokenorderId = new String(jedisUtil.get(out_trade_no.getBytes()));
+				if (StringUtils.isEmpty(tokenorderId)) {
+					return;
+				}
+				String[] to = tokenorderId.split("&");
+				String token = to[0];
+				String orderId = "";
+				if (to.length == 2) {
+					orderId = to[1];
+				}
+				
+				Order order = orderMapper.findOne(orderId);
+				if(order == null)
+					return ;
+				
+				if("2".equals(order.getStatus())){
+					order.setStatus("10");
+					orderMapper.update(order);
+					System.err.println(total_fee);
+					ResponseEntity responseEntity = refoundService.wxRefund(out_trade_no, tf + "");
+					if (responseEntity.getStatusCode().is2xxSuccessful()) {
+						Info info = new Info();
+						info.setOrderId(orderId);
+						info.setUserId(order.getUserId());
+						info.setInfo("订单超时，已将支付金额退还至【微信】");
+						infoService.add(info);
+                    }
+					return;
+				}
+				
+				if(!"0".equals(order.getStatus()))
+					return;
+				
+				//交易类型
+				if ("开通会员".equals(attach)) {
+					payService.updateMember(token);
+				} else if ("钱包充值".equals(attach)) {
+					payService.updateBalance(token, tf);
+				}
+				com.qigan.qiganshop.pojo.Pay pay = new com.qigan.qiganshop.pojo.Pay();
+				pay.setPayCode(trade_no);
+				pay.setOutPayCode(out_trade_no);
+				pay.setOrderId(orderId);
+				pay.setPayTypeCode("weixin");
+				pay.setPayment(tf.toString());
+				pay.setPaytime(tend);
+				int suc = payService.insertPay(pay);
+
+				Info info = new Info();
+				info.setOrderId(orderId);
+				info.setUserId(order.getUserId());
+				info.setInfo("微信支付成功!");
+				infoService.add(info);
+
+				order.setStatus("1");
+				order.setPayCode(trade_no);
+				order.setPayTime(pay.getPaytime());
+				//释放支付锁
+				order.setWaitingPay("2");
+				orderMapper.update(order);
+
+				if (suc == 1) {
+					jedisUtil.del(out_trade_no.getBytes());
+					// String resultMsg =
+					// "<xml><return_code><![CDATA[SUCCESS]]></return_code><return_msg><![CDATA[OK]]></return_msg></xml>";
+					String resultMsg = "success";
+					PrintWriter out = httpResponse.getWriter();
+					out.write(resultMsg);
+					out.flush();
+					out.close();
+				}
+				// *****************查询未推送的订单进行推送******************
+				Set<String> elementsFromHash = jedisUtil.getElementsFromHash("pub_err");
+				if (elementsFromHash != null && elementsFromHash.size() > 0) {
+					for (String unPubOrderId : elementsFromHash) {
+						String result = service.pullToGuanYi(unPubOrderId);
+						if ("ok".equals(result.trim()))
+							jedisUtil.removeElementFromHash("pub_err", unPubOrderId);
+					}
+				}
+
+				// ***************推送订单到管易（尝试3次）********************
+				label: while (true) {
+					String message = "";
+					try {
+//						for (int i = 0; i < 3; i++) {
+						if (StringNotNull.check(orderId)) {
+							// 用实体进行接收订单信息
+							JsonResult weixin = serviceConcat.optStock(out_trade_no, "weixin", orderId);
+							String res_code = weixin.getRes_code();
+							message = weixin.getMessage();
+							if (ResultCode.SUCCESS.res_code().equals(res_code) && "支付成功".equals(message))
+								break label;
+						}
+//						}
+					} catch (Exception e) {
+						// 记录推送异常的日志
+						jedisUtil.setToHash("pub_err", orderId, "0");
+						break label;
+					}
+					// 记录推送异常的日志
+					jedisUtil.setToHash("pub_err", orderId, "0");
+					break label;
+				}
+			}
+		} catch (Exception e) {
+			System.err.println("支付失败");
+			e.printStackTrace();
+		}
+	}
+
+	public Map orderquery(String out_trade_no) {
+		try {
+			String nonce_str = PayUtil.getRandomString(20);
+			SortedMap<Object, Object> parameters = new TreeMap<Object, Object>();
+			parameters.put("appid", appid);
+			parameters.put("mch_id", mch_id);
+			parameters.put("nonce_str", nonce_str);
+			parameters.put("out_trade_no", out_trade_no);
+
+			String sign = Sign.createSign(parameters, Key);
+			Query pay = new Query();
+			pay.setAppid(appid);
+			pay.setMch_id(mch_id);
+			pay.setNonce_str(nonce_str);
+			pay.setSign(sign);
+			pay.setOut_trade_no(out_trade_no);
+
+			Xstreamutil.xstream.alias("xml", Query.class);
+
+			String xml = Xstreamutil.xstream.toXML(pay).replaceAll("__", "_");
+			String requestUrl = "https://api.mch.weixin.qq.com/pay/orderquery";
+			String respxml = null;
+			String trade_state = null;
+
+			respxml = Httpsrequest.HttpsRequest(requestUrl, "POST", xml);
+
+			Document doc = DocumentHelper.parseText(respxml);
+			Element root = doc.getRootElement();
+			List<Element> elementList = root.elements();
+			Map<String, Object> map = new HashMap<>();
+			for (int i = 0; i < elementList.size(); i++) {
+				map.put(elementList.get(i).getName(), elementList.get(i).getTextTrim());
+				if (elementList.get(i).getName().equals("trade_state")) {
+					trade_state = elementList.get(i).getTextTrim();
+				}
+			}
+			return map;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	/**
+	 * 查询微信订单
+	 * @param request
+	 * @param response
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping(value = "/searchWeChatOrder.do",method = RequestMethod.GET)
+	public XltcResult searchWeChatOrder(HttpServletRequest request,HttpServletResponse response) throws Exception {
+		try {
+			String out_trade_num1 = ServletRequestUtils.getStringParameter(request, "out_trade_num", null);
+			String appid = this.appid;
+			String mch_id = this.mch_id;
+			String key = this.Key;
+			String out_trade_no = out_trade_num1;
+			String nonce_str = RandomStringUtils.randomNumeric(32);
+			HashMap<String, String> parmMap = new HashMap<>();
+			parmMap.put("appid",appid);
+			parmMap.put("mch_id",mch_id);
+			parmMap.put("out_trade_no",out_trade_no);
+			parmMap.put("nonce_str",nonce_str);
+			String sign = WXPayUtil.generateSignature(parmMap, key);
+			parmMap.put("sign",sign);
+			String xmlParm = WXPayUtil.mapToXml(parmMap);
+			HttpClient httpClient = new HttpClient("https://api.mch.weixin.qq.com/pay/orderquery");
+			httpClient.setHttps(true);
+			httpClient.setXmlParam(xmlParm);
+			httpClient.post();
+			String content = httpClient.getContent();
+			Map<String, String> resultMap = WXPayUtil.xmlToMap(content);
+			return XltcResult.ok(resultMap);
+		}catch (Exception e){
+			System.out.println(e.getMessage());
+			return XltcResult.error("查询微信订单异常！");
+		}
+	}
+
+
+	/**
+	 * 微信充值
+	 * @param request
+	 * @param Reesponse
+	 * @return
+	 * @throws Exception
+	 */
+	@RequestMapping("/deposit.do")
+	public JsonResult wechatDeposit(HttpServletRequest request, HttpServletResponse Reesponse) throws Exception {
+		try {
+			String notify_url = SERVER_URL + "qiganshop/app/wxpay/depositNotify.do";
+//			String notify_url = "http://192.168.3.147:8085/" + "xltc/app/wxpay/depositNotify.do";
+			String token = ServletRequestUtils.getStringParameter(request, "token", "");
+			String deposit_cart_id = ServletRequestUtils.getStringParameter(request, "deposit_cart_id", null);
+			String deposit_type = ServletRequestUtils.getStringParameter(request, "deposit_type", null);
+			String nonce_str = PayUtil.getRandomString(20);
+			String out_trade_no = PayUtil.getCurrTime() + PayUtil.getRandomString(5);
+			//生成订单id，载入缓存
+			String depositOrderId = IDUtils.genItemId();
+			//支付falg
+			jedisUtil.set(out_trade_no, token + "&" + depositOrderId);
+			//插入支付订单记录（不可退款）
+			//......
+			String total = ServletRequestUtils.getStringParameter(request, "total_fee");
+			BigDecimal total1 = new BigDecimal(total);
+			BigDecimal total2 = new BigDecimal(100);
+			int total_fee = total1.multiply(total2).intValue();
+			//(业务)充值内容  member / balance  ....
+			String body = ServletRequestUtils.getStringParameter(request, "body", "喜乐同城");
+			//插入支付订单记录
+			if(!StringNotNull.check(token))
+				return new JsonResult(ResultCode.ERROR.res_code(),"token为空！");
+			//校验用户,插入预支付记录
+			AppUser user = userService.getAppUserByToken(token);
+			if(user==null)
+				return new JsonResult(ResultCode.ERROR.res_code(),"用户不存在！");
+			//添加冲值对象deposit
+			TbDeposit tbDeposit = new TbDeposit();
+			tbDeposit.setDepositType( StringNotNull.check(deposit_type) == true ? deposit_type : "weixin" );
+			tbDeposit.setCreatetime(TimeFormat.nomalFormat.format(new Date()));
+			tbDeposit.setOrderId(depositOrderId);
+			tbDeposit.setOutTradeNum(out_trade_no);
+			tbDeposit.setPaytime(null);
+			tbDeposit.setPhone(user.getPhone());
+			tbDeposit.setStatus("0");
+			tbDeposit.setDepositCardId(deposit_cart_id);
+			tbDeposit.setUserId(user.getUserId());
+			tbDeposit.setDepositMoneyUnit(String.valueOf(total_fee));
+			tbDeposit.setDepositContent(body);
+			int i = depositService.insert(tbDeposit);
+			//支付单的过期时间
+			String orderTime = tbDeposit.getCreatetime();
+			LocalDateTime ldt = LocalDateTime.parse(orderTime.replaceAll("[[\\s-:punct:]]", ""), DF);
+			String expire = ldt.plusMinutes(2).format(DF);
+			//封装参数
+			SortedMap<String, String> parameters = new TreeMap<String, String>();
+			parameters.put("appid", appid);
+			parameters.put("body", body);
+			parameters.put("mch_id", mch_id);
+			parameters.put("nonce_str", nonce_str);
+			parameters.put("notify_url", notify_url);
+			parameters.put("out_trade_no", out_trade_no);
+			parameters.put("spbill_create_ip", spbill_create_ip);
+			parameters.put("total_fee", String.valueOf(total_fee));
+			parameters.put("trade_type", trade_type);
+			parameters.put("attach", body);
+			parameters.put("time_expire", expire);
+			//计算签名 XML
+            String sign = WXPayUtil.generateSignature(parameters, Key);
+			parameters.put("sign",sign);
+			//map to xml
+			String xmlParams = WXPayUtil.mapToXml(parameters);
+			//发起统一下单API请求
+            String requestUrl = "https://api.mch.weixin.qq.com/pay/unifiedorder";
+			String resultXml = Httpsrequest.HttpsRequest(requestUrl, "POST", xmlParams);
+			Map<String, String> responseMap = WXPayUtil.xmlToMap(resultXml);
+			String prepay_id = null;
+			prepay_id = responseMap.get("prepay_id");
+			//构建返回map，唤起app 支付
+			TreeMap<String, String> resultMap = new TreeMap<>();
+			resultMap.put("appid",appid);
+			resultMap.put("partnerid",mch_id);
+			resultMap.put("prepayid",prepay_id);
+			resultMap.put("package","Sign=WXPay");
+			resultMap.put("noncestr",nonce_str);
+			resultMap.put("timestamp",PayUtil.getTempStamp());
+			String senceSign = WXPayUtil.generateSignature(resultMap, Key);
+			resultMap.put("sign",senceSign);
+			resultMap.put("out_trade_no",out_trade_no);
+			System.out.println(resultMap);
+			return  jr.jsonResultData(ResultCode.SUCCESS.res_code(),"调用成功!",resultMap);
+		}catch (Exception e) {
+			e.printStackTrace();
+			return jr.jsonResultData(ResultCode.ERROR.res_code());
+		}
+	}
+
+
+
+	/**
+	 * 微信充值回调
+	 * @param request
+	 * @param response
+	 * @return
+	 */
+	@RequestMapping(value = "/depositNotify.do",method = RequestMethod.GET)
+	public String depositNotify(HttpServletRequest request,HttpServletResponse response) throws Exception {
+		//获取回调输入流
+		ServletInputStream inputStream = request.getInputStream();
+		//构建BufferReader
+		BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream,"UTF-8"));
+		String line = null;
+		StringBuffer buffer = new StringBuffer();
+		//读取流数据(xml文本) 到buffer中
+		while ((line=reader.readLine())!=null){
+			buffer.append(line);
+		}
+		//将xml文本 转成Map
+		String xmlRequest = buffer.toString();
+		Map<String, String> mapRequest = WXPayUtil.xmlToMap(xmlRequest);
+		if("SUCCESS".equals(mapRequest.get("return_code")) &&
+			"SUCCESS".equals(mapRequest.get("result_code"))){
+			//充值成功！
+			//本平台流水号
+			String out_trade_no = mapRequest.get("out_trade_no");
+			//支付时间
+			String time_end = mapRequest.get("time_end");
+			//支付金额
+			String total_fee = mapRequest.get("total_fee");
+			//微信平台流水号
+			String transaction_id = mapRequest.get("transaction_id");
+			//查询redis
+			String tokenAndOrderId = jedisUtil.get(out_trade_no);
+			//查库 ，充值记录
+			List<TbDeposit> list =  depositService.findByOutTradeNum(out_trade_no);
+			if(!SqlConstructUtils.nullList(list)){
+				TbDeposit tbDeposit = list.get(0);
+				String status = tbDeposit.getStatus();
+				String payTime = tbDeposit.getPaytime();
+				String transactionId = tbDeposit.getTransactionId();
+				if( "1".equals(status) && StringNotNull.check(payTime,transactionId) ){
+					//已经处理过了 , 返回微信
+					return this.notifySuccess();
+				}else {
+					//支付成功，修改支付记录 ，删除 memory --> out_trade_num
+					TbDeposit deposit = new TbDeposit();
+					deposit.setOrderId(tbDeposit.getOrderId());
+					deposit.setPaytime(payTime);
+					deposit.setStatus("1");
+					deposit.setTransactionId(transactionId);
+					//修改充值记录日志
+					int i = depositService.updateByPrimaryKeySelective(deposit);
+					if( i>0 ){
+						//修改支付日志成功！
+						//充值用户id
+						String userId = tbDeposit.getUserId();
+						//获取充值金额
+						BigDecimal divideBy = new BigDecimal(total_fee);
+						BigDecimal divideBase = new BigDecimal("100");
+						String depositYuan = String.valueOf(divideBy.divide(divideBase));
+						try {
+							if("balance".equals(tbDeposit.getDepositContent())){
+								//执行充值业务.....
+								int i1 = userService.reGivenUserAmount(userId, depositYuan);
+								//记录info  异常日志  微信充值支付成功，但下发账户余额失败！
+								Info info = new Info();
+								info.setOrderId(tbDeposit.getOrderId());
+								info.setUserId(userId);
+								info.setInfo("微信充值(balance)成功！本次支付金额："+depositYuan);
+								infoService.add(info);
+							}
+							if("member".equals(tbDeposit.getDepositContent())){
+								//执行会员业务.......
+
+								//记录info  异常日志  微信充值支付成功，但下发账户余额失败！
+								Info info = new Info();
+								info.setOrderId(tbDeposit.getOrderId());
+								info.setUserId(userId);
+								info.setInfo("微信充值会员(member)成功！本次支付金额："+depositYuan);
+								infoService.add(info);
+							}
+							//删除redis
+							jedisUtil.del(out_trade_no);
+						}catch (Exception e){
+							//记录info  异常日志  微信充值支付成功，但下发账户余额失败！
+							Info info = new Info();
+							info.setOrderId(tbDeposit.getOrderId());
+							info.setUserId(userId);
+							info.setInfo("微信充值支付成功，但业务（"+tbDeposit.getDepositContent()+"）执行失败,实付金额:"+depositYuan);
+							infoService.add(info);
+						}
+					}
+					//响应微信成功请求
+					return this.notifySuccess();
+				}
+			}
+		}
+		return null;
+	}
+
+
+	private String notifySuccess(){
+		return "<xml>" + "<return_code><![CDATA[SUCCESS]]></return_code>"
+                + "<return_msg><![CDATA[OK]]></return_msg>" + "</xml> ";
+	}
+
+}

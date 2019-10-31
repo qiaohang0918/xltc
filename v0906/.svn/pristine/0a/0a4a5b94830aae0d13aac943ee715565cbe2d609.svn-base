@@ -1,0 +1,47 @@
+package com.qigan.qiganshop.mapper;
+
+import com.qigan.qiganshop.pojo.Goods;
+import com.qigan.qiganshop.pojo.LabelGoods;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
+
+/**
+ * 标签商品关联表
+ *
+ * @author wanghao
+ */
+public interface LabelGoodsMapper {
+    /**
+     * 删除
+     *
+     * @param record
+     * @return
+     */
+    int delete(LabelGoods record);
+
+    /**
+     * 新增
+     *
+     * @param record
+     * @return
+     */
+    int insert(LabelGoods record);
+
+    /**
+     * 查询单个关联情况,主要用于查重
+     *
+     * @param labelGoods
+     * @return
+     */
+    List<LabelGoods> findOne(LabelGoods labelGoods);
+
+    /**
+     * 根据标签 ID 查询商品
+     *
+     * @param cateId
+     * @param labelId
+     * @return
+     */
+    List<Goods> findUnionGoods(@Param("cateId") String cateId, @Param("labelId") String labelId);
+}

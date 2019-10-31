@@ -1,0 +1,14 @@
+<component name="ArtifactManager">
+  <artifact type="war" name="qiganshop:war">
+    <output-path>$PROJECT_DIR$/target</output-path>
+    <properties id="maven-jee-properties">
+      <options>
+        <module>qiganshop</module>
+        <packaging>war</packaging>
+      </options>
+    </properties>
+    <root id="archive" name="qiganshop.war">
+      <element id="artifact" artifact-name="qiganshop:war exploded" />
+    </root>
+  </artifact>
+</component>

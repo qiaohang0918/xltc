@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qigan.qiganshop.mapper.ScopeMapper">
+    <resultMap id="BaseResultMap" type="com.qigan.qiganshop.pojo.Scope">
+        <id column="rangeId" property="rangeId" jdbcType="VARCHAR"/>
+        <result column="warehouseId" property="warehouseId" jdbcType="VARCHAR"/>
+        <result column="province" property="province" jdbcType="VARCHAR"/>
+        <result column="name" property="name" jdbcType="VARCHAR"/>
+        <result column="city" property="city" jdbcType="VARCHAR"/>
+        <result column="apexs" property="apexs" jdbcType="VARCHAR"/>
+        <result column="enable" property="enable" jdbcType="VARCHAR"/>
+        <result column="warehouseName" property="warehouseName" jdbcType="VARCHAR"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        rangeId, warehouseId, province, city, apexs, enable,name,warehouseName
+   </sql>
+
+    <insert id="insert" parameterType="com.qigan.qiganshop.pojo.Scope">
+   insert into tb_scope (rangeId, warehouseId, province,city, apexs, enable,name,warehouseName)
+    values (#{rangeId,jdbcType=VARCHAR}, #{warehouseId,jdbcType=VARCHAR}, #{province,jdbcType=VARCHAR},
+      #{city,jdbcType=VARCHAR}, #{apexs,jdbcType=VARCHAR}, #{enable,jdbcType=VARCHAR}, #{name,jdbcType=VARCHAR},#{warehouseName,jdbcType=VARCHAR})
+  </insert>
+    <delete id="delete" parameterType="java.lang.String">
+    delete from tb_scope
+    where rangeId = #{rangeId,jdbcType=VARCHAR}
+  </delete>
+    <update id="update" parameterType="map">
+        update tb_scope
+        <set>
+            <if test="record.warehouseId != null">
+                warehouseId = #{record.warehouseId,jdbcType=VARCHAR},
+            </if>
+            <if test="record.province != null">
+                province = #{record.province,jdbcType=VARCHAR},
+            </if>
+            <if test="record.city != null">
+                city = #{record.city,jdbcType=VARCHAR},
+            </if>
+            <if test="record.apexs != null">
+                apexs = #{record.apexs,jdbcType=VARCHAR},
+            </if>
+            <if test="record.enable != null">
+                enable = #{record.enable,jdbcType=VARCHAR},
+            </if>
+            <if test="record.name != null">
+                name = #{record.name,jdbcType=VARCHAR},
+            </if>
+            <if test="record.warehouseName != null">
+                warehouseName = #{record.warehouseName,jdbcType=VARCHAR},
+            </if>
+        </set>
+        where rangeId = #{record.rangeId,jdbcType=VARCHAR}
+    </update>
+    <select id="findByScope" resultMap="BaseResultMap" parameterType="map">
+        select <include refid="Base_Column_List"/> from tb_scope
+        <if test="record != null">
+            where
+            <if test="record.rangeId != null">
+                rangeId = #{record.rangeId,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.warehouseId != null">
+                warehouseId = #{record.warehouseId,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.province != null">
+                province = #{record.province,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.city != null">
+                city = #{record.city,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.apexs != null">
+                apexs = #{record.apexs,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.enable != null">
+                enable = #{record.enable,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.name != null">
+                name = #{record.name,jdbcType=VARCHAR} and
+            </if>
+            <if test="record.warehouseName != null">
+                warehouseName = #{record.warehouseName,jdbcType=VARCHAR} and
+            </if>
+            1 = 1
+        </if>
+        order by warehouseId
+        <if test="page!= null and size != null">
+            limit #{page},#{size}
+        </if>
+    </select>
+    <select id="findOne" resultMap="BaseResultMap" parameterType="java.lang.String">
+        select
+        <include refid="Base_Column_List"/>
+        from tb_scope
+        where rangeId = #{rangeId,jdbcType=VARCHAR}
+    </select>
+
+    <select id="findOtherWarehouse" resultMap="BaseResultMap" parameterType="java.util.Map">
+        select * from tb_scope
+        where city = #{city} and wareHouseId != #{wareHouseId}
+        order by warehouseId
+    </select>
+
+</mapper>

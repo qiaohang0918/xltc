@@ -1,0 +1,100 @@
+package com.qigan.qiganshop.service.impl;
+
+import com.qigan.qiganshop.mapper.AppUserMapper;
+import com.qigan.qiganshop.mapper.TbExplandMapper;
+import com.qigan.qiganshop.myutils.SqlConstructUtils;
+import com.qigan.qiganshop.pojo.AppUser;
+import com.qigan.qiganshop.pojo.TbExpland;
+import com.qigan.qiganshop.service.XltcExpladService;
+import com.qigan.qiganshop.util.notnull.StringNotNull;
+import com.qigan.qiganshop.util.result.XltcResult;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+/**
+ * @Aurher: QiaoHang
+ * @Description:
+ * @Data: 2019/9/18 18:42
+ * @Modified By:
+ */
+@Service
+@Transactional(rollbackFor = Exception.class)
+public class XltcExpladServiceImpl implements XltcExpladService {
+
+
+    @Autowired
+    AppUserMapper appUserMapper;
+    @Autowired
+    TbExplandMapper explandMapper;
+
+    /**
+     * 添加扩展源用户
+     * @param phone
+     * @return
+     */
+    @Override
+    public XltcResult addExplandUser(String phone) {
+        if(!StringNotNull.check(phone)){
+            return XltcResult.error("phone不能为空！");
+        }
+        AppUser appUser  = appUserMapper.getUserByPhone(phone);
+        if(appUser==null){
+            return XltcResult.error("用户不存在！");
+        }
+        TbExpland expland = explandMapper.selectByPrimaryKey(appUser.getUserId());
+        if(expland!=null){
+            return XltcResult.error("该用户已经是渠道扩展用户！");
+        }
+        TbExpland tbExpland = new TbExpland();
+        tbExpland.setExplanduserid(appUser.getUserId());
+        tbExpland.setExplandregisters("0");
+        int insert = explandMapper.insert(tbExpland);
+        if(insert>0)
+            return XltcResult.ok();
+        return XltcResult.error("操作失败，请重试");
+    }
+
+    /**
+     * 查询当前用户的扩展用户
+     * @param searchField
+     * @param searchValue
+     * @return
+     */
+    @Override
+    public List<AppUser> findCurrentUsersExplandUsers(String searchField, String searchValue) {
+        List<String> clueUserIdList = null;
+        if("userId".equals(searchField)){
+            //通过userId查询扩展用户的Id
+            clueUserIdList =  explandMapper.findCurrentUsersExplandUserIds(searchValue);
+        }else if("token".equals(searchField)){
+            //先用token查询用户id
+            AppUser user = appUserMapper.getAppUserByToken(searchValue);
+            if(user!=null){
+                //通过userId查询扩展用户的Id
+                clueUserIdList =  explandMapper.findCurrentUsersExplandUserIds(user.getUserId());
+            }
+        }
+        if(SqlConstructUtils.nullList(clueUserIdList))
+            return null;
+        //获取线索用户 'ids'
+        String clueUserIds = SqlConstructUtils.constructListToStringsOnIn(clueUserIdList, null);
+        //查询用户
+        List<AppUser> clueUsers = appUserMapper.findUserByIds(clueUserIds);
+        return clueUsers==null || clueUsers.size()<=0? null : clueUsers;
+    }
+
+    /**
+     * 查询托儿用户，绩效
+     * @return
+     */
+    @Override
+    public List<Map> findExplandUsers() {
+        List<Map> list = explandMapper.findExplandUsersScore();
+        return list==null || list.size()<=0? null : list;
+    }
+}

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qigan.qiganshop.mapper.InfoMapper">
+    <resultMap id="BaseResultMap" type="com.qigan.qiganshop.pojo.Info">
+        <!--@mbg.generated generated on Sat Jul 13 18:07:22 CST 2019.-->
+        <id column="infoId" jdbcType="VARCHAR" property="infoId"/>
+        <result column="info" jdbcType="VARCHAR" property="info"/>
+        <result column="orderId" jdbcType="VARCHAR" property="orderId"/>
+        <result column="createTime" jdbcType="VARCHAR" property="createTime"/>
+        <result column="userId" jdbcType="VARCHAR" property="userId"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        <!--@mbg.generated generated on Sat Jul 13 18:07:22 CST 2019.-->
+        infoId, info, orderId, createTime, userId
+    </sql>
+
+    <insert id="add" parameterType="com.qigan.qiganshop.pojo.Info">
+    insert  into tb_info (infoId, info, orderId, createTime, userId)
+    values (
+    #{infoId,jdbcType=VARCHAR},
+     #{info,jdbcType=VARCHAR}, #{orderId,jdbcType=VARCHAR},
+     now(),
+     #{userId,jdbcType=VARCHAR})
+  </insert>
+    <select id="findPage" parameterType="string" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from tb_info
+        where orderId = #{orderId}
+        order by infoId desc
+    </select>
+</mapper>

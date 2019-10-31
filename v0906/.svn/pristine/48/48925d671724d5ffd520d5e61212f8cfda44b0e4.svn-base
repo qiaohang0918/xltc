@@ -1,0 +1,374 @@
+package com.qigan.qiganshop.controller.backstage;
+
+import com.alibaba.druid.util.StringUtils;
+import com.qigan.qiganshop.constant.RedisConstant;
+import com.qigan.qiganshop.controller.utils.RefundController;
+import com.qigan.qiganshop.controller.utils.SortType;
+import com.qigan.qiganshop.pojo.Goods;
+import com.qigan.qiganshop.pojo.Manager;
+import com.qigan.qiganshop.service.GoodsService;
+import com.qigan.qiganshop.service.ManagerService;
+import com.qigan.qiganshop.service.XltcActRecordService;
+import com.qigan.qiganshop.util.access.JedisUtil;
+import com.qigan.qiganshop.util.notnull.StringNotNull;
+import com.qigan.qiganshop.util.result.PageResult;
+import com.qigan.qiganshop.util.result.XltcResult;
+import com.qigan.qiganshop.util.result.format.JsonResult;
+import com.qigan.qiganshop.util.result.format.ResultCode;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import redis.clients.jedis.Jedis;
+
+import java.lang.management.BufferPoolMXBean;
+import java.util.*;
+import java.util.stream.Collectors;
+
+/**
+ * @author starlord
+ */
+@RestController
+@RequestMapping("/manager")
+public class ManagerController {
+
+    @Autowired
+    private ManagerService managerService;
+
+    @Autowired
+    private JedisUtil jedisUtil;
+
+    @Autowired
+    private GoodsService goodsService;
+
+    @Autowired
+    XltcActRecordService actRecordService;
+
+    /**
+     * 查询所有manager
+     */
+    public void recordManagers(){
+        PageResult page = managerService.getManagerPage(0, 0, "create_time", "ASC");
+        List<Manager> rows = page.getRows();
+        if(rows!=null && rows.size()>0){
+            for (Manager row : rows) {
+                RefundController.managerMap.put(row.getNo(),row);
+            }
+        }
+    }
+
+    @RequestMapping(method = RequestMethod.GET, value = "/page.do")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "200 成功,其它为错误")})
+    @ApiOperation(httpMethod = "GET", value = "平台管理人员翻页")
+    public JsonResult getManagerPage(@RequestParam(defaultValue = "1") int page,
+                                     @RequestParam(defaultValue = "10") int size,
+                                     @RequestParam(defaultValue = "create_time") String order,
+                                     @RequestParam(defaultValue = "ASC") SortType sort) {
+        PageResult managerPage = managerService.getManagerPage(page, size, order, sort.name());
+        recordManagers();
+        return new JsonResult(managerPage);
+    }
+
+    @RequestMapping(method = RequestMethod.POST, value = "/save.do")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "200 成功,其它为错误")})
+    @ApiOperation(httpMethod = "POST", value = "添加平台管理人员信息")
+    public JsonResult saveManager(@RequestParam(required = false) Integer managerId, @RequestParam String no, @RequestParam String name, @RequestParam String phone) {
+        try {
+            managerService.save(new Manager(managerId, no, name, phone));
+            return new JsonResult(null);
+        } catch (Exception e) {
+            return new JsonResult(ResultCode.FAIL.res_code(), e.getMessage());
+        }finally {
+            recordManagers();
+        }
+    }
+
+    @RequestMapping(method = RequestMethod.POST, value = "/enable.do")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "200 成功,其它为错误")})
+    @ApiOperation(httpMethod = "POST", value = "启用禁用平台管理人员信息")
+    public JsonResult enableManager(@RequestParam Integer managerId, @RequestParam boolean enabled) {
+        try {
+            managerService.enable(new Manager(managerId, enabled));
+            return new JsonResult(null);
+        } catch (Exception e) {
+            return new JsonResult(ResultCode.FAIL.res_code(), e.getMessage());
+        }finally {
+            recordManagers();
+        }
+    }
+
+    @RequestMapping(method = RequestMethod.POST, value = "/changePwd.do")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "200 成功,其它为错误")})
+    @ApiOperation(httpMethod = "POST", value = "修改平台管理人员密码")
+    public JsonResult changePwd(@RequestParam String token, @RequestParam String oldPassword, @RequestParam String password) {
+        try {
+            Integer managerId = Integer.parseInt(jedisUtil.get(token));
+            final Manager manager = managerService.getManager(managerId);
+            if(!manager.getPassword().equalsIgnoreCase(DigestUtils.md5Hex(oldPassword))){
+                return new JsonResult(ResultCode.FAIL.res_code(), "旧密码不正确");
+            }
+            managerService.modifyPwd(new Manager(managerId, password));
+            return new JsonResult(null);
+        } catch (Exception e) {
+            return new JsonResult(ResultCode.FAIL.res_code(), e.getMessage());
+        }finally {
+            recordManagers();
+        }
+    }
+
+    @RequestMapping(method = RequestMethod.POST, value = "/login.do")
+    @ApiOperation(
+            value = "平台用户登录接口",
+            notes = "需要填写的参数有 工号 password 登录密码",
+            httpMethod = "POST")
+    public JsonResult login(@RequestParam String username, @RequestParam String password) {
+        try {
+            final Manager manager = managerService.getManager(username);
+            if (manager != null) {
+                if(!manager.isEnabled()){
+                    return new JsonResult(ResultCode.FAIL.res_code(), "账户已被禁用,请联系管理员启用");
+                }
+                String pwd = manager.getPassword();
+                if (pwd.equalsIgnoreCase(DigestUtils.md5Hex(password))) {
+                    String uuid = "to_" + UUID.randomUUID().toString().replaceAll("-", "");
+                    jedisUtil.set(uuid, manager.getManagerId().toString());
+                    HashMap<String, Object> map = new HashMap<>();
+                    map.put("token", uuid);
+                    map.put("userId", manager.getNo());
+                    map.put("userInfo", manager);
+                    return new JsonResult(map);
+                } else {
+                    return new JsonResult(ResultCode.FAIL.res_code(), "密码错误");
+                }
+            } else {
+                return new JsonResult(ResultCode.FAIL.res_code(), "账户不存在");
+            }
+        } catch (Exception e) {
+            return new JsonResult(ResultCode.FAIL.res_code(), e.getMessage());
+        }finally {
+            recordManagers();
+        }
+    }
+
+    @RequestMapping(method = RequestMethod.POST, value = "/logout.do")
+    @ApiOperation(
+            value = "平台用户退出接口",
+            notes = "token 需要填写令牌",
+            httpMethod = "POST")
+    public JsonResult logout(String token) {
+        try {
+            jedisUtil.del(token.getBytes());
+            return new JsonResult(null);
+        } catch (Exception e) {
+            return new JsonResult(ResultCode.FAIL.res_code(), "退出登录失败");
+        }finally {
+            recordManagers();
+        }
+    }
+
+    @RequestMapping(method = RequestMethod.GET, value = "/getMananger.do")
+    @ApiOperation(
+            value = "获取平台用户信息",
+            notes = "token 需要填写令牌",
+            httpMethod = "GET")
+    public JsonResult getMananger(String token) {
+        try {
+            String no = jedisUtil.get(token);
+            if(StringUtils.isEmpty(no)){
+                return new JsonResult(ResultCode.FAIL.res_code(), "token失效");
+            }
+            final Manager manager = managerService.getManager(no);
+            return new JsonResult(manager);
+        } catch (Exception e) {
+            return new JsonResult(ResultCode.FAIL.res_code(), "获取平台用户信息失败");
+        }finally {
+            recordManagers();
+        }
+    }
+
+    /**
+     * 添加受限商品
+     * @param codes
+     * @return
+     */
+    @RequestMapping(value = "/addLimitedCodes.do",method = RequestMethod.GET)
+    public JsonResult addLimitedCodes(String codes){
+        if(codes==null  ||  codes.length()<=0){
+            return new JsonResult(ResultCode.FAIL.res_code(),"请先选择商品code");
+        }
+        boolean insert = actRecordService.insert(codes);
+        if(!insert)
+            return new JsonResult(ResultCode.FAIL.res_code(),"添加受限商品失败！");
+        String[] split = codes.split(",");
+        //载入受限商品集合
+        Jedis jedis = jedisUtil.getConn();
+        try {
+            for (String code : split) {
+                jedis.sadd(RedisConstant.LIMITED_CODES,code);
+            }
+            return new JsonResult(ResultCode.SUCCESS.res_code(),"添加成功！","添加成功！");
+        }finally {
+            jedis.close();
+        }
+    }
+
+    /**
+     * 添加较为宽泛的受限商品
+     * @param codes
+     * @return
+     */
+    @RequestMapping(value = "/addLimitedCodesCasue.do",method = RequestMethod.GET)
+    public XltcResult addLimitedCodesCasue(String codes){
+        if(codes==null  ||  codes.length()<=0){
+            return XltcResult.error("请先选择商品code");
+        }
+        boolean insert = actRecordService.addLimitedCodesCasue(codes);
+        if(!insert)
+            return XltcResult.error("添加宽泛类型受限商品失败！");
+        String[] split = codes.split(",");
+        //载入宽泛的受限商品集合
+        Jedis jedis = jedisUtil.getConn();
+        try {
+            for (String code : split) {
+                jedis.sadd(RedisConstant.LIMITED_CODES_CASUE,code);
+            }
+            return XltcResult.ok("添加成功！");
+        }finally {
+            jedis.close();
+        }
+    }
+
+    /**
+     * 移除受限商品
+     * @param codes
+     * @return
+     */
+    @RequestMapping(value = "/removeLimitedCodes.do",method = RequestMethod.GET)
+    public JsonResult removeLimitedCodes(String codes){
+        if(codes==null  ||  codes.length()<=0){
+            return new JsonResult(ResultCode.FAIL.res_code(),"请先选择商品code");
+        }
+        boolean delete = actRecordService.deleteByCode(codes);
+        if(!delete)
+            return new JsonResult(ResultCode.FAIL.res_code(),"移除受限商品失败！");
+        String[] split = codes.split(",");
+        //载入受限商品集合
+        Jedis jedis = jedisUtil.getConn();
+        try {
+            //删除受限商品code
+            jedis.srem(RedisConstant.LIMITED_CODES,split);
+            //查询所有受限记录
+            Set<String> hkeys = jedis.hkeys(RedisConstant.LIMITED_CODE_USER);
+            List<String> badCodes = Arrays.stream(split).collect(Collectors.toList());
+            //删除不再受限的购买记录
+            if(hkeys.size()>0){
+                for (String hkey : hkeys) {
+                    if(badCodes.contains(hkey.split(":")[0]))
+                        //删除
+                        jedis.hdel(RedisConstant.LIMITED_CODE_USER,hkey);
+                }
+            }
+            return new JsonResult(ResultCode.SUCCESS.res_code(),"移除成功！","移除成功！");
+        }finally {
+            jedis.close();
+        }
+    }
+
+    /**
+     * 移除宽泛的受限商品
+     * @param codes
+     * @return
+     */
+    @RequestMapping(value = "/removeLimitedCodesCasue.do",method = RequestMethod.GET)
+    public XltcResult removeLimitedCodesCasue(String codes){
+        if(codes==null  ||  codes.length()<=0){
+            return XltcResult.error("请先选择商品code");
+        }
+        boolean delete = actRecordService.deleteByCode(codes);
+        if(!delete)
+            return XltcResult.error("移除宽泛的受限商品失败！");
+        String[] split = codes.split(",");
+        //载入受限商品集合
+        Jedis jedis = jedisUtil.getConn();
+        try {
+            //删除宽泛的受限商品code
+            jedis.srem(RedisConstant.LIMITED_CODES_CASUE,split);
+            return XltcResult.error("移除成功！");
+        }finally {
+            jedis.close();
+        }
+    }
+
+    /**
+     * 查询当前受限商品列表
+     * @return
+     */
+    @RequestMapping(value = "/findCurrentLimitedGoods.do",method = RequestMethod.GET)
+    public JsonResult findCurrentLimitedGoods(){
+        Jedis jedis = jedisUtil.getConn();
+        JsonResult jsonResult= null;
+        try {
+            Set<String> codes = jedis.smembers(RedisConstant.LIMITED_CODES);
+            StringBuffer buffer = new StringBuffer(" ");
+            if(codes!=null && codes.size()>0){
+                for (String code : codes) {
+                    buffer.append("'"+code+"',");
+                }
+            }
+            buffer.replace(buffer.length()-1,buffer.length(),"");
+            String searchCodes = buffer.toString();
+            if("".equals(searchCodes.trim()))
+                return new JsonResult(ResultCode.SUCCESS.res_code(),"查询成功！",null);
+            List<Goods> goods= goodsService.findGoodsByCodes(searchCodes);
+            jsonResult = new JsonResult(ResultCode.SUCCESS.res_code(),"查询成功！",goods);
+        }catch (Exception e){
+            jsonResult = new JsonResult(ResultCode.FAIL.res_code(),"查询失败！","操作失败！");
+        }finally {
+            jedis.close();
+        }
+        return jsonResult;
+    }
+
+
+    /**
+     * 查询当前宽泛受限商品列表
+     * @return
+     */
+    @RequestMapping(value = "/findCurrentLimitedGoodsCasue.do",method = RequestMethod.GET)
+    public XltcResult findCurrentLimitedGoodsCasue(){
+        Jedis jedis = jedisUtil.getConn();
+        XltcResult xltcResult= null;
+        try {
+            Set<String> codes = jedis.smembers(RedisConstant.LIMITED_CODES_CASUE);
+            StringBuffer buffer = new StringBuffer(" ");
+            if(codes!=null && codes.size()>0){
+                for (String code : codes) {
+                    buffer.append("'"+code+"',");
+                }
+            }
+            buffer.replace(buffer.length()-1,buffer.length(),"");
+            String searchCodes = buffer.toString();
+            if("".equals(searchCodes.trim()))
+                return XltcResult.ok();
+            List<Goods> goods= goodsService.findGoodsByCodes(searchCodes);
+            xltcResult = XltcResult.ok(goods);
+        }catch (Exception e){
+            xltcResult = XltcResult.error("查询失败,联系管理员！");
+        }finally {
+            jedis.close();
+        }
+        return xltcResult;
+    }
+
+
+
+}

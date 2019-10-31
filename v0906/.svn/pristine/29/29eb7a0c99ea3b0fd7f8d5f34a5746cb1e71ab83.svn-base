@@ -1,0 +1,48 @@
+package com.qigan.qiganshop.mapper;
+
+import com.qigan.qiganshop.pojo.Coupon;
+import com.qigan.qiganshop.pojo.UserCoupon;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
+
+public interface UserCouponMapper {
+
+    int delete(String userCouponId);
+
+    int insert(UserCoupon record);
+
+    UserCoupon findOne(String userCouponId);
+
+    int update(UserCoupon record);
+
+    List<UserCoupon> findPage(@Param("userId") String userId,
+                              @Param("page") Integer page,
+                              @Param("size") Integer size);
+
+    /**
+     * 查询可用优惠券
+     *
+     * @param userId
+     * @param total
+     * @return
+     */
+    List<Coupon> findCanUse(@Param("userId") String userId,
+                            @Param("total") Double total);
+
+    /**
+     * 根据用户 ID 和 优惠券 Id 查询用户是否拥有该优惠券
+     *
+     * @param userId
+     * @param couponId
+     * @return
+     */
+    List<UserCoupon> findByUserIdAndCouponId(@Param("userId") String userId, @Param("couponId") String couponId);
+
+    /**
+     * 下单时修改优惠券状态
+     *
+     * @param userCoupon
+     */
+    Integer updateByOrder(UserCoupon userCoupon);
+}

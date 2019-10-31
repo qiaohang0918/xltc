@@ -1,0 +1,213 @@
+package com.qigan.qiganshop.controller.utils;
+
+import com.alibaba.druid.util.StringUtils;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.alipay.api.AlipayApiException;
+import com.alipay.api.AlipayClient;
+import com.alipay.api.DefaultAlipayClient;
+import com.alipay.api.request.AlipayTradeRefundRequest;
+import com.alipay.api.response.AlipayTradeRefundResponse;
+import com.qigan.qiganshop.annocation.XltcLogRecord;
+import com.qigan.qiganshop.pojo.*;
+import com.qigan.qiganshop.service.*;
+import com.qigan.qiganshop.util.access.JedisUtil;
+import com.qigan.qiganshop.util.notnull.StringNotNull;
+import com.qigan.qiganshop.util.pay.PayUtil;
+import com.qigan.qiganshop.util.pay.wxpay.Httpsrequest;
+import com.qigan.qiganshop.util.pay.wxpay.Refund;
+import com.qigan.qiganshop.util.pay.wxpay.Sign;
+import com.qigan.qiganshop.util.pay.wxpay.Xstreamutil;
+import com.qigan.qiganshop.util.result.XltcResult;
+import com.qigan.qiganshop.util.result.format.JsonResult;
+import com.qigan.qiganshop.util.result.format.ResultCode;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import javafx.geometry.Pos;
+import org.apache.http.HttpResponse;
+import org.dom4j.Document;
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.*;
+
+/**
+ * 退款
+ *
+ * @author wanghao
+ * @time 2019-06-26 14:53
+ */
+
+
+@RestController
+@Api(tags = {"WEB APP 退款接口"})
+public class RefundController {
+    @Autowired
+    private RefundService refundService;
+    @Autowired
+    private AppUserService userService;
+
+    //所有管理员信息
+    public static Map<String , Manager> managerMap=new HashMap<>();
+
+    /**
+     * 退款接口
+     * 首先检查用户是否存在
+     * 检查订单是否处于支付成功但是未发货状态
+     * * 非该状态,直接返回失败信息
+     * * 该状态下:
+     * * * 根据订单编号查询支付信息,并获取支付方式
+     * * * 根据支付方式,决定退款方式调用哪个平台
+     * * * * 退款方式分为三种:支付宝 微信 余额
+     * * * * 退款信息记录到支付表中
+     * * * 通知管易云取消订单
+     * * * * 成功,修改订单状态
+     * * * * * 修改库存
+     * * * * 失败,通知用户
+     *
+     * @param orderId
+     * @param token
+     * @return
+     */
+//    @RequestMapping(value = "/app/Refund/refund.do")
+//    @ApiOperation(
+//            value = "APP 支付退款接口",
+//            notes = "orderId 订单号，orderAmount 退款金额,token",
+//            httpMethod = "POST")
+//    public ResponseEntity refund(@RequestParam String orderId, @RequestParam String token) {
+//        AppUser user = userService.getAppUserByToken(token);
+//        return new ResponseEntity(refundService.refund(orderId, user.getUserId()), HttpStatus.OK);
+//    }
+
+
+    @RequestMapping(value = "/app/Refund/refund.do")
+    @ApiOperation(
+            value = "APP 支付退款接口  【已废弃】",
+            notes = "orderId 订单号，orderAmount 退款金额,token",
+            httpMethod = "POST")
+    public ResponseEntity refund(@RequestParam String orderId, @RequestParam String token) {
+        AppUser user = userService.getAppUserByToken(token);
+        return new ResponseEntity(refundService.refund(orderId, user.getUserId()), HttpStatus.OK);
+    }
+
+
+
+    /**
+     * 退款接口
+     * 首先检查用户是否存在
+     * 检查订单是否处于支付成功但是未发货状态
+     * * 非该状态,直接返回失败信息
+     * * 该状态下:
+     * * * 根据订单编号查询支付信息,并获取支付方式
+     * * * 根据支付方式,决定退款方式调用哪个平台
+     * * * * 退款方式分为三种:支付宝 微信 余额
+     * * * * 退款信息记录到支付表中
+     * * * 通知管易云取消订单
+     * * * * 成功,修改订单状态
+     * * * * * 修改库存
+     * * * * 失败,通知用户
+     *
+     * @param orderId
+     * @return
+     */
+    @RequestMapping(value = "/Refund/refund.do")
+    @ApiOperation(
+            value = "WEB 支付退款接口  【已废弃】",
+            notes = "orderId 订单号，orderAmount 退款金额",
+            httpMethod = "POST")
+    @XltcLogRecord(apiName = "web退款接口")
+    public ResponseEntity webRefund(@RequestParam String orderId,@RequestParam String no) {
+        if(no==null || "".equals(no.trim())){
+            new ResponseEntity("管理员未登录", HttpStatus.NON_AUTHORITATIVE_INFORMATION);
+        }
+        Manager currentManager = RefundController.managerMap.get(no);
+        if(currentManager==null || !"1".equals(currentManager.getAuthRefund()) ){
+            new ResponseEntity("管理员不存在或没有权限", HttpStatus.NON_AUTHORITATIVE_INFORMATION);
+        }
+        return new ResponseEntity(refundService.webRefund(orderId), HttpStatus.OK);
+    }
+
+
+    /**
+     * 问题订单退款
+     * @param map
+     * @return
+     */
+    @RequestMapping(value = "/Refund/questionOrderRefund.do",method = RequestMethod.POST)
+    public XltcResult questionOrderRefund(@RequestBody Map<String,Object> map){
+        String orderId =map.get("orderId")==null?null:(String)map.get("orderId");
+        String status = map.get("status")==null?null:(String)map.get("status");
+        String subMoney = map.get("subMoney")==null?null:(String)map.get("subMoney");
+        String no = map.get("no")==null?null:(String)map.get("no");
+        List<String> orderItemIds = map.get("orderItemIds")==null?null:(List<String>)map.get("orderItemIds");
+        if(!StringNotNull.check(no))
+            return XltcResult.error("请传入管理员工号！");
+        //校验权限
+        Manager currentManager = RefundController.managerMap.get(no);
+        if(currentManager==null || !"1".equals(currentManager.getAuthRefund()) ){
+            return XltcResult.error("管理员不存在或没有权限!");
+        }
+        //校验orderid ，status not null!
+        if(!StringNotNull.check(orderId,status))
+            return XltcResult.error("订单id 和 状态必须传入！");
+        //记入退款
+        return refundService.questionOrderRefund(orderId,orderItemIds,status,subMoney);
+    }
+
+
+    /**
+     * 只退余额，不操作库存！
+     * 需要鉴权，
+     * 会添加退款记录(tb_refund_record)
+     * @param tbRefundRecord
+     * @return
+     */
+    @RequestMapping(value = "/Refund/onlyRefundBalance.do",method = RequestMethod.POST)
+    public XltcResult onlyRefundBalance(@RequestBody TbRefundRecord tbRefundRecord){
+        if(StringNotNull.check(tbRefundRecord.getNo(),
+                tbRefundRecord.getOrderid(),
+                tbRefundRecord.getRefundtype(),
+                tbRefundRecord.getMoney())){
+            return XltcResult.error("参数不全,[ 操作员工号，订单编号，退款类型,退款金额 ] 必须传入！");
+        }
+        //校验权限
+        Manager currentManager = RefundController.managerMap.get(tbRefundRecord.getNo());
+        if(currentManager==null || !"1".equals(currentManager.getAuthRefund()) ){
+            return XltcResult.error("管理员不存在或没有权限!");
+        }
+        //设置管理员姓名
+        tbRefundRecord.setName(currentManager.getName());
+        //校验金额数据类型
+        try {
+            Double.parseDouble(tbRefundRecord.getMoney());
+        }catch (Exception e){
+            return XltcResult.error("金额数据类型不匹配，请传入数字类型！");
+        }
+        //退款
+        return refundService.onlyRefundBalance(tbRefundRecord);
+    }
+
+    /**
+     * 查询only退款 记录
+     * @param startTime
+     * @param endTime
+     * @param no
+     * @return
+     */
+    @RequestMapping(value = "/Refund/queryBalanceRefundRecord.do",method = RequestMethod.GET)
+    public XltcResult queryBalanceRefundRecord(String startTime,String endTime,String no){
+        List<TbRefundRecord> list = refundService.queryBalanceRefundRecord(startTime,endTime,no);
+        return XltcResult.ok(list);
+    }
+
+
+}

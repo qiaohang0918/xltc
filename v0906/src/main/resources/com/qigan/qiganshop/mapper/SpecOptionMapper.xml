@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.qigan.qiganshop.mapper.SpecOptionMapper">
+
+    <resultMap id="BaseResultMap" type="com.qigan.qiganshop.pojo.SpecOption">
+        <id column="optionId" property="optionId" jdbcType="VARCHAR"/>
+        <result column="optionName" property="optionName" jdbcType="VARCHAR"/>
+        <result column="specId" property="specId" jdbcType="VARCHAR"/>
+        <result column="sort" property="sort" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+    optionId,optionName,specId,sort
+  </sql>
+
+    <insert id="insert" parameterType="com.qigan.qiganshop.pojo.SpecOption">
+     insert into tb_specification_option (optionId,optionName,specId,sort)
+     values (#{record.optionId,jdbcType=VARCHAR}, #{record.optionName,jdbcType=VARCHAR}
+     ,#{record.specId,jdbcType=VARCHAR},#{record.sort,jdbcType=VARCHAR})
+   </insert>
+
+    <delete id="delete" parameterType="string">
+     delete from tb_specification_option
+     where optionId = #{optionId,jdbcType=VARCHAR}
+   </delete>
+
+    <delete id="deleteBySpecId" parameterType="string">
+     delete from tb_specification_option
+     where specId = #{specId,jdbcType=VARCHAR}
+   </delete>
+
+    <update id="update" parameterType="com.qigan.qiganshop.pojo.SpecOption">
+     update tb_specification_option
+     set optionName = #{optionName,jdbcType=VARCHAR},
+         specId = #{specId,jdbcType=VARCHAR},
+         sort = #{sort,jdbcType=VARCHAR}
+     where optionId = #{optionId,jdbcType=INTEGER}
+   </update>
+
+    <select id="findBySpecOption" resultMap="BaseResultMap" parameterType="java.util.Map">
+        select
+        <include refid="Base_Column_List"/>
+        from tb_specification_option
+        <if test="record != null">
+            where
+            <trim prefix="(" suffix=")" suffixOverrides="and">
+                <if test="record.optionId != null">
+                    optionId = #{record.optionId,jdbcType=VARCHAR} and
+                </if>
+                <if test="record.optionName != null">
+                    specName like '%${record.optionName}%' and
+                </if>
+                <if test="record.specId != null">
+                    specId = #{record.specId,jdbcType=VARCHAR} and
+                </if>
+                <if test="record.sort != null">
+                    sort = #{record.sort,jdbcType=INTEGER} and
+                </if>
+            </trim>
+        </if>
+        order by specId,sort
+    </select>
+
+    <select id="findOne" resultMap="BaseResultMap" parameterType="java.lang.String">
+        select
+        <include refid="Base_Column_List"/>
+        from tb_specification_option where optionId = #{optionId}
+    </select>
+
+
+</mapper>

@@ -1,0 +1,24 @@
+package com.qigan.qiganshop.pojo;
+
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+
+/**
+ * TODO
+ *
+ * @author wanghao
+ * @time 2019-06-27 15:28
+ */
+@ToString
+public class CountMap {
+    @Getter
+    @Setter
+    private String userId;
+    @Setter
+    @Getter
+    private String status;
+    @Getter
+    @Setter
+    private Integer number;
+}

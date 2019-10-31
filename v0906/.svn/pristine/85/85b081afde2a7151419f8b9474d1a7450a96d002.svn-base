@@ -1,0 +1,357 @@
+package com.qigan.qiganshop.controller.utils;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import com.alipay.api.request.AlipayTradeCloseRequest;
+import com.alipay.api.response.AlipayTradeCloseResponse;
+import com.qigan.qiganshop.constant.PayConstant;
+import com.qigan.qiganshop.constant.RedisConstant;
+import com.qigan.qiganshop.service.XltcOrderService;
+import com.qigan.qiganshop.service.XltcOrderServiceConcat;
+import com.qigan.qiganshop.util.notnull.StringNotNull;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.ServletRequestUtils;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.alibaba.fastjson.JSONObject;
+import com.alipay.api.AlipayClient;
+import com.alipay.api.DefaultAlipayClient;
+import com.alipay.api.request.AlipayTradeAppPayRequest;
+import com.alipay.api.request.AlipayTradeQueryRequest;
+import com.alipay.api.response.AlipayTradeAppPayResponse;
+import com.alipay.api.response.AlipayTradeQueryResponse;
+import com.qigan.qiganshop.exception.XltcRuntimeException;
+import com.qigan.qiganshop.mapper.OrderMapper;
+import com.qigan.qiganshop.pojo.Info;
+import com.qigan.qiganshop.pojo.Order;
+import com.qigan.qiganshop.pojo.Pay;
+import com.qigan.qiganshop.service.InfoService;
+import com.qigan.qiganshop.service.PayService;
+import com.qigan.qiganshop.service.RefundService;
+import com.qigan.qiganshop.util.access.JedisUtil;
+import com.qigan.qiganshop.util.pay.PayUtil;
+import com.qigan.qiganshop.util.result.format.JsonResult;
+import com.qigan.qiganshop.util.result.format.ResultCode;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+
+/**
+ * @author wanghao
+ */
+@RestController
+@RequestMapping("/app/alipay")
+@Api(tags = {"支付宝支付管理接口"})
+public class AlipayController {
+    @Value("${serverUrl}")
+    public String serverUrl;
+    @Value("${appId}")
+    public String appId;
+    @Value("${app_private_key}")
+    public String app_private_key;
+    @Value("${format}")
+    public String format;
+    @Value("${charset}")
+    public String charset;
+    @Value("${alipay_public_key}")
+    public String alipay_public_key;
+    @Value("${sign_type}")
+    public String sign_type;
+    @Value("${SERVER_URL}")
+    private String SERVER_URL;
+    @Autowired
+    private JsonResult jr;
+    @Autowired
+    private PayService payService;
+    @Autowired
+    private JedisUtil jedisUtil;
+    @Autowired
+    private XltcOrderService service;
+    
+    @Autowired
+	private InfoService infoService;
+    
+    @Autowired
+    private XltcOrderServiceConcat serviceConcat;
+    
+    @Autowired
+	RefundService refoundService;
+    
+    @Autowired
+	private OrderMapper orderMapper;
+    
+    public static final String SIT_NOTIFY = "http://sit.xiletongcheng.com/";
+    
+    private static final DateTimeFormatter DF = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+
+    @RequestMapping(value = "/pay.do")
+    @ApiOperation(
+            value = "支付接口",
+            notes = "token,total 金额 subject 商品的标题/交易标题/订单标题/订单关键字等,如果是开通会员 一定要写 开通会员 几个字 钱包充值,orderId 订单id",
+            httpMethod = "POST")
+    public JsonResult pay(HttpServletRequest httpRequest,
+                          HttpServletResponse httpResponse) throws ServletException, IOException {
+        AlipayClient alipayClient = new DefaultAlipayClient(serverUrl, appId,
+                app_private_key, format, charset, alipay_public_key, sign_type);
+        AlipayTradeAppPayRequest alipayRequest = new AlipayTradeAppPayRequest();
+        String token = ServletRequestUtils.getStringParameter(httpRequest, "token", "");
+        String total = ServletRequestUtils.getStringParameter(httpRequest, "total");
+        String subject = ServletRequestUtils.getStringParameter(httpRequest, "subject", "喜乐同城");
+        String orderId = ServletRequestUtils.getStringParameter(httpRequest, "orderId", "");
+        Order o = service.findOne(orderId);
+		if(o != null && "1".equals(o.getStatus())){
+			throw XltcRuntimeException.throwable("您已支付过了！");
+		}
+		if(o == null || "2".equals(o.getStatus())){
+			return jr.jsonResultData(ResultCode.FAIL.res_code(), "抱歉:订单超时");
+		}
+        //锁订单
+        boolean lockResult = service.lockOrderWaitingPay(orderId);
+        if(!lockResult){
+            return jr.jsonResultData(ResultCode.FAIL.res_code(), "拉取支付信息失败，订单不存在或已被释放!");
+        }
+        String out_trade_no = PayUtil.getCurrTime() + PayUtil.getRandomString(5);
+        jedisUtil.set(out_trade_no.getBytes(), (token + "&" + orderId).getBytes());
+
+        //插入订单贸易号   ailipay:time:out_trade_no
+        jedisUtil.setToHash(RedisConstant.ORDER_PAY, orderId,PayConstant.AL_PAY+":"+out_trade_no);
+        String notify_url = SERVER_URL + "qiganshop/app/alipay/notify.do";
+//        String notify_url = SIT_NOTIFY + "qiganshop/app/alipay/notify.do";
+        //String notify_url = "http://8f61c175.ngrok.io/qiganshop/app/alipay/notify.do";
+        String orderTime = o.getDealDatetime();
+        LocalDateTime ldt = LocalDateTime.parse(orderTime.substring(0, orderTime.lastIndexOf(":")), DF);
+        String expire = ldt.plusMinutes(2).format(DF);
+        
+        String biz_content = "{" +
+                "    \"out_trade_no\":\"" + out_trade_no + "\"," +
+                "    \"total_amount\":\"" + total + "\"," +
+                "    \"subject\":\"" + subject + "\"," +
+                "    \"time_expire\":\"" + expire + "\"," +
+                //"    \"notify_url\":\""+notify_url+"\"," +
+                "    \"product_code\":\"" + "QUICK_MSECURITY_PAY" + "\"" +
+                "  }";
+        alipayRequest.setBizContent(biz_content);
+        alipayRequest.setNotifyUrl(notify_url);
+        try {
+            AlipayTradeAppPayResponse response = alipayClient.sdkExecute(alipayRequest);
+            String form = response.getBody();
+            if (response.isSuccess()) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("orderStr", form);
+                map.put("out_trade_no", out_trade_no);
+                return jr.jsonResultData(ResultCode.SUCCESS.res_code(), "调用成功!", map);
+            } else {
+                return jr.jsonResultData(ResultCode.FAIL.res_code(), "调用失败!");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return jr.jsonResultData(ResultCode.ERROR.res_code());
+        }
+    }
+
+    @RequestMapping("/notify.do")
+    @ApiOperation(
+            value = "支付异步通知接口",
+            notes = "服务器内部接口不用调用",
+            httpMethod = "POST")
+    public void notify(HttpServletRequest httpRequest,
+                       HttpServletResponse httpResponse) throws Exception {
+        try {
+            String trade_status = httpRequest.getParameter("trade_status");
+            String out_trade_no = httpRequest.getParameter("out_trade_no");
+            String trade_no = httpRequest.getParameter("trade_no");
+            String total_amount = httpRequest.getParameter("total_amount");
+            String gmt_payment = httpRequest.getParameter("gmt_payment");
+            String subject = httpRequest.getParameter("subject");
+            if ("TRADE_SUCCESS".equals(trade_status)) {
+                com.qigan.qiganshop.pojo.Pay old = payService.selectByOutpaycode(out_trade_no);
+                if (old != null) {
+                    return;
+                }
+                String tokenorderId = new String(jedisUtil.get(out_trade_no.getBytes()));
+                String[] to = tokenorderId.split("&");
+                String token = to[0];
+                String orderId = "";
+                if (to.length == 2) {
+                    orderId = to[1];
+                }
+                
+                Order order = orderMapper.findOne(orderId);
+                if(order == null)
+                	return;
+                
+                if("2".equals(order.getStatus())){
+					order.setStatus("10");
+					orderMapper.update(order);
+					ResponseEntity responseEntity = refoundService.aliRefund(out_trade_no, total_amount);
+					if (responseEntity.getStatusCode().is2xxSuccessful()) {
+						Info info = new Info();
+						info.setOrderId(orderId);
+						info.setUserId(order.getUserId());
+						info.setInfo("订单超时，已将支付金额退还至【支付宝】");
+						infoService.add(info);
+                    }
+					return;
+				}
+                if(!"0".equals(order.getStatus()))
+                	return;
+                
+                
+                if ("开通会员".equals(subject)) {
+                    payService.updateMember(token);
+                } else if ("钱包充值".equals(subject)) {
+                    Double total = Double.parseDouble(total_amount);
+                    payService.updateBalance(token, total);
+                }
+                Pay pay = new Pay();
+                pay.setPayCode(trade_no);
+                pay.setOutPayCode(out_trade_no);
+                pay.setOrderId(orderId);
+                pay.setPayTypeCode("zhifubao");
+                pay.setPayment(total_amount);
+                pay.setPaytime(gmt_payment);
+                
+                order.setStatus("1");
+				order.setPayCode(trade_no);
+				order.setPayTime(pay.getPaytime());
+				order.setWaitingPay("2");
+				orderMapper.update(order);
+                
+                int suc = payService.insertPay(pay);
+                if (suc == 1) {
+                    jedisUtil.del(out_trade_no.getBytes());
+                    PrintWriter pw = httpResponse.getWriter();
+                    pw.write("success");
+                    pw.flush();
+                    pw.close();
+                }
+                //*****************查询未推送的订单进行推送******************
+                Set<String> elementsFromHash = jedisUtil.getElementsFromHash("pub_err");
+                if(elementsFromHash!=null && elementsFromHash.size()>0){
+                    for (String unPubOrderId : elementsFromHash) {
+                        String result = service.pullToGuanYi(unPubOrderId);
+                        if("ok".equals(result.trim()))
+                            jedisUtil.removeElementFromHash("pub_err",unPubOrderId);
+                    }
+                }
+                //***************推送订单到管易（尝试3次）********************
+                label: while (true) {
+                    String message="";
+                    try {
+//                        for (int i = 0; i < 3; i++) {
+                            if (StringNotNull.check(orderId)) { 
+                                // 用实体进行接收订单信息
+                                JsonResult aliPay = serviceConcat.optStock(out_trade_no, "zhifubao", orderId);
+                                String res_code = aliPay.getRes_code();
+                                message = aliPay.getMessage();
+                                if(ResultCode.SUCCESS.res_code().equals(res_code) && "支付成功".equals(message)){
+                                    break label;
+                                }
+                            }
+//                        }
+                    }catch (Exception e){
+                        //记录推送异常的日志
+                        jedisUtil.setToHash("pub_err",orderId,"0");
+                        break label;
+                    }
+                    //记录推送异常的日志
+                    jedisUtil.setToHash("pub_err",orderId,"0");
+                    break label;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 获取支付宝支付信息
+     *
+     * @param out_trade_no
+     * @return
+     */
+    public JSONObject select(String out_trade_no) {
+        try {
+            AlipayClient alipayClient = new DefaultAlipayClient(serverUrl, appId,
+                    app_private_key, format, charset, alipay_public_key, sign_type);
+
+            AlipayTradeQueryRequest request = new AlipayTradeQueryRequest();
+            request.setBizContent("{" +
+                    " \"out_trade_no\":\"" + out_trade_no + "\"" +
+                    //" \"trade_no\":\""+trade_no+"\"" +
+                    " }");//设置业务参数
+            AlipayTradeQueryResponse response = alipayClient.execute(request);
+            JSONObject js = JSONObject.parseObject(response.getBody());
+            JSONObject js1 = JSONObject.parseObject(js.getString("alipay_trade_query_response"));
+            String trade_status = js1.getString("trade_status");
+            return js1;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+//    /**
+//     * 关闭交易订单
+//     * @param orderId   订单号
+//     */
+//    public boolean closeTradeOrder(String orderId){
+//        if(!StringNotNull.check(orderId))
+//            return false;
+//        String type_time_outTradeNum = jedisUtil.getFromHash(RedisConstant.ORDER_PAY, orderId);
+//        if(!StringNotNull.check(type_time_outTradeNum) ) {
+//            return false;
+//        }
+//        String[] split = type_time_outTradeNum.split(":");
+//        if(split.length<3){
+//            return false;
+//        }
+//        try {
+//            AlipayClient alipayClient = new DefaultAlipayClient(serverUrl, appId,
+//                    app_private_key, format, charset, alipay_public_key, sign_type);
+//            HashMap<String, String> parmMap = new HashMap<>();
+//
+//            AlipayTradeCloseRequest request = new AlipayTradeCloseRequest();
+//            request.setBizContent("{" +
+////                    "\"trade_no\":\""+split[2]+"\"," +
+//                    "\"out_trade_no\":\""+split[2]+"\"," +
+//                    "\"operator_id\":\"XLTC\"" +
+//                    "  }");
+//            AlipayTradeCloseResponse response = alipayClient.execute(request);
+//            System.out.println(response.getSubCode());
+//            if(response.isSuccess()){
+//                System.out.println("调用成功");
+//                //检查状态码
+//                String subCode = response.getSubCode();
+//                if("ACQ.TRADE_HAS_SUCCESS".equals(subCode)){
+//                    //取消订单成功，--->
+//                    return true;
+//                }else{
+//                    System.out.println(response.getSubMsg());
+//                    return false;
+//                }
+//            } else {
+//               System.out.println("调用失败");
+//                return false;
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            return false;
+//        }
+//    }
+
+}

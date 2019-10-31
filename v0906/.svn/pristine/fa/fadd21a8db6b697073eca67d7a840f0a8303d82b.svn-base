@@ -1,0 +1,30 @@
+package com.qigan.qiganshop.mapper;
+
+import com.qigan.qiganshop.pojo.TbSpecialConcat;
+import com.qigan.qiganshop.pojo.TbSpecialConcatExample;
+import java.util.List;
+import org.apache.ibatis.annotations.Param;
+
+public interface TbSpecialConcatMapper {
+    int countByExample(TbSpecialConcatExample example);
+
+    int deleteByExample(TbSpecialConcatExample example);
+
+    int deleteByPrimaryKey(String concatId);
+
+    int insert(TbSpecialConcat record);
+
+    int insertSelective(TbSpecialConcat record);
+
+    List<TbSpecialConcat> selectByExample(TbSpecialConcatExample example);
+
+    TbSpecialConcat selectByPrimaryKey(String concatId);
+
+    int updateByExampleSelective(@Param("record") TbSpecialConcat record, @Param("example") TbSpecialConcatExample example);
+
+    int updateByExample(@Param("record") TbSpecialConcat record, @Param("example") TbSpecialConcatExample example);
+
+    int updateByPrimaryKeySelective(TbSpecialConcat record);
+
+    int updateByPrimaryKey(TbSpecialConcat record);
+}

@@ -1,0 +1,62 @@
+package com.qigan.qiganshop.pojo;
+
+import java.io.Serializable;
+
+public class TbPresellOrder implements Serializable {
+    private String presellorderid;
+
+    private String preselltime;
+
+    private String createtime;
+
+    private String ispushed;
+
+    private static final long serialVersionUID = 1L;
+
+    public String getPresellorderid() {
+        return presellorderid;
+    }
+
+    public void setPresellorderid(String presellorderid) {
+        this.presellorderid = presellorderid == null ? null : presellorderid.trim();
+    }
+
+    public String getPreselltime() {
+        return preselltime;
+    }
+
+    public void setPreselltime(String preselltime) {
+        this.preselltime = preselltime == null ? null : preselltime.trim();
+    }
+
+    public String getCreatetime() {
+        return createtime;
+    }
+
+    public void setCreatetime(String createtime) {
+        this.createtime = createtime == null ? null : createtime.trim();
+    }
+
+    public String getIspushed() {
+        return ispushed;
+    }
+
+    public void setIspushed(String ispushed) {
+        this.ispushed = ispushed == null ? null : ispushed.trim();
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(getClass().getSimpleName());
+        sb.append(" [");
+        sb.append("Hash = ").append(hashCode());
+        sb.append(", presellorderid=").append(presellorderid);
+        sb.append(", preselltime=").append(preselltime);
+        sb.append(", createtime=").append(createtime);
+        sb.append(", ispushed=").append(ispushed);
+        sb.append(", serialVersionUID=").append(serialVersionUID);
+        sb.append("]");
+        return sb.toString();
+    }
+}

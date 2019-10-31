@@ -1,0 +1,349 @@
+package com.qigan.qiganshop.service.impl;
+
+import com.qigan.qiganshop.constant.RedisConstant;
+import com.qigan.qiganshop.exception.XltcRuntimeException;
+import com.qigan.qiganshop.mapper.UserCartMapper;
+import com.qigan.qiganshop.pojo.*;
+import com.qigan.qiganshop.service.GoodsService;
+import com.qigan.qiganshop.service.ItemService;
+import com.qigan.qiganshop.service.StockService;
+import com.qigan.qiganshop.service.UserCartService;
+import com.qigan.qiganshop.util.access.JedisUtil;
+import com.qigan.qiganshop.util.maputil.MapUtil;
+import com.qigan.qiganshop.util.notnull.StringNotNull;
+import com.qigan.qiganshop.util.result.format.JsonResult;
+import com.qigan.qiganshop.util.result.format.ResultCode;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.*;
+
+/**
+ * 购物车
+ *
+ * @author wanghao
+ * @time 2019-06-10 14:36
+ */
+@Service
+@Transactional(rollbackFor = Exception.class)
+public class UserCartServerImpl implements UserCartService {
+    @Autowired
+    private UserCartMapper mapper;
+    @Autowired
+    private ItemService service;
+    @Autowired
+    StockService stockService;
+    @Autowired
+    GoodsService goodsService;
+    @Autowired
+    private JedisUtil jedisUtil;
+
+
+    /**
+     * 增加
+     *
+     * @param userCart
+     * @return
+     */
+    @Override
+    public int add(UserCart userCart) {
+        return mapper.insert(userCart);
+    }
+
+    /**
+     * 删除用户自己的购物车
+     *
+     * @param cartId
+     * @return
+     */
+    @Override
+    public int delete(String cartId) {
+        return mapper.delete(cartId);
+    }
+
+    /**
+     * 删除单个
+     *
+     * @param cartId
+     * @param skuId
+     * @return
+     */
+    @Override
+    public int delete(String cartId, String skuId) {
+        return mapper.deleteOne(cartId, skuId);
+    }
+
+    /**
+     * 更新购物车
+     *
+     * @param userCart
+     * @return
+     */
+    @Override
+    public int update(UserCart userCart) {
+        UserCart one = this.findOne(userCart.getCartId(), userCart.getSkuId());
+        if (one != null) {
+            // 更新数量
+            // 先删后增
+            this.delete(userCart.getCartId(), userCart.getSkuId());
+            return this.add(userCart);
+
+        }
+        return 0;
+    }
+
+    /**
+     * 查询购物车中单个商品信息
+     *
+     * @param cartId
+     * @param skuId
+     * @return
+     */
+    @Override
+    public UserCart findOne(String cartId, String skuId) {
+        return mapper.findOne(cartId, skuId);
+    }
+
+    /**
+     * 查询某个用户的购物车完整信息
+     *
+     * @param cartId
+     * @return
+     */
+    @Override
+    public List<UserCart> findByCateId(String cartId) {
+        return mapper.findByCartId(cartId);
+    }
+
+    /**
+     * APP 端增加一个或多个商品到购物车
+     *
+     * @param appUser
+     * @param items
+     * @return
+     */
+    @Override
+    public Integer addOneGoods(AppUser appUser, String cd, Map<String, Integer> items) {
+    	if(StringUtils.isBlank(cd))
+    		throw XltcRuntimeException.throwable("经纬度为空");
+    	String wareHouseId = null;
+    	JsonResult jsonResult = goodsService.getWarehouseId(cd);
+    	if (!"200".equals(jsonResult.getRes_code())) 
+    		throw XltcRuntimeException.throwable("当前区域无法配送");
+        int count = 0;
+        wareHouseId = jsonResult.getMessage();
+        //查询预售商品code
+        Set<String> preSellGoodsCode = findPreSellGoods();
+        for (String skuId : items.keySet()) {
+            //校验预售商品(不走添加购物车流程)
+            Item one1 = service.findOne(skuId);
+            if(one1!=null && StringNotNull.check(one1.getCode())){
+                String code = one1.getCode();
+                if(preSellGoodsCode!=null && preSellGoodsCode.size()>0){
+                    if(preSellGoodsCode.contains(code.trim())){
+                        throw XltcRuntimeException.throwable("商品：["+one1.getName()+"]是预售商品，请下载新版App，快速抢购吧！");
+                    }
+                }
+            }
+            Stock stock = stockService.findByItemIdAndWareHouseId(skuId, wareHouseId);
+             if (stock != null && stock.getSalableNum() > 0) {
+            	 UserCart one = this.findOne(appUser.getUserId(), skuId);
+                 if (one != null) {
+                     // 如果已经添加,数量相加
+                     one.setNum(one.getNum() + items.get(skuId));
+                     count += this.update(one);
+                 } else {
+                     // 没有添加,直接新增
+                     UserCart userCart = new UserCart(appUser.getUserId(), skuId, items.get(skuId));
+                     count += this.add(userCart);
+                 }
+             } else {
+            	 throw XltcRuntimeException.throwable("库存不足，请稍后重试");
+             }
+
+         }
+        return count;
+    }
+
+    /**
+     * 查询缓存中的预售商品信息
+     */
+    public Set<String> findPreSellGoods(){
+        Set<String> preSellGoodsCodes = jedisUtil.getElementsFromHash(RedisConstant.PRESELL_GOODS_CODE);
+        return preSellGoodsCodes;
+    }
+
+    /**
+     * 保存订单信息
+     *
+     * @param appUser
+     * @param items
+     * @return
+     */
+    @Override
+    public boolean saveCart(AppUser appUser, Map<String, Integer> items) {
+        int count = 0;
+        this.delete(appUser.getUserId());
+        for (String skuId : items.keySet()) {
+            if (items.get(skuId) == 0) {
+                // 删除
+                count += this.delete(appUser.getUserId(), skuId);
+            } else {
+                // 直接新增
+                UserCart userCart = new UserCart(appUser.getUserId(), skuId, items.get(skuId));
+                count += this.add(userCart);
+            }
+        }
+        if (count == items.size()) {
+            // 全部保存成功
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 更新购物车数据
+     *
+     * @param userId
+     * @param items
+     * @return
+     */
+    @Override
+    public boolean updateCart(String userId, Map<String, Integer> items) {
+        int count = 0;
+        for (String skuId : items.keySet()) {
+            UserCart one = this.findOne(userId, skuId);
+            if (items.get(skuId) == 0) {
+                // 删除
+                count += this.delete(userId, skuId);
+            } else {
+                if (one != null) {
+                    // 如果已经添加,数量更新
+                    one.setNum(items.get(skuId));
+                    count += this.update(one);
+                } else {
+                    // 没有添加,直接新增
+                    UserCart userCart = new UserCart(userId, skuId, items.get(skuId));
+                    count += this.add(userCart);
+                }
+            }
+
+        }
+        if (count == items.size()) {
+            // 全部保存成功
+            return true;
+        }
+        return false;
+    }
+
+
+    @Override
+    public boolean updateCart(String userId,String wareHouseId, Map<String, Integer> items) {
+        int count = 0;
+        for (String skuId : items.keySet()) {
+            UserCart one = this.findOne(userId, skuId);
+            if (items.get(skuId) == 0) {
+                // 删除
+                count += this.delete(userId, skuId);
+            } else {
+                if (one != null) {
+                    // 如果已经添加,判断库存，数量更新
+                    if(searchCurrentWarehouseSKUStock(wareHouseId,skuId,items.get(skuId))){
+                        one.setNum(items.get(skuId));
+                        count += this.update(one);
+                    }else {
+                        //已是最大可售，禁止增加/减少
+                        continue;
+                    }
+                } else {
+                    // 没有添加,直接新增
+                    UserCart userCart = new UserCart(userId, skuId, items.get(skuId));
+                    count += this.add(userCart);
+                }
+            }
+
+        }
+        if (count == items.size()) {
+            // 全部保存成功
+            return true;
+        }
+        return false;
+    }
+
+
+    /**
+     * 根据skuid  wareHouseId 查库存
+     * @param wareHouseId
+     * @param skuId
+     * @param num
+     * @return
+     */
+    public boolean searchCurrentWarehouseSKUStock(String wareHouseId,String skuId,Integer num){
+        Stock stock = stockService.findByItemIdAndWareHouseId(skuId, wareHouseId);
+        if(stock.getSalableNum()>=num)
+            return true;
+        return false;
+
+    }
+
+    /**
+     * 删除购物车中的商品
+     *
+     * @param userId
+     * @param skuIds
+     * @return
+     */
+    @Override
+    public boolean deleteCart(String userId, String[] skuIds) {
+        int count = 0;
+        for (String skuId : skuIds) {
+            count += this.delete(userId, skuId);
+        }
+        if (count == skuIds.length) {
+            // 全部保存成功
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 获取用户的购物车信息
+     *
+     * @param userId
+     * @return
+     */
+    @Override
+    public Map getCart(String userId, String coordinate) {
+        HashMap hashMap = new HashMap();
+        List<UserCart> byCateId = this.findByCateId(userId);
+        int count= 0;
+        ArrayList<Map> result = new ArrayList<>();
+        if (byCateId != null) {
+            for (UserCart userCart : byCateId) {
+                Goods goods = service.getGoodsByItemId(userCart.getSkuId(), userId, coordinate);
+                if (goods == null) {
+                    continue;
+                }
+                Map<String, Object> map = MapUtil.objectToMap(goods);
+                map.put("userChooseNum", userCart.getNum());
+                //查询仓库id
+                JsonResult warehouse = goodsService.getWarehouseId(coordinate);
+                //获取商品库存
+                Stock stock = stockService.findByItemIdAndWareHouseId(userCart.getSkuId(), warehouse.getMessage());
+                if(stock==null ||stock.getSalableNum()< userCart.getNum()){
+                    map.put("buyAble","0");
+                }else {
+                    map.put("buyAble","1");
+                    count += userCart.getNum();
+                }
+                result.add(map);
+            }
+        }
+        hashMap.put("count",count);
+        hashMap.put("goods",result);
+        return hashMap;
+    }
+}

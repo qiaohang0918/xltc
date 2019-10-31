@@ -1,0 +1,83 @@
+package com.qigan.qiganshop.service.impl;
+
+import com.qigan.qiganshop.exception.XltcRuntimeException;
+import com.qigan.qiganshop.mapper.BannerMapper;
+import com.qigan.qiganshop.pojo.Banner;
+import com.qigan.qiganshop.service.BannerService;
+import com.qigan.qiganshop.util.picture.PicUtil;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+@Service
+@Transactional(rollbackFor = Exception.class)
+public class BannerServiceImpl implements BannerService {
+
+    @Autowired
+    private BannerMapper mapper;
+    @Value("${FILE_SERVER_URL}")
+    private String FILE_SERVER_URL;
+    @Autowired
+    private PicUtil picUtil;
+
+    @Override
+    public List<Banner> selectBanner(String kind) {
+        List<Banner> banners = mapper.selectBanner(kind);
+        for (Banner banner : banners) {
+            if(banner!= null && banner.getImage()!= null){
+               banner.setImage( picUtil.addOneUrlHead(banner.getImage()));
+            }
+        }
+        return banners;
+    }
+
+    @Override
+    public int insertBanner(Banner banner)
+    {
+        return mapper.insertBanner(banner);
+    }
+    @Override
+    public int updateBanner(Banner banner) {
+        return mapper.updateBanner(banner);
+    }
+
+    @Override
+    public int deleteBanner(Integer bannerId) {
+        return mapper.deleteBanner(bannerId);
+    }
+
+    @Override
+    public int sortBanner(Integer bannerId1, Integer bannerId2) {
+        Banner banner1 = mapper.selectBannerById(bannerId1);
+        Banner banner2 = mapper.selectBannerById(bannerId2);
+        int suc1 = mapper.sortBanner(bannerId1,banner2.getSort());
+        int suc2 = mapper.sortBanner(bannerId2,banner1.getSort());
+        if(suc1 == 1 && suc2 == 1){
+            return 1;
+        }
+        return 0;
+    }
+
+	@Override
+	public void updateEnabel(String status, Integer... ids) {
+		// TODO Auto-generated method stub
+		if(StringUtils.isBlank(status) || ids == null)
+			throw XltcRuntimeException.throwable("参数不完整，请检查参数");
+		for (Integer id : ids) {
+			mapper.updateEnabel(status, id);
+		}
+	}
+
+	@Override
+	public void updateWare(String wareId, Integer id) {
+		// TODO Auto-generated method stub
+		if(StringUtils.isBlank(wareId) || id == null)
+			throw XltcRuntimeException.throwable("参数不完整，请检查参数");
+		mapper.updateWare(wareId, id);
+	}
+}
